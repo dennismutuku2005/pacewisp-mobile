@@ -41,7 +41,8 @@ class ApiService {
   String? _detectedPath;
 
   Future<Map<String, dynamic>?> _requestWithFallback(String endpoint, {String method = 'GET', Map<String, dynamic>? data, Map<String, dynamic>? queryParameters}) async {
-    final protocols = ['https', 'http'];
+    // Force HTTPS only as per user request
+    final protocols = ['https'];
     
     // Use detected path if we have it
     List<String> pathsToTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
@@ -63,7 +64,16 @@ class ApiService {
           
           if (response.statusCode == 200) {
             _detectedPath = path; // Cache for next time
-            return response.data as Map<String, dynamic>;
+            // If it's a map, return it. If it's a string, try to parse it (Dio usually handles this)
+            if (response.data is Map) {
+              return response.data as Map<String, dynamic>;
+            } else if (response.data is String) {
+              // Sometimes response is not auto-parsed if content-type is wrong
+              try {
+                import 'dart:convert';
+                return jsonDecode(response.data) as Map<String, dynamic>;
+              } catch (_) {}
+            }
           }
         } catch (e) {
           print('DEBUG: Probe failed at $url: $e');
@@ -115,7 +125,15 @@ class ApiService {
     // Reset path detection on ping if it's the first check
     _detectedPath = null; 
     final res = await _requestWithFallback('/auth.php?action=ping');
-    return res != null && (res['status'] == 'success' || res['status'] == 200);
+    
+    if (res != null) {
+      // Specifically check for the message "PaceWISP API is online" as requested
+      final status = res['status']?.toString().toLowerCase();
+      final message = res['message']?.toString();
+      
+      return (status == 'success' || status == '200') && message == 'PaceWISP API is online';
+    }
+    return false;
   }
 
   Future<Map<String, dynamic>?> login(String username, String password) async {
