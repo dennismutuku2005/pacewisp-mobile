@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'cache_service.dart';
@@ -64,13 +65,10 @@ class ApiService {
           
           if (response.statusCode == 200) {
             _detectedPath = path; // Cache for next time
-            // If it's a map, return it. If it's a string, try to parse it (Dio usually handles this)
             if (response.data is Map) {
               return response.data as Map<String, dynamic>;
             } else if (response.data is String) {
-              // Sometimes response is not auto-parsed if content-type is wrong
               try {
-                import 'dart:convert';
                 return jsonDecode(response.data) as Map<String, dynamic>;
               } catch (_) {}
             }
