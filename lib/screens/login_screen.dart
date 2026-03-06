@@ -23,7 +23,12 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isReachable = false;
   
   String _selectedDomain = 'pacewisp.co.ke';
-  final List<String> _domains = ['pacewisp.co.ke', 'pace.com', 'wispportal.online'];
+  final List<String> _domains = [
+    'pacewisp.co.ke', 
+    'pace.com', 
+    'wispportal.online',
+    'internet-mtaani.pacewisp.co.ke', // Specifically added for the user
+  ];
 
   Future<void> _handleVerifyInstance() async {
     final subdomain = _subdomainController.text.trim();
@@ -38,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final settings = Provider.of<SettingsProvider>(context, listen: false);
       await settings.setTemporaryConfig(subdomain, _selectedDomain);
 
+      // This will now try both https and http, and log details to the console
       final reachable = await _apiService.pingInstance();
       
       if (!mounted) return;
@@ -46,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (reachable) {
         setState(() => _isReachable = true);
       } else {
-        _showError('Account not found or unreachable. Check your entry.');
+        _showError('Instance unreachable. Check Account Name and Domain.');
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -143,6 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _handleVerifyInstance,
                     label: 'VERIFY ACCOUNT',
                     isLoading: _isLoading,
+                    isDark: isDark,
                   ),
                 ] else ...[
                   _buildInstanceInfo(isDark),
@@ -165,6 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _handleLogin,
                     label: 'SIGN IN',
                     isLoading: _isLoading,
+                    isDark: isDark,
                   ),
                   TextButton(
                     onPressed: () => setState(() => _isReachable = false),
@@ -208,9 +216,13 @@ class _LoginScreenState extends State<LoginScreen> {
           shape: BoxShape.circle,
         ),
         child: Image.asset(
-          'assets/images/logoc.png',
-          height: 60,
-          errorBuilder: (_, __, ___) => const Icon(Icons.wifi, color: PaceColors.purple, size: 48),
+          'assets/images/logo.png', // Switched to logo.png for better compatibility
+          height: 64,
+          errorBuilder: (_, __, ___) => Image.asset(
+            'assets/images/logoc.png', // Fallback to logoc.png
+            height: 64,
+            errorBuilder: (ctx, _, __) => const Icon(Icons.wifi, color: PaceColors.purple, size: 48),
+          ),
         ),
       ),
     );
@@ -270,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildButton({required VoidCallback onPressed, required String label, required bool isLoading}) {
+  Widget _buildButton({required VoidCallback onPressed, required String label, required bool isLoading, required bool isDark}) {
     return SizedBox(
       height: 56,
       child: ElevatedButton(
