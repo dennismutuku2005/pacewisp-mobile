@@ -22,43 +22,52 @@ class ApiService {
     _domain = prefs.getString('domain') ?? 'pacewisp.co.ke';
   }
 
-  String get baseUrlBase {
+  String get host {
     if (_subdomain != null && _subdomain!.isNotEmpty) {
       if (_subdomain!.contains('.')) {
         return _subdomain!;
       }
       return '$_subdomain.$_domain';
     }
-    return _domain ?? 'localhost/pace.com'; // Fallback to domain if subdomain is empty
+    return _domain ?? 'pacewisp.co.ke';
   }
 
-  String get apiPath => '/pace-apis/dashboard/v1';
+  // Common paths to try if 404 occurs
+  final List<String> _possibleApiPaths = [
+    '/dashboard/v1',
+    '/pace-apis/dashboard/v1',
+  ];
 
-  Future<Map<String, dynamic>?> _requestWithFallback(String path, {String method = 'GET', Map<String, dynamic>? data, Map<String, dynamic>? queryParameters}) async {
-    final protocols = ['http', 'https']; // Try HTTP first as it's more common for local/private setups, then fallback
+  String? _detectedPath;
+
+  Future<Map<String, dynamic>?> _requestWithFallback(String endpoint, {String method = 'GET', Map<String, dynamic>? data, Map<String, dynamic>? queryParameters}) async {
+    final protocols = ['https', 'http'];
+    
+    // Use detected path if we have it
+    List<String> pathsToTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
+
     for (var protocol in protocols) {
-      final url = '$protocol://$baseUrlBase$apiPath$path';
-      try {
-        print('DEBUG: Request URL: $url');
-        final options = Options(method: method);
-        final response = await _dio.request(
-          url,
-          data: data,
-          queryParameters: queryParameters,
-          options: options,
-        ).timeout(const Duration(seconds: 12));
+      for (var path in pathsToTry) {
+        final url = '$protocol://$host$path$endpoint';
+        try {
+          print('DEBUG: Probing URL: $url');
+          final options = Options(method: method);
+          final response = await _dio.request(
+            url,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+          ).timeout(const Duration(seconds: 12));
 
-        print('DEBUG: Response Status: ${response.statusCode}');
-        if (response.statusCode == 200) {
-          return response.data as Map<String, dynamic>;
+          print('DEBUG: Response from $url: ${response.statusCode}');
+          
+          if (response.statusCode == 200) {
+            _detectedPath = path; // Cache for next time
+            return response.data as Map<String, dynamic>;
+          }
+        } catch (e) {
+          print('DEBUG: Probe failed at $url: $e');
         }
-        
-        // Handle specific 404/500 if they still return a body
-        if (response.data is Map && response.data['status'] == 'error') {
-          print('DEBUG: Server returned error JSON: ${response.data['message']}');
-        }
-      } catch (e) {
-        print('DEBUG: Request failed at $url: $e');
       }
     }
     return null;
@@ -103,6 +112,8 @@ class ApiService {
   }
 
   Future<bool> pingInstance() async {
+    // Reset path detection on ping if it's the first check
+    _detectedPath = null; 
     final res = await _requestWithFallback('/auth.php?action=ping');
     return res != null && (res['status'] == 'success' || res['status'] == 200);
   }
@@ -115,7 +126,7 @@ class ApiService {
     );
   }
 
-  // Helper APIs...
+  // APIs
   Future<Map<String, dynamic>?> getEntries({String? search, String? router, int page = 1, bool forceRefresh = false}) async => getDashboardData(action: 'entries', search: search, router: router, page: page, limit: 12, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> getIncome({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async => getDashboardData(action: 'income', router: router, startDate: startDate, endDate: endDate, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> getVouchers({String? search, String? router, int page = 1, bool forceRefresh = false}) async => getDashboardData(action: 'vouchers', search: search, router: router, page: page, limit: 15, forceRefresh: forceRefresh);
