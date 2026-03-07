@@ -159,22 +159,27 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   Widget _buildHeader(bool isDark) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('CUSTOMERS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
-                child: Text('RECORDS: $_total', style: const TextStyle(color: PaceColors.purple, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-              ),
+              const Icon(Icons.people_outline_rounded, color: PaceColors.purple, size: 24),
+              const SizedBox(width: 10),
+              Text('CUSTOMERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
             ],
           ),
-          Text('CORE USER DIRECTORY', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 2)),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.only(left: 8),
+            decoration: const BoxDecoration(border: Border(left: BorderSide(color: Color(0x334B1D8F), width: 2))),
+            child: Text(
+              'MANAGE HOTSPOT USERS, DISTINCT BY PHONE NUMBER.',
+              style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2, fontStyle: FontStyle.italic),
+            ),
+          ),
         ],
       ),
     );
@@ -196,26 +201,31 @@ class _CustomersScreenState extends State<CustomersScreen> {
   Widget _buildStatItem(String label, String value, Color color, bool isDark, {bool isLive = false}) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            Text(value, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+            const SizedBox(height: 2),
             Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if (isLive) ...[
-                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: PaceColors.emerald, shape: BoxShape.circle), child: const SizedBox.shrink()),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle, boxShadow: [BoxShadow(color: color.withOpacity(0.5), blurRadius: 4, spreadRadius: 1)]),
+                  ),
                   const SizedBox(width: 6),
                 ],
-                Text(label, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                Text(label, style: GoogleFonts.figtree(color: color.withOpacity(0.8), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color, fontFamily: 'monospace')),
           ],
         ),
       ),
@@ -224,25 +234,37 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   Widget _buildSearchBox(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: PaceColors.getSurface(isDark), 
-          borderRadius: BorderRadius.circular(16), 
-          border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)
-        ),
-        child: TextField(
-          onChanged: (val) { setState(() => _search = val); _fetchCustomers(); },
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
-          decoration: InputDecoration(
-            hintText: 'Search Phone or MAC...', 
-            hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 12, fontWeight: FontWeight.bold), 
-            prefixIcon: Icon(Icons.search_rounded, color: PaceColors.purple.withOpacity(0.5), size: 20), 
-            border: InputBorder.none, 
-            contentPadding: const EdgeInsets.symmetric(vertical: 14)
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: PaceColors.getSurface(isDark), 
+                borderRadius: BorderRadius.circular(16), 
+                border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)
+              ),
+              child: TextField(
+                onChanged: (val) { setState(() => _search = val); _fetchCustomers(); },
+                style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+                decoration: InputDecoration(
+                  hintText: 'Search MAC or mobile number...', 
+                  hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 11, fontWeight: FontWeight.bold), 
+                  icon: Icon(Icons.search_rounded, color: PaceColors.getDimText(isDark), size: 16), 
+                  border: InputBorder.none, 
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12)
+                ),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
+            child: Text('$_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+          ),
+        ],
       ),
     );
   }
@@ -255,38 +277,61 @@ class _CustomersScreenState extends State<CustomersScreen> {
     return InkWell(
       onTap: () => _showCustomerDetails(customer, isDark),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20.0),
-        child: Row(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10), 
-              decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(12)), 
-              child: const Icon(Icons.person_pin_rounded, color: PaceColors.purple, size: 22)
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(phone, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1, fontFamily: 'monospace')),
-                  const SizedBox(height: 2),
-                  Text(mac, style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            Row(
               children: [
-                Text('KES ${customer['totalSpent']}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), fontFamily: 'monospace')),
-                const SizedBox(height: 6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(phone, style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.wifi_rounded, size: 10, color: PaceColors.getDimText(isDark).withOpacity(0.5)),
+                          const SizedBox(width: 4),
+                          Text(mac, style: GoogleFonts.jetBrainsMono(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('KES ${customer['totalSpent']}', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.purple)),
+                    Text('AGGREGATE SPEND', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(6), border: Border.all(color: PaceColors.getBorder(isDark), width: 0.8)),
+                  child: Text('${customer['sessions']} SESSIONS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                ),
+                const SizedBox(width: 8),
                 PaceBadge(
                   label: isActive ? 'ACTIVE' : 'INACTIVE', 
                   variant: isActive ? BadgeVariant.success : BadgeVariant.error
                 ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_rounded, size: 10, color: PaceColors.getDimText(isDark)),
+                    const SizedBox(width: 4),
+                    Text(customer['lastSeen']?.toString().toUpperCase() ?? 'NEVER', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Text('PROFILE →', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)),
               ],
             ),
-            const SizedBox(width: 8),
-            Icon(Icons.chevron_right_rounded, size: 18, color: PaceColors.getBorder(isDark)),
           ],
         ),
       ),
