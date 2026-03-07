@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class WidgetService {
   static const String _groupId = 'group.com.pacewisp.pacewisp'; // For iOS if needed later
   static const String _androidWidgetName = 'AppWidgetProvider';
-  static const String _androidClassName = 'com.pacewisp.pacewisp.AppWidgetProvider';
+  static const String _androidClassName = 'AppWidgetProvider';
 
   static Future<void> updateWidgetData({
     required String accountName,
