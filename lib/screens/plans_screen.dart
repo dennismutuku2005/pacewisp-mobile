@@ -109,7 +109,7 @@ class _PlansScreenState extends State<PlansScreen> {
               const SizedBox(height: 12),
               Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 24),
-              Text(editingPlan != null ? 'EDIT PLAN CONFIG' : 'GENERATE NEW PLAN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.2)),
+              Text(editingPlan != null ? 'EDIT PLAN' : 'GENERATE NEW PLAN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.2)),
               const SizedBox(height: 8),
               if (_routers.any((r) => r['id'].toString() == _selectedRouterId))
                 Text('ROUTER NODE: ${_routers.firstWhere((r) => r['id'].toString() == _selectedRouterId)['router_name']?.toString().toUpperCase()}', 
@@ -216,7 +216,7 @@ class _PlansScreenState extends State<PlansScreen> {
                     style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                     child: isSaving 
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(editingPlan != null ? 'UPDATE CONFIG' : 'COMMIT PLAN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                      : Text(editingPlan != null ? 'UPDATE PLAN' : 'SAVE PLAN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
                   )
                 ),
               ),
