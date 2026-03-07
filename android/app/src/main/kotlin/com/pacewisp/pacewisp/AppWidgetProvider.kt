@@ -10,6 +10,7 @@ import android.net.Uri
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetProvider
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
+import com.pacewisp.pacewisp.R
 
 class AppWidgetProvider : HomeWidgetProvider() {
     companion object {
@@ -24,7 +25,8 @@ class AppWidgetProvider : HomeWidgetProvider() {
                 val current = prefs.getBoolean("is_blurred", true)
                 prefs.edit().putBoolean("is_blurred", !current).apply()
 
-                if (!current) { // Transitioning to unblurred
+                // If unfolding data, trigger a background sync to get LATEST LIVE data
+                if (current == true) { 
                     try {
                         val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
                             context, Uri.parse("pacewisp://sync_data")
@@ -43,37 +45,38 @@ class AppWidgetProvider : HomeWidgetProvider() {
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray, widgetData: SharedPreferences) {
-        try {
-            appWidgetIds.forEach { widgetId ->
-                val views = RemoteViews(context.packageName, R.layout.widget_layout).apply {
-                    val isBlurred = widgetData.getBoolean("is_blurred", true)
-                    val income = widgetData.getString("income", "0") ?: "0"
-                    val entries = widgetData.getString("entries", "0") ?: "0"
-                    val accountName = widgetData.getString("account_name", "PaceWisp Admin") ?: "PaceWisp Admin"
+        appWidgetIds.forEach { widgetId ->
+            try {
+                val views = RemoteViews(context.packageName, R.layout.widget_layout)
+                
+                val isBlurred = widgetData.getBoolean("is_blurred", true)
+                val income = widgetData.getString("income", "0") ?: "0"
+                val entries = widgetData.getString("entries", "0") ?: "0"
+                val accountName = widgetData.getString("account_name", "PaceWisp Admin") ?: "PaceWisp Admin"
 
-                    setTextViewText(R.id.tv_title, accountName)
-                    
-                    if (isBlurred) {
-                        setTextViewText(R.id.tv_income, "KSH ***")
-                        setTextViewText(R.id.tv_entries, "*** Entries")
-                    } else {
-                        setTextViewText(R.id.tv_income, if (income.contains("KSH")) income else "KSH $income")
-                        setTextViewText(R.id.tv_entries, if (entries.contains("Entries")) entries else "$entries Entries")
-                    }
-
-                    val intent = Intent(context, AppWidgetProvider::class.java).apply {
-                        action = ACTION_TOGGLE_BLUR
-                        // Add widget ID to intent data to make it unique
-                        data = Uri.parse("pacewisp://widget/$widgetId")
-                    }
-                    val pendingIntent = PendingIntent.getBroadcast(
-                        context, widgetId, intent, 
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                    setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+                views.setTextViewText(R.id.tv_title, accountName)
+                
+                if (isBlurred) {
+                    views.setTextViewText(R.id.tv_income, "KSH ***")
+                    views.setTextViewText(R.id.tv_entries, "*** Entries")
+                } else {
+                    views.setTextViewText(R.id.tv_income, if (income.contains("KSH")) income else "KSH $income")
+                    views.setTextViewText(R.id.tv_entries, if (entries.contains("Entries")) entries else "$entries Entries")
                 }
+
+                val intent = Intent(context, AppWidgetProvider::class.java).apply {
+                    action = ACTION_TOGGLE_BLUR
+                    data = Uri.parse("pacewisp://widget/$widgetId")
+                }
+                
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context, widgetId, intent, 
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+                
                 appWidgetManager.updateAppWidget(widgetId, views)
-            }
-        } catch (e: Exception) {}
+            } catch (e: Exception) {}
+        }
     }
 }
