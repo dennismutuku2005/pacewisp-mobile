@@ -9,6 +9,7 @@ import '../theme/colors.dart';
 import '../components/dashboard_chart.dart';
 import '../components/skeleton.dart';
 import '../components/badge.dart';
+import '../services/widget_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onGenerateVoucher;
@@ -60,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _transactions = _extractData(tMem, 'recent_transactions') ?? [];
       _routerStatus = _extractData(rMem, 'router_status') ?? [];
       _isLoading = false; // Instant data available
+      _refreshWidgetData();
     }
   }
   
@@ -123,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _routerStatus = _extractData(cached[3], 'router_status') ?? [];
         if (hasData) _isLoading = false;
       });
+      _refreshWidgetData();
     }
 
     // LIVE REFRESH
@@ -141,6 +144,22 @@ class _HomeScreenState extends State<HomeScreen> {
         _routerStatus = _extractData(live[3], 'router_status') ?? [];
         _isLoading = false;
       });
+      _refreshWidgetData();
+    }
+  }
+
+  void _refreshWidgetData() {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    // Only update if current active account is the widget account OR if widget account is set to active
+    if (settings.widgetAccount?.subdomain == settings.activeAccount?.subdomain) {
+       if (_widgets != null) {
+         WidgetService.updateWidgetData(
+           accountName: settings.activeAccount?.accountName ?? "PaceWisp",
+           income: _widgets!['todays_earnings']?['value'] ?? "0",
+           entries: _widgets!['active_users']?['value'] ?? "0",
+           isBlurred: settings.isWidgetBlurred,
+         );
+       }
     }
   }
 
