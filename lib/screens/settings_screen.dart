@@ -4,6 +4,7 @@ import '../providers/settings_provider.dart';
 import '../theme/colors.dart';
 import 'login_screen.dart';
 import '../services/lock_service.dart';
+import 'webview_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -36,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
                 final isActive = settings.activeAccount?.subdomain == acc.subdomain && settings.activeAccount?.domain == acc.domain;
                 
                 return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                   title: Text("${acc.subdomain}.${acc.domain}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
                   subtitle: Text(acc.accountName.toUpperCase(), style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                   trailing: isActive ? const Icon(Icons.check_circle_rounded, color: PaceColors.purple, size: 22) : null,
@@ -44,12 +45,8 @@ class SettingsScreen extends StatelessWidget {
                 );
               }),
               ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.add_link_rounded, color: PaceColors.purple, size: 20),
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                leading: const Icon(Icons.add_link_rounded, color: PaceColors.purple, size: 20),
                 title: Text('ADD NEW INSTANCE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
@@ -58,55 +55,48 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
           
-          const SizedBox(height: 32),
+          const Divider(height: 32),
           _buildSectionTitle('APPEARANCE & SECURITY', isDark),
           _buildSettingGroup(
             isDark,
             [
-              _buildSwitchTile(
-                'DARK MODE', 
-                'ADAPTIVE VISUAL INTERFACE', 
-                Icons.dark_mode_rounded, 
-                settings.isDarkMode, 
-                (val) => settings.toggleDarkMode(), 
-                isDark,
-                Colors.amber
-              ),
-              const Divider(height: 1, indent: 56),
-              _buildSwitchTile(
-                'SYSTEM APP LOCK', 
-                'SECURE WITH BIOMETRICS', 
-                Icons.fingerprint_rounded, 
-                settings.isAppLockEnabled, 
-                (val) async {
+              _buildSwitchTile('DARK MODE', 'ADAPTIVE VISUAL INTERFACE', Icons.dark_mode_rounded, settings.isDarkMode, (val) => settings.toggleDarkMode(), isDark, Colors.amber),
+              _buildSwitchTile('SYSTEM APP LOCK', 'SECURE WITH BIOMETRICS', Icons.fingerprint_rounded, settings.isAppLockEnabled, (val) async {
                   if (val) {
                     final success = await LockService().authenticate();
-                    if (success) {
-                      settings.toggleAppLock(true);
-                    }
+                    if (success) settings.toggleAppLock(true);
                   } else {
                     final success = await LockService().authenticate();
-                    if (success) {
-                      settings.toggleAppLock(false);
-                    }
+                    if (success) settings.toggleAppLock(false);
                   }
-                }, 
-                isDark,
-                PaceColors.emerald
-              ),
+              }, isDark, PaceColors.emerald),
             ],
           ),
-          const SizedBox(height: 32),
+          
+          const Divider(height: 32),
+          _buildSectionTitle('LEGAL & POLICIES', isDark),
+          _buildSettingGroup(
+            isDark,
+            [
+              _buildActionTile('TERMS & CONDITIONS', 'User agreements', Icons.gavel_rounded, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const WebViewScreen(title: 'Terms of Service', url: 'https://pacewisp.co.ke/terms/')));
+              }, isDark, Colors.blueGrey),
+              _buildActionTile('PRIVACY POLICY', 'Data protection', Icons.privacy_tip_rounded, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const WebViewScreen(title: 'Privacy Policy', url: 'https://pacewisp.co.ke/privacy/')));
+              }, isDark, Colors.blueGrey),
+            ],
+          ),
+
+          const Divider(height: 32),
           _buildSectionTitle('BUILD INFORMATION', isDark),
           _buildSettingGroup(
             isDark,
             [
               _buildReadOnlyTile('VERSION', '1.2.6 ENTERPRISE STABLE', isDark),
-              const Divider(height: 1),
               _buildReadOnlyTile('SYSTEM STATUS', 'CORE API ONLINE', isDark, valueColor: PaceColors.emerald),
             ],
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 48),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SizedBox(
@@ -222,30 +212,19 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildSectionTitle(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(title, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
     );
   }
 
   Widget _buildSettingGroup(bool isDark, List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
-      ),
-      child: Column(children: children),
-    );
+    return Column(children: children);
   }
 
   Widget _buildSwitchTile(String title, String subtitle, IconData icon, bool value, Function(bool) onChanged, bool isDark, Color iconColor) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      leading: Icon(icon, color: iconColor, size: 24),
       title: Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
       subtitle: Text(subtitle, style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1)),
       trailing: Switch(
@@ -259,12 +238,24 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildActionTile(String title, String subtitle, IconData icon, VoidCallback onTap, bool isDark, Color iconColor) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      leading: Icon(icon, color: iconColor, size: 24),
+      title: Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1)),
+      trailing: Icon(Icons.chevron_right_rounded, color: PaceColors.getDimText(isDark), size: 20),
+      onTap: onTap,
+    );
+  }
+
   Widget _buildReadOnlyTile(String label, String value, bool isDark, {Color? valueColor}) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      title: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-      trailing: Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      title: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+      trailing: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
     );
   }
 }
+
 
