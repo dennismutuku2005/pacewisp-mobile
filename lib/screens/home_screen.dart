@@ -58,15 +58,25 @@ class _HomeScreenState extends State<HomeScreen> {
         
         if (mounted) {
           setState(() {
-            _routerNames = ['All Routers'];
+            // Hardened de-duplication
+            final Set<String> unique = {'All Routers'};
             for (var r in fetched) {
+              String? name;
               if (r is String) {
-                _routerNames.add(r);
+                name = r.trim();
               } else if (r is Map) {
-                final name = r['name']?.toString() ?? r['router_name']?.toString() ?? r['router']?.toString();
-                if (name != null) _routerNames.add(name);
+                name = (r['name'] ?? r['router_name'] ?? r['router'])?.toString().trim();
+              }
+              
+              if (name != null && name.isNotEmpty) {
+                final lower = name.toLowerCase();
+                // Avoid adding 'All Routers' or 'All' variants if they already exist
+                if (lower != 'all routers' && lower != 'all' && lower != 'any') {
+                  unique.add(name);
+                }
               }
             }
+            _routerNames = unique.toList();
           });
         }
       } else {
@@ -106,11 +116,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
 
     // 1. SILENT CACHE LOAD
-    final cached = await Future.wait([
+    final cached = await Future.wait<Map<String, dynamic>?>([
       _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: false),
       _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: false),
       _apiService.getRecentTransactions(router: router, startDate: filters['startDate'], endDate: filters['endDate'], limit: 5, forceRefresh: false),
-      _apiService.getRouterStatus(limit: 4, forceRefresh: false),
+      _apiService.getRouterStatus(limit: 5, forceRefresh: false),
     ]);
 
     if (mounted) {
@@ -124,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // 2. SILENT LIVE LOAD
-    final live = await Future.wait([
+    final live = await Future.wait<Map<String, dynamic>?>([
       _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
       _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
       _apiService.getRecentTransactions(router: router, startDate: filters['startDate'], endDate: filters['endDate'], limit: 5, forceRefresh: true),
@@ -385,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisSpacing: 12,
       childAspectRatio: 2.5,
       children: [
-        _buildActionItem(Icons.confirmation_num_rounded, 'GENERATE ASSETS', 'Prepaid production', PaceColors.purple, isDark, widget.onGenerateVoucher),
+        _buildActionItem(Icons.confirmation_num_rounded, 'GENERATE VOUCHERS', 'Bulk prepaid production', PaceColors.purple, isDark, widget.onGenerateVoucher),
         _buildActionItem(Icons.tag_rounded, 'ACTIVE PLANS', 'Bandwidth tiers', Colors.blue, isDark, () {}),
         _buildActionItem(Icons.lan_rounded, 'STATION NODE', 'Hardware portal', Colors.orange, isDark, () {}),
         _buildActionItem(Icons.analytics_rounded, 'SMART LOGGER', 'Internal events', PaceColors.getDimText(isDark), isDark, () {}),
@@ -405,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 18)),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(title, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.2)),
+              Text(title, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.2)),
               Text(sub, style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
             ])),
           ],
@@ -456,9 +466,9 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index) {
                 final tx = _transactions[index];
                 return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.smartphone_rounded, color: PaceColors.purple, size: 14)),
-                  title: Text(tx['user_phone'] ?? 'SYSTEM', style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  leading: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.smartphone_rounded, color: PaceColors.purple, size: 12)),
+                  title: Text(tx['user_phone'] ?? 'SYSTEM', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
                   subtitle: Row(children: [Text(tx['plan_name']?.toString().split('_')[0].toUpperCase() ?? 'PREPAID', style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))), const SizedBox(width: 8), Icon(Icons.access_time_rounded, size: 8, color: PaceColors.getDimText(isDark)), const SizedBox(width: 2), Text(tx['time_ago'] ?? 'Now', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold))]),
                   trailing: Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisAlignment: MainAxisAlignment.center, children: [
                     Text('KES ${_format(tx['amount'])}', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)),
