@@ -203,7 +203,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
 
   Widget _buildGlobalFilters(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, bottom: 12),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       child: Row(children: [
         Expanded(child: _buildFilterButton(icon: Icons.router_rounded, label: _selectedRouter, onTap: () => _showRouterPicker(isDark), isDark: isDark)),
         const SizedBox(width: 8),
