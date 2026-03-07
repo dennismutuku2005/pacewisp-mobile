@@ -33,45 +33,54 @@ class ApiService {
     return _domain ?? 'pacewisp.co.ke';
   }
 
-  // Common paths to try if 404 occurs
   final List<String> _possibleApiPaths = [
     '/dashboard/v1',
-    '/pace-apis/dashboard/v1',
+    '/',
   ];
 
   String? _detectedPath;
 
   Future<Map<String, dynamic>?> _requestWithFallback(String endpoint, {String method = 'GET', Map<String, dynamic>? data, Map<String, dynamic>? queryParameters}) async {
-    // Force HTTPS only as per user request
-    final protocols = ['https'];
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
     
-    // Use detected path if we have it
+    final protocols = ['https'];
     List<String> pathsToTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
+
+    Map<String, String> headers = {
+      'Accept': 'application/json',
+    };
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
 
     for (var protocol in protocols) {
       for (var path in pathsToTry) {
-        final url = '$protocol://$host$path$endpoint';
+        String cleanPath = path;
+        if (!cleanPath.startsWith('/')) cleanPath = '/$cleanPath';
+        if (cleanPath.endsWith('/') && cleanPath != '/') cleanPath = cleanPath.substring(0, cleanPath.length - 1);
+        
+        final separator = cleanPath == '/' ? '' : cleanPath;
+        final url = '$protocol://$host$separator$endpoint';
+        
         try {
           print('DEBUG: Probing URL: $url');
-          final options = Options(method: method);
           final response = await _dio.request(
             url,
             data: data,
             queryParameters: queryParameters,
-            options: options,
-          ).timeout(const Duration(seconds: 12));
+            options: Options(
+              method: method,
+              headers: headers,
+            ),
+          ).timeout(const Duration(seconds: 15));
 
-          print('DEBUG: Response from $url: ${response.statusCode}');
-          
           if (response.statusCode == 200) {
-            _detectedPath = path; // Cache for next time
-            if (response.data is Map) {
-              return response.data as Map<String, dynamic>;
-            } else if (response.data is String) {
-              try {
-                return jsonDecode(response.data) as Map<String, dynamic>;
-              } catch (_) {}
-            }
+            _detectedPath = cleanPath;
+            if (response.data is Map) return response.data as Map<String, dynamic>;
+            if (response.data is String) return jsonDecode(response.data) as Map<String, dynamic>;
+          } else {
+            print('DEBUG: Probe returned status ${response.statusCode} at $url');
           }
         } catch (e) {
           print('DEBUG: Probe failed at $url: $e');
@@ -81,73 +90,84 @@ class ApiService {
     return null;
   }
 
-  Future<Map<String, dynamic>?> getDashboardData({
-    String? action,
-    String? search,
-    String? startDate,
-    String? endDate,
-    String? router,
-    int? page,
-    int? limit,
+  // --- API ROUTING LOGIC ---
+
+  Future<Map<String, dynamic>?> fetchData({
+    required String slug,
+    Map<String, dynamic>? params,
     bool forceRefresh = false,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
     final subdomainKey = _subdomain ?? 'default';
 
-    final cacheKey = "${action}_${router ?? 'all'}_${search ?? ''}_${startDate ?? 'na'}_${endDate ?? 'na'}_${page ?? 1}";
+    // Map internal actions to correct PHP files
+    String phpFile = '/dashboard.php';
+    if (slug == 'vouchers') phpFile = '/vouchers.php';
+    else if (slug == 'income') phpFile = '/income.php';
+    else if (slug == 'entries') phpFile = '/entries.php';
+    else if (slug == 'customers') phpFile = '/customers.php';
+    else if (slug == 'plans') phpFile = '/hotspot_plans.php';
+    else if (slug == 'logs') phpFile = '/logs.php';
+    else if (slug == 'routers') phpFile = '/routers.php';
 
+    final cacheKey = "${slug}_${params.toString()}";
     if (!forceRefresh) {
       final cached = await _cache.get(cacheKey, subdomain: subdomainKey, expiry: const Duration(minutes: 5));
       if (cached != null) return cached;
     }
 
-    final queryParams = <String, dynamic>{};
-    if (action != null) queryParams['action'] = action;
-    if (search != null) queryParams['search'] = search;
-    if (startDate != null) queryParams['startDate'] = startDate;
-    if (endDate != null) queryParams['endDate'] = endDate;
-    if (router != null && router != 'All Routers') queryParams['router'] = router;
-    if (page != null) queryParams['page'] = page;
-    if (limit != null) queryParams['limit'] = limit;
-    if (token != null) queryParams['token'] = token;
-
-    final data = await _requestWithFallback('/dashboard.php', queryParameters: queryParams);
+    final data = await _requestWithFallback(phpFile, queryParameters: params);
     if (data != null && (data['status'] == 'success' || data['status'] == 200)) {
       await _cache.save(cacheKey, data, subdomain: subdomainKey);
     }
     return data;
   }
 
+  // --- ACTIONS ---
+
   Future<bool> pingInstance() async {
-    // Reset path detection on ping if it's the first check
     _detectedPath = null; 
     final res = await _requestWithFallback('/auth.php?action=ping');
-    
     if (res != null) {
-      // Specifically check for the message "PaceWISP API is online" as requested
-      final status = res['status']?.toString().toLowerCase();
       final message = res['message']?.toString();
-      
-      return (status == 'success' || status == '200') && message == 'PaceWISP API is online';
+      return message == 'PaceWISP API is online';
     }
     return false;
   }
 
   Future<Map<String, dynamic>?> login(String username, String password) async {
-    return await _requestWithFallback(
-      '/auth.php?action=login',
-      method: 'POST',
-      data: {'username': username, 'password': password},
-    );
+    return await _requestWithFallback('/auth.php?action=login', method: 'POST', data: {'username': username, 'password': password});
   }
 
-  // APIs
-  Future<Map<String, dynamic>?> getEntries({String? search, String? router, int page = 1, bool forceRefresh = false}) async => getDashboardData(action: 'entries', search: search, router: router, page: page, limit: 12, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getIncome({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async => getDashboardData(action: 'income', router: router, startDate: startDate, endDate: endDate, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getVouchers({String? search, String? router, int page = 1, bool forceRefresh = false}) async => getDashboardData(action: 'vouchers', search: search, router: router, page: page, limit: 15, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => getDashboardData(action: 'customers', search: search, page: page, limit: 12, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getPlans(String routerId, {bool forceRefresh = false}) async => getDashboardData(action: 'plans', router: routerId, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getRouters({bool forceRefresh = false}) async => getDashboardData(action: 'routers', forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getLogs({String? search, int page = 1, bool forceRefresh = false}) async => getDashboardData(action: 'logs', search: search, page: page, limit: 20, forceRefresh: forceRefresh);
+  // Dashboard Summary (uses dashboard.php)
+  Future<Map<String, dynamic>?> getSummaryWidgets({bool forceRefresh = false}) async => fetchData(slug: 'widgets', params: {'action': 'widgets'}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getSummaryCharts({bool forceRefresh = false}) async => fetchData(slug: 'charts', params: {'action': 'charts'}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getRecentTransactions({int limit = 5, bool forceRefresh = false}) async => fetchData(slug: 'recent_transactions', params: {'action': 'recent_transactions', 'limit': limit}, forceRefresh: forceRefresh);
+
+  // Vouchers
+  Future<Map<String, dynamic>?> getVouchers({String? search, String? router, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'vouchers', params: {'search': search, 'router_name': router, 'page': page}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> createVoucher(Map<String, dynamic> data) async => _requestWithFallback('/vouchers.php', method: 'POST', data: data);
+  Future<Map<String, dynamic>?> deleteVoucher(String id) async => _requestWithFallback('/vouchers.php', method: 'DELETE', data: {'ids': [id]});
+  Future<Map<String, dynamic>?> deleteVouchers(List<String> ids) async => _requestWithFallback('/vouchers.php', method: 'DELETE', data: {'ids': ids});
+
+  // Customers
+  Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customers', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> deleteCustomer(String phone) async => _requestWithFallback('/customers.php?action=delete', method: 'POST', data: {'phone': phone});
+
+  // Plans
+  Future<Map<String, dynamic>?> getPlans(String routerId, {bool forceRefresh = false}) async => fetchData(slug: 'plans', params: {'router': routerId}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> createPlan(Map<String, dynamic> data) async => _requestWithFallback('/hotspot_plans.php?action=create', method: 'POST', data: data);
+  Future<Map<String, dynamic>?> deletePlan(String id) async => _requestWithFallback('/hotspot_plans.php?action=delete', method: 'POST', data: {'id': id});
+
+  // Income Report
+  Future<Map<String, dynamic>?> getIncome({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async => fetchData(slug: 'income', params: {'router': router, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
+
+  // Entries
+  Future<Map<String, dynamic>?> getEntries({String? search, String? router, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'entries', params: {'search': search, 'router': router, 'page': page}, forceRefresh: forceRefresh);
+
+  // System Logs
+  Future<Map<String, dynamic>?> getLogs({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'logs', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
+  
+  // Routers
+  Future<Map<String, dynamic>?> getRouters({bool forceRefresh = false}) async => fetchData(slug: 'routers', params: {'action': 'get_routers'}, forceRefresh: forceRefresh);
 }
