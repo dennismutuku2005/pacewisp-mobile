@@ -101,7 +101,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _charts = cached[1]?['data']?['charts']?['revenue_over_time'] ?? cached[1]?['charts']?['revenue_over_time'] ?? cached[1]?['data']?['revenue_over_time'] ?? [];
         _transactions = _extractData(cached[2], 'recent_transactions') ?? [];
         _routerStatus = _extractData(cached[3], 'router_status') ?? [];
-        // Only set loading to false if we actually got something from cache
         if (hasData) _isLoading = false;
       });
     }
@@ -231,7 +230,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMetricsGrid(bool isDark) {
-    // SILENT LOADING: If we have widgets (from cache), show them instead of skeletons
     if (_widgets == null) return const SkeletonGrid(count: 6);
     final data = _widgets!;
     final metrics = [
@@ -251,10 +249,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildQuickAccessGrid(bool isDark) {
     return GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 2.5, children: [
-      _buildActionItem(Icons.confirmation_num_rounded, 'GENERATE VOUCHERS', 'Bulk prepaid production', PaceColors.purple, isDark, widget.onGenerateVoucher),
-      _buildActionItem(Icons.tag_rounded, 'ACTIVE PLANS', 'Bandwidth tiers', Colors.blue, isDark, () {}),
-      _buildActionItem(Icons.lan_rounded, 'STATION NODE', 'Hardware portal', Colors.orange, isDark, () {}),
-      _buildActionItem(Icons.analytics_rounded, 'SMART LOGGER', 'Internal events', PaceColors.getDimText(isDark), isDark, () {}),
+        _buildActionItem(Icons.confirmation_num_rounded, 'GENERATE VOUCHERS', 'Bulk prepaid production', PaceColors.purple, isDark, widget.onGenerateVoucher),
+        _buildActionItem(Icons.tag_rounded, 'ACTIVE PLANS', 'Bandwidth tiers', Colors.blue, isDark, () {}),
+        _buildActionItem(Icons.lan_rounded, 'STATION NODE', 'Hardware portal', Colors.orange, isDark, () {}),
+        _buildActionItem(Icons.analytics_rounded, 'SMART LOGGER', 'Internal events', PaceColors.getDimText(isDark), isDark, () {}),
     ]);
   }
 
@@ -268,7 +266,29 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            InkWell(
+              onTap: () {
+                final next = (_currentChartIndex + 1) % 2;
+                _chartPageController.animateToPage(next, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_horiz_rounded, size: 14, color: PaceColors.purple),
+                    const SizedBox(width: 4),
+                    Text('SWAP VIEW', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 0.5)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         SizedBox(
           height: 240, 
           child: PageView(
