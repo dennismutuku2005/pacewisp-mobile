@@ -172,6 +172,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SkeletonGrid(count: 4)
             else ...[
               _buildMetricsGrid(isDark),
+              const SizedBox(height: 24),
+              _buildCreateVoucherButton(isDark),
               const SizedBox(height: 48),
               _buildQuickAccessGrid(isDark),
               const SizedBox(height: 48),
@@ -270,10 +272,29 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Widget _buildCreateVoucherButton(bool isDark) {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton.icon(
+        onPressed: widget.onGenerateVoucher,
+        icon: const Icon(Icons.confirmation_num_rounded, size: 24),
+        label: Text('CREATE NEW VOUCHERS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: PaceColors.purple,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 8,
+          shadowColor: PaceColors.purple.withOpacity(0.4),
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickAccessGrid(bool isDark) {
     return GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 2.5, children: [
-        _buildActionItem(Icons.confirmation_num_rounded, 'GENERATE VOUCHERS', 'Bulk prepaid production', PaceColors.purple, isDark, widget.onGenerateVoucher),
         _buildActionItem(Icons.tag_rounded, 'ACTIVE PLANS', 'Bandwidth tiers', Colors.blue, isDark, () {}),
+        _buildActionItem(Icons.people_alt_rounded, 'CUSTOMERS', 'Manage accounts', PaceColors.emerald, isDark, () {}),
         _buildActionItem(Icons.lan_rounded, 'STATION NODE', 'Hardware portal', Colors.orange, isDark, () {}),
         _buildActionItem(Icons.analytics_rounded, 'SMART LOGGER', 'Internal events', PaceColors.getDimText(isDark), isDark, () {}),
     ]);
