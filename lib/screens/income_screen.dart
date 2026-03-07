@@ -209,7 +209,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
               borderData: FlBorderData(show: false),
               lineBarsData: [
                 LineChartBarData(
-                  spots: trend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), double.tryParse(e.value['amount'].toString()) ?? 0)).toList(),
+                  spots: trend.asMap().entries.map<FlSpot>((e) => FlSpot(e.key.toDouble(), double.tryParse(e.value['amount'].toString()) ?? 0)).toList(),
                   isCurved: true,
                   color: PaceColors.purple,
                   barWidth: 4,
@@ -273,7 +273,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
              ), 
              borderData: FlBorderData(show: false),
-             barGroups: trend.asMap().entries.map((e) {
+             barGroups: trend.asMap().entries.map<BarChartGroupData>((e) {
                double amt = double.tryParse(e.value['amount'].toString()) ?? 0;
                double ent = double.tryParse(e.value['entries'].toString()) ?? 0;
                double avg = ent == 0 ? 0 : amt / ent;
