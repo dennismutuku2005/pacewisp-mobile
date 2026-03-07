@@ -30,9 +30,24 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSyncMemory();
     _fetchStats();
     _fetchCustomers();
     _scrollController.addListener(_onScroll);
+  }
+
+  void _loadSyncMemory() {
+    // 1. Stats
+    final sMem = _apiService.getMemoryCached('widgets', params: {'action': 'widgets', 'router': null, 'startDate': null, 'endDate': null});
+    if (sMem != null) _processStats(sMem);
+
+    // 2. Customers
+    final cMem = _apiService.getMemoryCached('customers', params: {'search': _search, 'page': 1});
+    if (cMem != null) {
+      _customers = cMem['data'] ?? [];
+      _total = cMem['pagination']?['total'] ?? 0;
+      _isLoading = false;
+    }
   }
 
   void _onScroll() {
