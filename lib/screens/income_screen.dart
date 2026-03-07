@@ -18,11 +18,11 @@ class IncomeScreen extends StatefulWidget {
 class _IncomeScreenState extends State<IncomeScreen> {
   final ApiService _apiService = ApiService();
   Map<String, dynamic>? _incomeData;
-  List<dynamic> _routers = ['All Routers'];
+  List<dynamic> _routerNames = ['All Routers'];
   
   bool _isLoading = true;
   String _selectedRouter = 'All Routers';
-  String _selectedRange = 'This Month';
+  String _selectedDateRange = 'This Month';
   final _currencyFormat = NumberFormat("#,###", "en_US");
 
   @override
@@ -39,28 +39,40 @@ class _IncomeScreenState extends State<IncomeScreen> {
       if (raw is List) {
         final Set<String> unique = {'All Routers'};
         for (var r in raw) {
-          String? name = (r is Map) ? (r['name'] ?? r['router_name'])?.toString() : r.toString();
-          if (name != null) unique.add(name);
+          String? name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
+          if (name != null && name.isNotEmpty) unique.add(name);
         }
-        if (mounted) setState(() => _routers = unique.toList());
+        if (mounted) setState(() => _routerNames = unique.toList());
       }
     }
   }
 
+  Map<String, String> _parseDateRange(String range) {
+    final now = DateTime.now();
+    final formatter = DateFormat('yyyy-MM-dd');
+    String start = formatter.format(now), end = formatter.format(now);
+    if (range == 'Yesterday') { final yest = now.subtract(const Duration(days: 1)); start = formatter.format(yest); end = formatter.format(yest); }
+    else if (range == 'This Week') { start = formatter.format(now.subtract(const Duration(days: 6))); }
+    else if (range == 'This Month') { start = formatter.format(DateTime(now.year, now.month, 1)); }
+    else if (range == 'All Time') { start = '2020-01-01'; }
+    return {'startDate': start, 'endDate': end};
+  }
+
   Future<void> _fetchCachedThenLive() async {
+    final filters = _parseDateRange(_selectedDateRange);
+    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
+
     // 1. SILENT CACHE LOAD
-    final cached = await _apiService.getIncome(router: _selectedRouter == 'All Routers' ? null : _selectedRouter, forceRefresh: false);
+    final cached = await _apiService.getIncome(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: false);
     if (mounted && cached != null) {
       setState(() {
         _incomeData = cached['data'] ?? cached;
         _isLoading = false;
       });
-    } else if (mounted) {
-       setState(() => _isLoading = true);
     }
 
     // 2. LIVE REFRESH
-    final live = await _apiService.getIncome(router: _selectedRouter == 'All Routers' ? null : _selectedRouter, forceRefresh: true);
+    final live = await _apiService.getIncome(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true);
     if (mounted && live != null) {
       setState(() {
         _incomeData = live['data'] ?? live;
@@ -74,35 +86,32 @@ class _IncomeScreenState extends State<IncomeScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
-      body: RefreshIndicator(
-        onRefresh: () => _fetchCachedThenLive(),
-        color: PaceColors.purple,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(isDark),
-              const SizedBox(height: 24),
-              _buildFilters(isDark),
+    return RefreshIndicator(
+      onRefresh: () => _fetchCachedThenLive(),
+      color: PaceColors.purple,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(isDark),
+            const SizedBox(height: 24),
+            _buildGlobalFilters(isDark),
+            const SizedBox(height: 32),
+            if (_isLoading && _incomeData == null) 
+               const SkeletonGrid(count: 9)
+            else ...[
+              _buildMetricsGrid(isDark),
               const SizedBox(height: 32),
-              if (_isLoading && _incomeData == null) 
-                 const SkeletonGrid(count: 9)
-              else ...[
-                _buildMetricsGrid(isDark),
-                const SizedBox(height: 32),
-                _buildChartCard(isDark),
-                const SizedBox(height: 32),
-                _buildPlanDistribution(isDark),
-                const SizedBox(height: 32),
-                _buildTicketValue(isDark),
-              ],
-              const SizedBox(height: 100),
+              _buildChartCard(isDark),
+              const SizedBox(height: 32),
+              _buildPlanDistribution(isDark),
+              const SizedBox(height: 32),
+              _buildTicketValue(isDark),
             ],
-          ),
+            const SizedBox(height: 100),
+          ],
         ),
       ),
     );
@@ -115,20 +124,37 @@ class _IncomeScreenState extends State<IncomeScreen> {
     ]);
   }
 
-  Widget _buildFilters(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedRouter,
-          isExpanded: true,
-          dropdownColor: PaceColors.getCard(isDark),
-          items: _routers.map((r) => DropdownMenuItem(value: r.toString(), child: Text(r.toString(), style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))))).toList(),
-          onChanged: (v) { if (v != null) { setState(() => _selectedRouter = v); _fetchCachedThenLive(); } },
-        ),
+  Widget _buildGlobalFilters(bool isDark) {
+    return Row(children: [
+      Expanded(child: _buildFilterButton(icon: Icons.router_rounded, label: _selectedRouter, onTap: () => _showRouterPicker(isDark), isDark: isDark)),
+      const SizedBox(width: 12),
+      Expanded(child: _buildFilterButton(icon: Icons.calendar_today_rounded, label: _selectedDateRange, onTap: () => _showDatePicker(isDark), isDark: isDark)),
+    ]);
+  }
+
+  Widget _buildFilterButton({required IconData icon, required String label, required VoidCallback onTap, required bool isDark}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))]),
+        child: Row(children: [Icon(icon, size: 16, color: PaceColors.getDimText(isDark)), const SizedBox(width: 10), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: PaceColors.getDimText(isDark))]),
       ),
     );
+  }
+
+  void _showRouterPicker(bool isDark) {
+    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('SELECT STATION NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), const SizedBox(height: 8), Flexible(child: ListView.builder(shrinkWrap: true, itemCount: _routerNames.length, itemBuilder: (context, index) { final r = _routerNames[index]; final isSelected = _selectedRouter == r; return _buildListTile(label: r, icon: Icons.router_outlined, isSelected: isSelected, isDark: isDark, onTap: () { setState(() => _selectedRouter = r); Navigator.pop(context); _fetchCachedThenLive(); }); }))])));
+  }
+
+  void _showDatePicker(bool isDark) {
+    final ranges = ['All Time', 'Today', 'Yesterday', 'This Week', 'This Month'];
+    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('SELECT PERFORMANCE CYCLE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), const SizedBox(height: 8), ...ranges.map((range) { final isSelected = _selectedDateRange == range; return _buildListTile(label: range, icon: Icons.access_time_rounded, isSelected: isSelected, isDark: isDark, onTap: () { setState(() => _selectedDateRange = range); Navigator.pop(context); _fetchCachedThenLive(); }); }).toList()])));
+  }
+
+  Widget _buildListTile({required String label, required IconData icon, required bool isSelected, required bool isDark, required VoidCallback onTap}) {
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2), child: ListTile(onTap: onTap, dense: true, selected: isSelected, selectedTileColor: PaceColors.purple.withOpacity(0.08), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: Icon(icon, size: 18, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)), title: Text(label, style: GoogleFonts.figtree(fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark))), trailing: isSelected ? const Icon(Icons.check_circle_rounded, size: 18, color: PaceColors.purple) : null));
   }
 
   Widget _buildMetricsGrid(bool isDark) {
@@ -167,8 +193,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
                if (trendNum != 0) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: (isUp ? Colors.green : Colors.red).withOpacity(0.1), borderRadius: BorderRadius.circular(6)), child: Text('${isUp ? '+' : ''}$trendNum%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: isUp ? Colors.green : Colors.red))),
              ]),
              const Spacer(),
-             Text(d['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-             Text('KSH ${_format(d['value'])}', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+             Text(d['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+             Text('KSH ${_format(d['value'])}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
           ]),
         );
       },
@@ -201,7 +227,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 })),
                 leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 45, getTitlesWidget: (v, m) {
                    if (v == 0) return const SizedBox();
-                   return Text(v >= 1000 ? '${(v/1000).toStringAsFixed(1)}k' : v.toInt().toString(), style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900));
+                   return Text(v >= 1000 ? '${(v/1000).toStringAsFixed(0)}k' : v.toInt().toString(), style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900));
                 })),
                 topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -290,7 +316,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
       double v = double.tryParse(d['amount'].toString()) ?? 0;
       if (v > max) max = v;
     }
-    if (max == 0) return 1000;
+    if (max <= 0) return 1000;
     return (max / 4).clamp(1.0, double.infinity);
   }
 
