@@ -45,6 +45,7 @@ dependencies:
   local_auth: 2.3.0
   local_auth_android: 1.0.56
   local_auth_darwin: 1.6.1
+  webview_flutter: ^4.13.1
 
 dev_dependencies:
   flutter_test:
