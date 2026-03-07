@@ -44,6 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadSyncMemory();
     _loadRouters();
     _fetchCachedThenLive();
+    // Force sync on init
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshWidgetData());
   }
 
   void _loadSyncMemory() {
@@ -150,16 +152,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshWidgetData() {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
-    // Only update if current active account is the widget account OR if widget account is set to active
-    if (settings.widgetAccount?.subdomain == settings.activeAccount?.subdomain) {
-       if (_widgets != null) {
-         WidgetService.updateWidgetData(
-           accountName: settings.activeAccount?.accountName ?? "PaceWisp",
-           income: _widgets!['todays_earnings']?['value'] ?? "0",
-           entries: _widgets!['active_users']?['value'] ?? "0",
-           isBlurred: settings.isWidgetBlurred,
-         );
-       }
+    final wAcc = settings.widgetAccount;
+    final aAcc = settings.activeAccount;
+    
+    // Auto-update if it's the same account
+    if (wAcc?.subdomain == aAcc?.subdomain && _widgets != null) {
+       final income = _widgets!['todays_earnings']?['value'] ?? "0";
+       final entries = _widgets!['active_users']?['value'] ?? "0";
+       
+       debugPrint("[WIDGET] Refreshing Data: Income=$income, Entries=$entries");
+       
+       WidgetService.updateWidgetData(
+         accountName: aAcc?.accountName ?? "PaceWisp Admin",
+         income: income,
+         entries: entries,
+         isBlurred: settings.isWidgetBlurred,
+       );
     }
   }
 
