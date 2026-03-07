@@ -443,6 +443,19 @@ class _RoutersScreenState extends State<RoutersScreen> {
                 label: isOnline ? 'ACTIVE' : 'INACTIVE', 
                 variant: isOnline ? BadgeVariant.success : BadgeVariant.error
               ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => _showControlModal(router, isDark),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: PaceColors.getBorder(isDark).withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: PaceColors.getBorder(isDark)),
+                  ),
+                  child: Icon(Icons.more_horiz_rounded, size: 16, color: PaceColors.getDimText(isDark)),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -485,19 +498,6 @@ class _RoutersScreenState extends State<RoutersScreen> {
                 ),
               ),
               InkWell(
-                onTap: () => _showControlModal(router, isDark),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: PaceColors.getBorder(isDark).withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.more_horiz_rounded, size: 16, color: PaceColors.getDimText(isDark)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
                 onTap: () => _showBillingModal(router, isDark),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
@@ -509,7 +509,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.edit_note_rounded, size: 14, color: PaceColors.purple),
+                      const Icon(Icons.credit_card_rounded, size: 14, color: PaceColors.purple),
                       const SizedBox(width: 4),
                       Text('BILLING', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 0.5)),
                     ],
