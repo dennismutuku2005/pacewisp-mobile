@@ -150,9 +150,13 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
                 color: PaceColors.purple,
                 child: _filteredLogs.isEmpty
                   ? _buildEmpty(isDark)
-                  : Column(
-                      children: [
-                        _buildTableHeader(isDark),
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: 800,
+                        child: Column(
+                          children: [
+                            _buildTableHeader(isDark),
                         Expanded(
                           child: ListView.separated(
                             controller: _scrollController,
@@ -177,7 +181,8 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
                         ),
                       ],
                     ),
-              ),
+                  ),
+                ),
         ),
         _buildFooter(isDark),
       ],
@@ -291,7 +296,6 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
       ),
       child: Row(
         children: [
-        children: [
           SizedBox(width: 70, child: Text('USER', style: headerStyle)),
           SizedBox(width: 80, child: Text('ACTION', style: headerStyle)),
           const SizedBox(width: 8),
@@ -313,7 +317,6 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
     final String ip = log['ip'] ?? '0.0.0.0';
     final Color statusColor = isFailed ? Colors.red : PaceColors.emerald;
 
-    return InkWell(
     return InkWell(
       onTap: () => _showLogDetailsModal(log, isDark),
       child: Container(
