@@ -108,8 +108,8 @@ class _RoutersScreenState extends State<RoutersScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(true),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('HARDWARE RESTART', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
-        content: Text('Confirm hardware reboot for ${router['router_name']?.toString().replaceAll('_', ' ')}? Active users will be disconnected.', 
+        title: Text('ROUTER RESTART', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
+        content: Text('Confirm router reboot for ${router['router_name']?.toString().replaceAll('_', ' ')}? Active users will be disconnected.', 
           style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getDimText(true))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCEL', style: GoogleFonts.figtree(color: PaceColors.getDimText(true)))),
@@ -155,7 +155,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 24),
             Text('ROUTER CONTROL', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
-            Text('Remote hardware operations & diagnostics', style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+            Text('Remote router operations & diagnostics', style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             
             // Device Info Card
@@ -213,7 +213,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
                 _handleRestart(router);
               },
               icon: const Icon(Icons.power_settings_new_rounded, size: 18),
-              label: Text('RESTART HARDWARE', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              label: Text('RESTART ROUTER', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.withOpacity(0.1),
                 foregroundColor: Colors.red,
