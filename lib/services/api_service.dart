@@ -223,4 +223,7 @@ class ApiService {
 
   Future<Map<String, dynamic>?> getRouterStatus({int limit = 5, bool forceRefresh = false}) async => 
     fetchData(slug: 'widgets', params: {'action': 'router_status', 'limit': limit}, forceRefresh: forceRefresh);
+
+  Future<Map<String, dynamic>?> updateRouter(String id, Map<String, dynamic> data) async => 
+    _requestWithFallback('/routers.php?id=$id', method: 'POST', data: data);
 }
