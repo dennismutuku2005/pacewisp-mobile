@@ -17,6 +17,10 @@ class PlansScreen extends StatefulWidget {
 class _PlansScreenState extends State<PlansScreen> {
   final ApiService _apiService = ApiService();
   
+  // Instant Recall cache keyed by router ID
+  static final Map<String, List<dynamic>> _cache = {};
+  static List<dynamic> _routersCache = [];
+
   List<dynamic> _plans = [];
   List<dynamic> _routers = [];
   bool _isLoading = true;
@@ -29,12 +33,25 @@ class _PlansScreenState extends State<PlansScreen> {
   }
 
   Future<void> _fetchInitialData() async {
-    setState(() => _isLoading = true);
+    // Instant Recall: show cached routers + plans immediately
+    if (_routersCache.isNotEmpty) {
+      _routers = List.from(_routersCache);
+      _selectedRouterId = _routers[0]['id'].toString();
+      if (_cache.containsKey(_selectedRouterId)) {
+        setState(() {
+          _plans = List.from(_cache[_selectedRouterId]!);
+          _isLoading = false;
+        });
+      }
+    }
+
+    // Silent background refresh
     final routersRes = await _apiService.getRouters();
     if (mounted && routersRes != null && routersRes['data'] != null) {
-      _routers = routersRes['data'];
+      _routersCache = routersRes['data'];
+      _routers = List.from(_routersCache);
       if (_routers.isNotEmpty) {
-        _selectedRouterId = _routers[0]['id'].toString();
+        if (_selectedRouterId.isEmpty) _selectedRouterId = _routers[0]['id'].toString();
         await _fetchPlans();
       }
     }
@@ -45,9 +62,9 @@ class _PlansScreenState extends State<PlansScreen> {
     if (_selectedRouterId.isEmpty) return;
     final res = await _apiService.getPlans(_selectedRouterId, forceRefresh: true);
     if (mounted) {
-      setState(() {
-        _plans = res?['data']?['plans'] ?? res?['plans'] ?? [];
-      });
+      final fresh = res?['data']?['plans'] ?? res?['plans'] ?? [];
+      _cache[_selectedRouterId] = fresh;
+      setState(() => _plans = fresh);
     }
   }
 
