@@ -101,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _charts = cached[1]?['data']?['charts']?['revenue_over_time'] ?? cached[1]?['charts']?['revenue_over_time'] ?? cached[1]?['data']?['revenue_over_time'] ?? [];
         _transactions = _extractData(cached[2], 'recent_transactions') ?? [];
         _routerStatus = _extractData(cached[3], 'router_status') ?? [];
+        // Only set loading to false if we actually got something from cache
         if (hasData) _isLoading = false;
       });
     }
@@ -230,9 +231,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMetricsGrid(bool isDark) {
-    if (_isLoading && _widgets == null) return const SkeletonGrid(count: 6);
-    final data = _widgets;
-    if (data == null) return const SizedBox();
+    // SILENT LOADING: If we have widgets (from cache), show them instead of skeletons
+    if (_widgets == null) return const SkeletonGrid(count: 6);
+    final data = _widgets!;
     final metrics = [
       {'label': "TODAY'S EARNINGS", 'value': "KSH ${_format(data['todays_earnings']?['value'])}", 'icon': Icons.account_balance_wallet_rounded, 'color': PaceColors.purple, 'bg': PaceColors.purple.withOpacity(0.08)},
       {'label': "MONTH REVENUE", 'value': "KSH ${_format(data['month_revenue']?['value'])}", 'icon': Icons.credit_card_rounded, 'color': const Color(0xFF3B82F6), 'bg': const Color(0xFF3B82F6).withOpacity(0.08)},
@@ -262,6 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildChartCard(bool isDark) {
+    if (_charts.isEmpty) return const PaceSkeleton(height: 240);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
@@ -286,6 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildLegend(Color color, String label) => Row(children: [Container(width: 5, height: 5, decoration: BoxDecoration(color: color, shape: BoxShape.circle)), const SizedBox(width: 4), Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.getDimText(true), letterSpacing: 1))]);
 
   Widget _buildActivityTable(bool isDark) {
+    if (_transactions.isEmpty && _isLoading) return const SkeletonList(count: 5);
     return Container(
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
       child: Column(children: [
@@ -313,6 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStationTable(bool isDark) {
+    if (_routerStatus.isEmpty && _isLoading) return const SkeletonList(count: 3);
     return Container(
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
       child: Column(children: [
