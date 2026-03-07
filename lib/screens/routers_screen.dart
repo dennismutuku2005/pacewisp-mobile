@@ -44,19 +44,46 @@ class _RoutersScreenState extends State<RoutersScreen> {
   }
 
   Future<void> _pingSingleRouter(int index) async {
-    final router = _routers[index];
+    if (index >= _routers.length) return;
+    final router = Map<String, dynamic>.from(_routers[index]);
     final ip = router['ip_address'];
     final port = router['winbox_port'] ?? 8728;
-    
-    final res = await _apiService.pingRouter(ip, port);
-    if (mounted && res != null && res['status'] == 'success') {
-      setState(() {
-        _routers[index] = {
-          ..._routers[index],
-          'stats': res['data'],
-          'status': (res['data']?['status'] == 'online' || res['data']?['cpu'] != null) ? 'active' : 'inactive',
-        };
-      });
+    if (ip == null) return;
+
+    try {
+      final res = await _apiService.pingRouter(ip, port);
+
+      // Portal pattern: stats = pingRes?.data || pingRes
+      // Try nested 'data' key first, fall back to root response
+      final dynamic rawStats = (res?['data'] != null && res!['data'] is Map)
+          ? res['data']
+          : res;
+
+      final bool isOnline = rawStats?['status'] == 'online' || rawStats?['cpu'] != null;
+      final String newStatus = isOnline ? 'active' : 'inactive';
+
+      if (mounted) {
+        setState(() {
+          if (index < _routers.length) {
+            _routers[index] = {
+              ..._routers[index],
+              'stats': isOnline ? rawStats : null,
+              'status': newStatus,
+            };
+          }
+        });
+
+        // Sync status back to backend if it changed (portal parity)
+        if (router['status'] != newStatus) {
+          _apiService.updateRouter(router['id'].toString(), {'status': newStatus});
+        }
+      }
+    } catch (e) {
+      // On ping failure, mark as inactive
+      if (mounted && index < _routers.length && router['status'] != 'inactive') {
+        setState(() { _routers[index] = {..._routers[index], 'status': 'inactive', 'stats': null}; });
+        _apiService.updateRouter(router['id'].toString(), {'status': 'inactive'});
+      }
     }
   }
 
