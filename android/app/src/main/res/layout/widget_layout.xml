@@ -5,16 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background">
 
-    <!-- Background Image -->
-    <ImageView
-        android:id="@+id/iv_bg"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/sidebar_bg"
-        android:scaleType="centerCrop"
-        android:alpha="0.25" />
-
-    <!-- Solid Overlay for better Contrast -->
+    <!-- Solid Overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -43,7 +34,7 @@
             android:id="@+id/tv_income"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="KSH 0"
+            android:text="KSH ***"
             android:textColor="#FFFFFF"
             android:textSize="26sp"
             android:textStyle="bold"
@@ -53,7 +44,7 @@
             android:id="@+id/tv_entries"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 Entries"
+            android:text="*** Entries"
             android:textColor="#22C55E"
             android:textSize="15sp"
             android:textStyle="bold"
