@@ -34,8 +34,30 @@ class _VouchersScreenState extends State<VouchersScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSyncMemory();
     _fetchInitialData();
     _scrollController.addListener(_onScroll);
+  }
+
+  void _loadSyncMemory() {
+    // 1. Routers
+    final rMem = _apiService.getMemoryCached('routers', params: {'limit': 100});
+    if (rMem != null) _processRouters(rMem);
+
+    // 2. Vouchers
+    String? rName;
+    if (_selectedRouterId != 'all') {
+      final r = _routers.firstWhere((e) => e['id'].toString() == _selectedRouterId, orElse: () => null);
+      rName = r?['router_name'] ?? r?['name'] ?? r?['router'];
+    }
+    
+    final vMem = _apiService.getMemoryCached('vouchers', params: {'search': _search, 'router_name': rName, 'page': 1});
+    if (vMem != null) {
+      final rawData = vMem['data'];
+      _vouchers = (rawData is List) ? rawData : (vMem['vouchers'] ?? []);
+      _total = vMem['pagination']?['total'] ?? vMem['data']?['pagination']?['total'] ?? 0;
+      _isLoading = false;
+    }
   }
 
   void _onScroll() {
@@ -459,6 +481,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     return Container(
       color: PaceColors.getBackground(isDark),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildPortalHeader(isDark),
           _buildControlBar(isDark),
