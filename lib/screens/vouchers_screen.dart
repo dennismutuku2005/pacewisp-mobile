@@ -55,14 +55,14 @@ class _VouchersScreenState extends State<VouchersScreen> {
       if (mounted) {
         final dynamic raw = routersRes?['data'] ?? routersRes?['routers'];
         if (raw is List) {
-          final Set<String> unique = {};
+          final Set<String> uniqueNames = {};
           _routers = [];
           for (var r in raw) {
             final name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
             if (name != null) {
               final lower = name.toLowerCase().trim();
-              if (lower != 'all' && lower != 'all routers' && lower != 'any' && !unique.contains(lower)) {
-                unique.add(lower);
+              if (lower != 'all' && lower != 'all routers' && lower != 'any' && !uniqueNames.contains(lower)) {
+                uniqueNames.add(lower);
                 _routers.add(r);
               }
             }
@@ -128,7 +128,10 @@ class _VouchersScreenState extends State<VouchersScreen> {
     List<dynamic> modalPlans = [];
 
     Future<void> loadModalPlans(String? rName, Function setModalState) async {
-      if (rName == null || rName == 'all') return;
+      if (rName == null || rName == 'all') {
+        setModalState(() { modalPlans = []; selectedPlan = null; isModalLoading = false; });
+        return;
+      }
       
       setModalState(() { isModalLoading = true; selectedPlan = null; });
       debugPrint('[VOUCHER] Loading plans for node: $rName');
@@ -151,9 +154,20 @@ class _VouchersScreenState extends State<VouchersScreen> {
       if (mounted) {
         setModalState(() {
           final raw = plansRes?['data']?['plans'] ?? plansRes?['plans'] ?? plansRes?['data'] ?? [];
-          modalPlans = (raw is List) ? raw : [];
-          debugPrint('[VOUCHER] Loaded ${modalPlans.length} plans');
+          final allPlans = (raw is List) ? raw : [];
           
+          // De-duplicate plans by name
+          final Set<String> uniquePlanNames = {};
+          modalPlans = [];
+          for (var p in allPlans) {
+            final pName = p['name']?.toString();
+            if (pName != null && !uniquePlanNames.contains(pName)) {
+              uniquePlanNames.add(pName);
+              modalPlans.add(p);
+            }
+          }
+
+          debugPrint('[VOUCHER] Loaded ${modalPlans.length} unique plans');
           if (modalPlans.isNotEmpty) {
             selectedPlan = modalPlans[0]['name']?.toString();
           }
@@ -163,7 +177,6 @@ class _VouchersScreenState extends State<VouchersScreen> {
     }
 
     if (selectedRouter != null) {
-      // Small delay to ensure modal state is ready
        Future.delayed(Duration.zero, () {
         loadModalPlans(selectedRouter, (fn) => fn());
       });
@@ -202,7 +215,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                           value: selectedRouter,
                           items: _routers.map((r) {
                             final name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
-                            return DropdownMenuItem(value: name, child: Text(name?.toUpperCase() ?? 'UNKNOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
+                            return DropdownMenuItem<String>(value: name, child: Text(name?.toUpperCase() ?? 'UNKNOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
                           }).toList(),
                           onChanged: (val) {
                             setModalState(() => selectedRouter = val);
@@ -219,7 +232,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                               items: modalPlans.map((p) {
                                 final pName = p['name']?.toString() ?? 'PLAN';
                                 final pPrice = (p['price'] ?? p['amount'] ?? '0').toString();
-                                return DropdownMenuItem(value: pName, child: Text('${pName.toUpperCase()} — KES $pPrice', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
+                                return DropdownMenuItem<String>(value: pName, child: Text('${pName.toUpperCase()} — KES $pPrice', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
                               }).toList(),
                               onChanged: (val) => setModalState(() => selectedPlan = val),
                             ),
@@ -270,7 +283,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
 
   Future<bool> _handleCreate(String routerName, String planName, int count) async {
     final res = await _apiService.createVoucher({'router_name': routerName, 'plan': planName, 'count': count});
-    if (res?['status'] == 'success') {
+    if (res?['status'] == 'success' || res?['status'] == 200) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generation Success'), backgroundColor: Colors.green));
       _fetchVouchers(page: 1, forceRefresh: true);
       return true;
@@ -306,6 +319,12 @@ class _VouchersScreenState extends State<VouchersScreen> {
   Widget _buildModalLabel(String label, bool isDark) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)));
 
   Widget _buildModalDropdown({required bool isDark, required String? value, required List<DropdownMenuItem<String>> items, required Function(String?) onChanged}) {
+    // Critical: Ensure value is actually in the items list, otherwise Flutter throws an assertion error
+    String? effectiveValue;
+    if (value != null && items.any((item) => item.value == value)) {
+      effectiveValue = value;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
@@ -315,11 +334,11 @@ class _VouchersScreenState extends State<VouchersScreen> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: items.any((item) => item.value == value) ? value : null,
+          value: effectiveValue,
           isExpanded: true,
           dropdownColor: PaceColors.getCard(isDark),
           hint: Text('Select...', style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-          items: items,
+          items: items.isEmpty ? null : items, // Handle empty items case
           onChanged: onChanged,
         ),
       ),
