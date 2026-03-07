@@ -226,6 +226,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Entries'),
         ],
       ) : null,
+      ),
     );
   }
 
