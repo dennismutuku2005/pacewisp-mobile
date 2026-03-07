@@ -226,4 +226,10 @@ class ApiService {
 
   Future<Map<String, dynamic>?> updateRouter(String id, Map<String, dynamic> data) async => 
     _requestWithFallback('/routers.php?id=$id', method: 'POST', data: data);
+
+  Future<Map<String, dynamic>?> pingRouter(String ip, dynamic port) async => 
+    _requestWithFallback('/routers.php?action=ping', method: 'POST', data: {'ip': ip, 'port': int.tryParse(port.toString()) ?? 8728});
+
+  Future<Map<String, dynamic>?> restartRouter(String ip, dynamic port) async => 
+    _requestWithFallback('/routers.php?action=restart', method: 'POST', data: {'ip': ip, 'port': int.tryParse(port.toString()) ?? 8728});
 }
