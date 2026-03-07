@@ -12,7 +12,8 @@ import '../components/badge.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onGenerateVoucher;
-  const HomeScreen({super.key, this.onGenerateVoucher});
+  final VoidCallback? onNavigateToRouters;
+  const HomeScreen({super.key, this.onGenerateVoucher, this.onNavigateToRouters});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -215,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
              CustomPaint(
                painter: DashedBorderPainter(color: PaceColors.purple.withOpacity(0.5), strokeWidth: 1.0, radius: 10),
                child: InkWell(
-                 onTap: () {},
+                 onTap: () => widget.onNavigateToRouters?.call(),
                  borderRadius: BorderRadius.circular(10),
                  child: Container(
                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
