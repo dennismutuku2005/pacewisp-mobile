@@ -93,8 +93,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('REVENUE ANALYTICS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-        Text('FINANCIAL PERFORMANCE & GROWTH INSIGHTS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 2)),
+        Text('REVENUE ANALYTICS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+        Text('FINANCIAL PERFORMANCE & GROWTH INSIGHTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
       ],
     );
   }
@@ -160,8 +160,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 ],
               ),
               const Spacer(),
-              Text(data['label'] as String, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-              Text('KSH ${_format(data['value'])}', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+              Text(data['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+              Text('KSH ${_format(data['value'])}', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
             ],
           ),
         );
@@ -181,8 +181,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('INCOME TREND', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 0.5)),
-          Text('DAILY REVENUE FLOW LOGS', style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          Text('INCOME TREND', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
+          Text('DAILY REVENUE FLOW LOGS', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
           const SizedBox(height: 32),
           SizedBox(
             height: 250,
@@ -238,8 +238,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 0.5)),
-                  Text('REVENUE SHARE BY TIER', style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
+                  Text('REVENUE SHARE BY TIER', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                 ],
               ),
               const Icon(Icons.pie_chart_rounded, color: PaceColors.purple, size: 24),
@@ -305,8 +305,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('TICKET VALUE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 0.5)),
-                  Text('AVG REVENUE PER TRANSACTION', style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  Text('TICKET VALUE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
+                  Text('AVG REVENUE PER TRANSACTION', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                 ],
               ),
               const Icon(Icons.leaderboard_rounded, color: PaceColors.sapphire, size: 24),
