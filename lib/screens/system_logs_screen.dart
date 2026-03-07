@@ -183,6 +183,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
                     ),
                   ),
                 ),
+              ),
         ),
         _buildFooter(isDark),
       ],
