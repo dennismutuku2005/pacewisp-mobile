@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:progress_indicators/progress_indicators.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/settings_provider.dart';
