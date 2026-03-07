@@ -64,7 +64,7 @@ class ApiService {
         final url = '$protocol://$host$separator$endpoint';
         
         try {
-          print('DEBUG: Probing URL: $url');
+          print('API: Probing URL: $url');
           final response = await _dio.request(
             url,
             data: data,
@@ -72,6 +72,7 @@ class ApiService {
             options: Options(
               method: method,
               headers: headers,
+              validateStatus: (s) => true,
             ),
           ).timeout(const Duration(seconds: 15));
 
@@ -79,11 +80,14 @@ class ApiService {
             _detectedPath = cleanPath;
             if (response.data is Map) return response.data as Map<String, dynamic>;
             if (response.data is String) return jsonDecode(response.data) as Map<String, dynamic>;
+          } else if (response.statusCode == 401) {
+            debugPrint('API: AUTH ERROR 401 at $url - Token might be invalid');
+            return {'status': 'error', 'message': 'Authentication failed'};
           } else {
-            print('DEBUG: Probe returned status ${response.statusCode} at $url');
+            debugPrint('API: ERROR ${response.statusCode} at $url');
           }
         } catch (e) {
-          print('DEBUG: Probe failed at $url: $e');
+          debugPrint('API: EXCEPTION at $url: $e');
         }
       }
     }
@@ -140,9 +144,14 @@ class ApiService {
   }
 
   // Dashboard Summary (uses dashboard.php)
-  Future<Map<String, dynamic>?> getSummaryWidgets({bool forceRefresh = false}) async => fetchData(slug: 'widgets', params: {'action': 'widgets'}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getSummaryCharts({bool forceRefresh = false}) async => fetchData(slug: 'charts', params: {'action': 'charts'}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getRecentTransactions({int limit = 5, bool forceRefresh = false}) async => fetchData(slug: 'recent_transactions', params: {'action': 'recent_transactions', 'limit': limit}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getSummaryWidgets({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async => 
+    fetchData(slug: 'widgets', params: {'action': 'widgets', 'router': router, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
+    
+  Future<Map<String, dynamic>?> getSummaryCharts({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async => 
+    fetchData(slug: 'charts', params: {'action': 'charts', 'router': router, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
+    
+  Future<Map<String, dynamic>?> getRecentTransactions({String? router, String? startDate, String? endDate, int limit = 5, bool forceRefresh = false}) async => 
+    fetchData(slug: 'recent_transactions', params: {'action': 'recent_transactions', 'limit': limit, 'router': router, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
 
   // Vouchers
   Future<Map<String, dynamic>?> getVouchers({String? search, String? router, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'vouchers', params: {'search': search, 'router_name': router, 'page': page}, forceRefresh: forceRefresh);
@@ -169,5 +178,9 @@ class ApiService {
   Future<Map<String, dynamic>?> getLogs({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'logs', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
   
   // Routers
-  Future<Map<String, dynamic>?> getRouters({bool forceRefresh = false}) async => fetchData(slug: 'routers', params: {'action': 'get_routers'}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getRouters({bool forceRefresh = false}) async => 
+    fetchData(slug: 'widgets', params: {'action': 'get_routers'}, forceRefresh: forceRefresh); // Use dashboard.php for the list
+
+  Future<Map<String, dynamic>?> getRouterStatus({int limit = 5, bool forceRefresh = false}) async => 
+    fetchData(slug: 'widgets', params: {'action': 'router_status', 'limit': limit}, forceRefresh: forceRefresh);
 }
