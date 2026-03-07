@@ -279,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ElevatedButton.icon(
         onPressed: widget.onGenerateVoucher,
         icon: const Icon(Icons.confirmation_num_rounded, size: 24),
-        label: Text('CREATE NEW VOUCHERS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        label: Text('CREATE NEW VOUCHERS', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         style: ElevatedButton.styleFrom(
           backgroundColor: PaceColors.purple,
           foregroundColor: Colors.white,
