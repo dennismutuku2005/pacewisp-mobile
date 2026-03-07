@@ -20,6 +20,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
+  final PageController _chartPageController = PageController();
+  
   Map<String, dynamic>? _widgets;
   List<dynamic> _charts = [];
   List<dynamic> _transactions = [];
@@ -28,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   String _selectedRouter = 'All Routers';
   String _selectedDateRange = 'Today';
+  int _currentChartIndex = 0;
   
   bool _isLoading = true;
   bool _isRevenueBlurred = true;
@@ -83,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final filters = _parseDateRange(_selectedDateRange);
     final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
 
+    // SILENT CACHE LOAD
     final cached = await Future.wait<Map<String, dynamic>?>([
       _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: false),
       _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: false),
@@ -91,15 +95,17 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
 
     if (mounted) {
+      final hasData = cached.any((element) => element != null);
       setState(() {
         _widgets = _extractData(cached[0], 'widgets');
         _charts = cached[1]?['data']?['charts']?['revenue_over_time'] ?? cached[1]?['charts']?['revenue_over_time'] ?? cached[1]?['data']?['revenue_over_time'] ?? [];
         _transactions = _extractData(cached[2], 'recent_transactions') ?? [];
         _routerStatus = _extractData(cached[3], 'router_status') ?? [];
-        if (_widgets != null) _isLoading = false;
+        if (hasData) _isLoading = false;
       });
     }
 
+    // LIVE REFRESH
     final live = await Future.wait<Map<String, dynamic>?>([
       _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
       _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
@@ -172,11 +178,20 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(title, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 13, fontWeight: FontWeight.normal, letterSpacing: -0.2)),
             Text(sub, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
           ]),
-          if (title == 'ACTIVITY & GROWTH') Row(children: [_buildLegend(PaceColors.purple, 'REVENUE'), const SizedBox(width: 12), _buildLegend(const Color(0xFF22C55E), 'ACTIVITY')]),
+          if (title == 'ACTIVITY & GROWTH') ...[
+             const Spacer(),
+             Row(children: [
+               _buildDot(0), const SizedBox(width: 4), _buildDot(1)
+             ]),
+             const SizedBox(width: 12),
+             Row(children: [_buildLegend(PaceColors.purple, 'REVENUE'), const SizedBox(width: 12), _buildLegend(const Color(0xFF22C55E), 'ACTIVITY')]),
+          ]
         ],
       ),
     );
   }
+
+  Widget _buildDot(int index) => Container(width: 6, height: 6, decoration: BoxDecoration(color: _currentChartIndex == index ? PaceColors.purple : PaceColors.getBorder(true), shape: BoxShape.circle));
 
   Widget _buildHeader(bool isDark) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -200,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))]),
-        child: Row(children: [Icon(icon, size: 16, color: PaceColors.getDimText(isDark)), const SizedBox(width: 10), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: PaceColors.getDimText(isDark))]),
+        child: Row(children: [Icon(icon, size: 16, color: PaceColors.getDimText(isDark)), const SizedBox(width: 10), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: PaceColors.getDimText(isDark))]),
       ),
     );
   }
@@ -229,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5), itemCount: metrics.length, itemBuilder: (context, index) {
       final m = metrics[index];
       final bool blurIt = m['label'] == "MONTH REVENUE" && _isRevenueBlurred;
-      return InkWell(onTap: m['label'] == "MONTH REVENUE" ? () => setState(() => _isRevenueBlurred = !_isRevenueBlurred) : null, child: Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: (m['color'] as Color).withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 10))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: m['bg'] as Color, borderRadius: BorderRadius.circular(10)), child: Icon(m['icon'] as IconData, color: m['color'] as Color, size: 16)), const Spacer(), if (blurIt) ClipRect(child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), child: Text("KSH 88,888", style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)))) else Text(m['value'] as String, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)), const SizedBox(height: 2), Text(m['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))])));
+      return InkWell(onTap: m['label'] == "MONTH REVENUE" ? () => setState(() => _isRevenueBlurred = !_isRevenueBlurred) : null, child: Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: (m['color'] as Color).withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 10))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: m['bg'] as Color, borderRadius: BorderRadius.circular(10)), child: Icon(m['icon'] as IconData, color: m['color'] as Color, size: 16)), const Spacer(), if (blurIt) ClipRect(child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), child: Text("KSH 88,888", style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)))) else Text(m['value'] as String, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)), const SizedBox(height: 2), Text(m['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))])));
     });
   }
 
@@ -252,7 +267,17 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 12),
-        SizedBox(height: 240, child: DashboardChart(chartData: _charts)),
+        SizedBox(
+          height: 240, 
+          child: PageView(
+            controller: _chartPageController,
+            onPageChanged: (idx) => setState(() => _currentChartIndex = idx),
+            children: [
+              DashboardChart(chartData: _charts, type: ChartType.line),
+              DashboardChart(chartData: _charts, type: ChartType.bar),
+            ],
+          )
+        ),
         const SizedBox(height: 12),
       ]),
     );
