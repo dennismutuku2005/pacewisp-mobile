@@ -295,7 +295,7 @@ class _PlansScreenState extends State<PlansScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          Text('TIERED SERVICE CONFIGURATION & BANDWIDTH CONTROL', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('PLAN & BANDWIDTH CONTROL', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ],
       ),
     );
