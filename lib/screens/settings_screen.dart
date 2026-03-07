@@ -113,12 +113,31 @@ class SettingsScreen extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: TextButton.icon(
-                onPressed: () {
-                  settings.logout();
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: PaceColors.getBackground(isDark),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      title: Text('SIGN OUT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                      content: Text('Are you sure you want to sign out of this device?', style: TextStyle(fontSize: 13, color: PaceColors.getDimText(isDark))),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCEL', style: TextStyle(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold))),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true), 
+                          child: const Text('SIGN OUT', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold))
+                        ),
+                      ],
+                    ),
                   );
+
+                  if (confirm == true) {
+                    settings.logout();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
                 },
                 icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
                 label: Text('SIGN OUT OF ALL SESSIONS', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 13)),
