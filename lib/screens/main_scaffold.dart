@@ -213,24 +213,39 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
   Widget _buildDrawerHeader(SettingsProvider settings, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top: 60, bottom: 24, left: 24, right: 24),
-      decoration: BoxDecoration(
-        color: PaceColors.purple.withOpacity(0.05),
-        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 0.5)),
+      height: 160,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/sidebar.png'),
+          fit: BoxFit.cover,
+          alignment: Alignment.centerRight,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            settings.accountName?.toUpperCase() ?? 'ADMINISTRATOR',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.only(top: 56, bottom: 20, left: 20, right: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [PaceColors.purple.withOpacity(0.85), PaceColors.purple.withOpacity(0.4)],
+            begin: Alignment.bottomLeft,
+            end: Alignment.topRight,
           ),
-          Text(
-            settings.activeAccount != null ? "${settings.activeAccount!.subdomain}.${settings.activeAccount!.domain}" : '',
-            style: TextStyle(fontSize: 10, color: PaceColors.getSecondaryText(isDark), fontWeight: FontWeight.bold),
-          ),
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              settings.accountName?.toUpperCase() ?? 'ADMINISTRATOR',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              settings.activeAccount != null ? "${settings.activeAccount!.subdomain}.${settings.activeAccount!.domain}" : 'PACE WISP',
+              style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.75), fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            ),
+          ],
+        ),
       ),
     );
   }
