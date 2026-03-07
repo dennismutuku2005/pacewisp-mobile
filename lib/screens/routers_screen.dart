@@ -16,6 +16,10 @@ class RoutersScreen extends StatefulWidget {
 
 class _RoutersScreenState extends State<RoutersScreen> {
   final ApiService _apiService = ApiService();
+ 
+  // Instant Recall memory cache
+  static List<dynamic> _cache = [];
+
   List<dynamic> _routers = [];
   bool _isLoading = true;
 
@@ -26,11 +30,22 @@ class _RoutersScreenState extends State<RoutersScreen> {
   }
 
   Future<void> _fetchRouters() async {
-    setState(() => _isLoading = true);
-    final res = await _apiService.getRouters();
-    if (mounted) {
+    // Instant Recall: show cached data immediately
+    if (_cache.isNotEmpty) {
       setState(() {
-        _routers = res?['data'] ?? [];
+        _routers = List.from(_cache);
+        _isLoading = false;
+      });
+      _startAutoPing();
+    }
+
+    // Silent background refresh
+    final res = await _apiService.getRouters(forceRefresh: true);
+    if (mounted) {
+      final fresh = res?['data'] ?? [];
+      _cache = fresh;
+      setState(() {
+        _routers = List.from(fresh);
         _isLoading = false;
       });
       _startAutoPing();
