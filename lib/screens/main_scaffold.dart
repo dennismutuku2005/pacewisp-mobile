@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../theme/colors.dart';
@@ -35,6 +36,19 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     WidgetsBinding.instance.addObserver(this);
     _checkAuth();
     _checkLock();
+    _setupHomeWidgetListener();
+  }
+
+  void _setupHomeWidgetListener() {
+    HomeWidget.widgetClicked.listen((Uri? uri) => _handleWidgetClick(uri));
+    HomeWidget.initiallyLaunchedFromHomeWidget().then((Uri? uri) => _handleWidgetClick(uri));
+  }
+
+  void _handleWidgetClick(Uri? uri) {
+    if (uri?.host == 'toggle_blur') {
+      final settings = Provider.of<SettingsProvider>(context, listen: false);
+      settings.toggleWidgetBlur();
+    }
   }
 
   @override
