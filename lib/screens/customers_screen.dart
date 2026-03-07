@@ -27,6 +27,22 @@ class _CustomersScreenState extends State<CustomersScreen> {
   int _onlineCount = 0;
   int _monthlyCount = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchStats();
+    _fetchCustomers();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMore && _hasMore) {
+        _fetchMoreCustomers();
+      }
+    }
+  }
+
   Future<void> _fetchStats() async {
     // 1. Silent Cache
     final cached = await _apiService.getSummaryWidgets(forceRefresh: false);
