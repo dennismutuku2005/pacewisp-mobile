@@ -216,13 +216,13 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
             icon: _isBlockLoading 
               ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Icon(_isBlocked ? Icons.lock_open_rounded : Icons.lock_person_rounded, size: 16),
-            label: Text(_isBlocked ? 'UNBLOCK' : 'BLOCK', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold)),
+            label: Text(_isBlocked ? 'UNBLOCK' : 'BLOCK', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: _isBlocked ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
               foregroundColor: _isBlocked ? Colors.green : Colors.red,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: (_isBlocked ? Colors.green : Colors.red).withOpacity(0.2))),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: (_isBlocked ? Colors.green : Colors.red).withOpacity(0.2))),
             ),
           ),
         ],
