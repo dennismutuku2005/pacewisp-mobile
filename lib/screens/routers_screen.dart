@@ -419,27 +419,28 @@ class _RoutersScreenState extends State<RoutersScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          // System Health Ledger
+          // System Health Ledger (Portal Parity)
           Row(
             children: [
-              _buildStat('LOAD', '${(cpuValue * 100).toInt()}%', Icons.speed_rounded, isDark, 
+              _buildStat('SYSTEM LOAD', '${(cpuValue * 100).toInt()}%', Icons.speed_rounded, isDark, 
                 sub: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 6),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: cpuValue,
                         backgroundColor: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
                         valueColor: AlwaysStoppedAnimation<Color>(cpuColor),
-                        minHeight: 2,
+                        minHeight: 4,
                       ),
                     ),
                   ],
                 )
               ),
+              const SizedBox(width: 24),
               _buildStat('UPTIME', router['stats']?['uptime'] ?? router['uptime'] ?? '0D 0H', Icons.timer_outlined, isDark),
-              _buildStat('USERS', router['users']?.toString() ?? '0', Icons.people_outline, isDark),
             ],
           ),
           const SizedBox(height: 16),
@@ -507,8 +508,11 @@ class _RoutersScreenState extends State<RoutersScreen> {
               Text(label, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1)),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(value, style: GoogleFonts.jetBrainsMono(color: PaceColors.getPrimaryText(isDark), fontSize: 13, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          if (value == '0%' || value == '0D 0H')
+            Text('POLLING...', style: GoogleFonts.jetBrainsMono(color: PaceColors.purple.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: -0.5))
+          else
+            Text(value, style: GoogleFonts.jetBrainsMono(color: PaceColors.getPrimaryText(isDark), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
           if (sub != null) sub,
         ],
       ),
