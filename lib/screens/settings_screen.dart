@@ -140,7 +140,7 @@ class SettingsScreen extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
-                label: Text('SIGN OUT OF ALL SESSIONS', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 13)),
+                label: Text('SIGN OUT OF ALL SESSIONS', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 11)),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.redAccent.withOpacity(0.05),
                   shape: RoundedRectangleBorder(
