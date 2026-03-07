@@ -145,7 +145,7 @@ class SettingsProvider with ChangeNotifier {
     _widgetAccountIndex = index;
     if (widgetAccount != null) {
       await HomeWidget.saveWidgetData<String>('account_name', widgetAccount!.accountName);
-      await HomeWidget.updateWidget(name: 'AppWidgetProvider', androidName: 'com.pacewisp.pacewisp.AppWidgetProvider');
+      await HomeWidget.updateWidget(name: 'AppWidgetProvider', androidName: 'AppWidgetProvider');
     }
     await _saveSettings();
     notifyListeners();
@@ -154,7 +154,7 @@ class SettingsProvider with ChangeNotifier {
   void toggleWidgetBlur() async {
     _isWidgetBlurred = !_isWidgetBlurred;
     await HomeWidget.saveWidgetData<bool>('is_blurred', _isWidgetBlurred);
-    await HomeWidget.updateWidget(name: 'AppWidgetProvider', androidName: 'com.pacewisp.pacewisp.AppWidgetProvider');
+    await HomeWidget.updateWidget(name: 'AppWidgetProvider', androidName: 'AppWidgetProvider');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_widget_blurred', _isWidgetBlurred);
     notifyListeners();
