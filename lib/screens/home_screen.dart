@@ -317,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTableHeader(List<String> titles, bool isDark) {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark).withOpacity(0.5), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))), child: Row(children: titles.asMap().entries.map((e) {
       final bool last = e.key == titles.length - 1;
-      return Expanded(flex: e.key == 0 ? 3 : 2, child: Text(e.value, textAlign: last ? TextAlign.right : TextAlign.left, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
+      return Expanded(flex: e.key == 0 ? 3 : 2, child: Text(e.value, textAlign: last ? TextAlign.right : TextAlign.left, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
     }).toList()));
   }
 
