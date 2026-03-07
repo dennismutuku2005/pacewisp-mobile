@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
 import 'cache_service.dart';
 
 class ApiService {
@@ -12,6 +14,14 @@ class ApiService {
 
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
+  
+  // Singleton memory cache to ensure instant UI transitions
+  static final Map<String, dynamic> _memoryCache = {};
+  
+  Map<String, dynamic>? getMemoryCached(String slug, {Map<String, dynamic>? params}) {
+    final key = "${slug}_${params.toString()}";
+    return _memoryCache[key];
+  }
   
   ApiService._internal() {
     _dio.options.followRedirects = true;
@@ -91,10 +101,28 @@ class ApiService {
           }
         } catch (e) {
           debugPrint('API: EXCEPTION at $url: $e');
+          if (e is DioException) {
+            final String msg = (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) 
+              ? 'Connection timed out' 
+              : 'Network connectivity issue detected';
+            _showGlobalError(msg);
+          }
         }
       }
     }
     return null;
+  }
+
+  void _showGlobalError(String message) {
+    scaffoldMessengerKey.currentState?.clearSnackBars();
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   // --- API ROUTING LOGIC ---
@@ -125,6 +153,7 @@ class ApiService {
 
     final data = await _requestWithFallback(phpFile, queryParameters: params);
     if (data != null && (data['status'] == 'success' || data['status'] == 200 || data['status'] == '200')) {
+      _memoryCache[cacheKey] = data; // Update memory cache
       await _cache.save(cacheKey, data, subdomain: subdomainKey);
     }
     return data;
