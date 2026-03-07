@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import 'customer_history_screen.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -27,6 +29,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   int _total = 0;
   int _onlineCount = 0;
   int _monthlyCount = 0;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -45,8 +48,16 @@ class _CustomersScreenState extends State<CustomersScreen> {
     // 2. Customers
     final cMem = _apiService.getMemoryCached('customers', params: {'search': _search, 'page': 1});
     if (cMem != null) {
-      _customers = cMem['data'] ?? [];
-      _total = cMem['pagination']?['total'] ?? 0;
+      final d = cMem['data'];
+      if (d is List) {
+        _customers = d;
+      } else if (d is Map) {
+        _customers = d['customers'] ?? d['data'] ?? [];
+      }
+      
+      final p = cMem['pagination'] ?? cMem['data']?['pagination'];
+      if (p is Map) _total = p['total'] ?? 0;
+      
       _isLoading = false;
     }
   }
@@ -97,31 +108,58 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   void _processCustomers(Map<String, dynamic> res, int page) {
+    if (!mounted) return;
     setState(() {
-      final newItems = res['data']?['customers'] ?? res['data'] ?? [];
-      if (page == 1) {
-        _customers = newItems;
+      List<dynamic> items = [];
+      final d = res['data'];
+      if (d is List) {
+        items = d;
+      } else if (d is Map) {
+        items = d['customers'] ?? d['data'] ?? [];
       } else {
-        _customers.addAll(newItems);
+        items = res['customers'] ?? [];
       }
-      _hasMore = res['pagination']?['has_more'] ?? res['data']?['pagination']?['has_more'] ?? false;
-      _total = res['pagination']?['total'] ?? res['data']?['pagination']?['total'] ?? 0;
+
+      if (page == 1) {
+        _customers = items;
+      } else {
+        _customers.addAll(items);
+      }
+
+      final p = res['pagination'] ?? res['data']?['pagination'];
+      if (p is Map) {
+        _hasMore = p['has_more'] ?? false;
+        _total = p['total'] ?? 0;
+      } else {
+        _hasMore = false;
+      }
+      
       _page = page;
+      _isLoading = false;
+    });
+  }
+
+  void _onSearchChanged(String val) {
+    if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        _search = val;
+        _isLoading = true;
+      });
+      _fetchCustomers(force: true);
     });
   }
 
   Future<void> _fetchMoreCustomers() async {
+    if (_isLoadingMore) return;
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
     final res = await _apiService.getCustomers(search: _search, page: nextPage);
-    if (mounted) {
-      setState(() {
-        final newItems = res?['data']?['customers'] ?? res?['data'] ?? [];
-        _customers.addAll(newItems);
-        _hasMore = res?['pagination']?['has_more'] ?? res?['data']?['pagination']?['has_more'] ?? false;
-        _page = nextPage;
-        _isLoadingMore = false;
-      });
+    if (mounted && res != null) {
+      _processCustomers(res, nextPage);
+      setState(() => _isLoadingMore = false);
+    } else if (mounted) {
+      setState(() => _isLoadingMore = false);
     }
   }
 
@@ -247,7 +285,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)
               ),
               child: TextField(
-                onChanged: (val) { setState(() => _search = val); _fetchCustomers(); },
+                onChanged: _onSearchChanged,
                 style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
                 decoration: InputDecoration(
                   hintText: 'Search MAC or mobile number...', 
@@ -263,7 +301,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-            child: Text('$_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+            child: Text('${_customers.length} OF $_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
           ),
         ],
       ),
@@ -276,7 +314,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     final String mac = (customer['mac']?.toString().toUpperCase() ?? '00:00:00:00:00:00');
     
     return InkWell(
-      onTap: () => _showCustomerDetails(customer, isDark),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: phone))),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Column(
