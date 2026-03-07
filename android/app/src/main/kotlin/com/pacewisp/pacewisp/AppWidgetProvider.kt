@@ -9,11 +9,11 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetProvider
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 
 class AppWidgetProvider : HomeWidgetProvider() {
     companion object {
         const val ACTION_TOGGLE_BLUR = "com.pacewisp.pacewisp.ACTION_TOGGLE_BLUR"
-        // The default filename used by home_widget plugin
         const val PREFS_NAME = "HomeWidgetPreferences"
     }
 
@@ -22,6 +22,15 @@ class AppWidgetProvider : HomeWidgetProvider() {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val current = prefs.getBoolean("is_blurred", true)
             prefs.edit().putBoolean("is_blurred", !current).apply()
+
+            if (!current) { // if transitioning to blurred -> unblurred
+                try {
+                    val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
+                        context, Uri.parse("pacewisp://sync_data")
+                    )
+                    backgroundIntent.send()
+                } catch (e: Exception) {}
+            }
 
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val thisAppWidget = ComponentName(context.packageName, AppWidgetProvider::class.java.name)
@@ -45,7 +54,6 @@ class AppWidgetProvider : HomeWidgetProvider() {
                     setTextViewText(R.id.tv_income, "KSH ***")
                     setTextViewText(R.id.tv_entries, "*** Entries")
                 } else {
-                    // Handled formatting on Flutter side, but ensuring clean display here
                     setTextViewText(R.id.tv_income, if (income.contains("KSH")) income else "KSH $income")
                     setTextViewText(R.id.tv_entries, if (entries.contains("Entries")) entries else "$entries Entries")
                 }
