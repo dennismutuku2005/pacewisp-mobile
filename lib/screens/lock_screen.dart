@@ -158,9 +158,12 @@ class _LockScreenState extends State<LockScreen> {
                             children: [
                               const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 14),
                               const SizedBox(width: 8),
-                              Text(
-                                _error,
-                                style: GoogleFonts.figtree(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                              Flexible(
+                                child: Text(
+                                  _error,
+                                  style: GoogleFonts.figtree(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ],
                           ),
