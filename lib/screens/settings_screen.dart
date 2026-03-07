@@ -36,11 +36,6 @@ class SettingsScreen extends StatelessWidget {
                 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: isActive ? PaceColors.purple : PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(10)),
-                    child: Text(acc.subdomain[0].toUpperCase(), style: TextStyle(color: isActive ? Colors.white : PaceColors.purple, fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
                   title: Text("${acc.subdomain}.${acc.domain}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
                   subtitle: Text(acc.accountName.toUpperCase(), style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                   trailing: isActive ? const Icon(Icons.check_circle_rounded, color: PaceColors.purple, size: 22) : null,
