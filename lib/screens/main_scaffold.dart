@@ -148,8 +148,18 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
       });
     }
 
-    return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
+    return WillPopScope(
+      onWillPop: () async {
+        if (_selectedIndex != 0) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: PaceColors.getBackground(isDark),
       appBar: AppBar(
         centerTitle: false,
         title: Image.asset('assets/images/logoc.png', height: 26, errorBuilder: (_, __, ___) => const Text('PaceWISP')),
