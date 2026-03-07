@@ -156,34 +156,38 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildActiveAccountCard(SettingsProvider settings, bool isDark) {
     final acc = settings.activeAccount;
     return Container(
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: PaceColors.purple,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(color: PaceColors.purple.withOpacity(isDark ? 0.2 : 0.4), blurRadius: 24, offset: const Offset(0, 12))
-        ]
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 64, height: 64,
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white.withOpacity(0.2))),
-            child: Center(child: Text(acc?.subdomain[0].toUpperCase() ?? 'P', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ACTIVE INSTANCE', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                const SizedBox(height: 4),
-                Text(acc?.accountName.toUpperCase() ?? 'GUEST USER', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                Text("${acc?.subdomain}.${acc?.domain}", style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-              ],
-            ),
-          ),
         ],
+        image: const DecorationImage(
+          image: AssetImage('assets/images/sidebar.png'),
+          fit: BoxFit.cover,
+          alignment: Alignment.centerRight,
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            colors: [PaceColors.purple.withOpacity(0.95), PaceColors.purple.withOpacity(0.5)],
+            begin: Alignment.bottomLeft,
+            end: Alignment.topRight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('ACTIVE INSTANCE', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            const SizedBox(height: 12),
+            Text(acc?.accountName.toUpperCase() ?? 'GUEST USER', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+            const SizedBox(height: 4),
+            Text("${acc?.subdomain}.${acc?.domain}", style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          ],
+        ),
       ),
     );
   }
