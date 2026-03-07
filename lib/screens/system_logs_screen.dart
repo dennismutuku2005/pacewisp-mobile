@@ -18,7 +18,6 @@ class SystemLogsScreen extends StatefulWidget {
 class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _searchController = TextEditingController();
 
   // Instant Recall memory cache
   static List<dynamic> _cache = [];
@@ -30,9 +29,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
   bool _isRefreshing = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-  String _search = '';
   String _statusFilter = 'all'; // all | success | failed
-  Timer? _debounce;
 
   late AnimationController _refreshController;
 
@@ -54,10 +51,8 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _refreshController.dispose();
     _scrollController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -78,20 +73,12 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
     });
   }
 
-  void _onSearchChanged(String val) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      setState(() => _search = val);
-      _fetchLogs();
-    });
-  }
-
   Future<void> _fetchLogs({bool silent = false}) async {
     if (!silent) setState(() => _isLoading = _cache.isEmpty);
     setState(() => _isRefreshing = true);
     _refreshController.repeat();
 
-    final res = await _apiService.getLogs(search: _search, page: 1);
+    final res = await _apiService.getLogs(page: 1);
     if (mounted) {
       final fresh = _extractLogs(res);
       _cache = fresh;
@@ -118,7 +105,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
   Future<void> _fetchMoreLogs() async {
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
-    final res = await _apiService.getLogs(search: _search, page: nextPage);
+    final res = await _apiService.getLogs(page: nextPage);
     if (mounted) {
       final newItems = _extractLogs(res);
       setState(() {
@@ -209,30 +196,8 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: PaceColors.getSurface(isDark),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: PaceColors.getBorder(isDark)),
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
-                decoration: InputDecoration(
-                  hintText: 'Search logs...',
-                  hintStyle: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 11),
-                  prefixIcon: Icon(Icons.search_rounded, color: PaceColors.purple.withOpacity(0.5), size: 18),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
           // Status filter pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4),
