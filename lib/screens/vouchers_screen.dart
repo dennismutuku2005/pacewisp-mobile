@@ -29,7 +29,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   String _search = '';
-  String _selectedRouterId = 'all'; // Store ID instead of Name for better sync
+  String _selectedRouterId = 'all';
 
   @override
   void initState() {
@@ -53,19 +53,30 @@ class _VouchersScreenState extends State<VouchersScreen> {
     try {
       final routersRes = await _apiService.getRouters(forceRefresh: true);
       if (mounted) {
+        // Handle routers.php response correctly (Maps list from 'data' field)
         final dynamic raw = routersRes?['data'] ?? routersRes?['routers'];
         if (raw is List) {
           final Set<String> uniqueIds = {};
           _routers = [];
           for (var r in raw) {
-            final id = (r is Map) ? r['id']?.toString() : null;
+            String? id;
+            if (r is Map) {
+              id = (r['id'] ?? r['router_id'] ?? r['router_name'] ?? r['name'])?.toString();
+            } else {
+              id = r.toString();
+            }
+
             if (id != null && !uniqueIds.contains(id)) {
               uniqueIds.add(id);
-              _routers.add(r);
+              if (r is! Map) {
+                _routers.add({'id': r, 'router_name': r, 'name': r});
+              } else {
+                _routers.add(r);
+              }
             }
           }
         }
-        debugPrint('[VOUCHERS] Loaded ${_routers.length} nodes');
+        debugPrint('[VOUCHERS] Loaded ${_routers.length} nodes metadata');
       }
     } catch (e) {
       debugPrint('[VOUCHERS] Error loading nodes: $e');
@@ -86,11 +97,10 @@ class _VouchersScreenState extends State<VouchersScreen> {
       if (mounted) setState(() => _isLoadingMore = true);
     }
 
-    // Get current router name for legacy compatibility if needed
     String? rName;
     if (_selectedRouterId != 'all') {
       final r = _routers.firstWhere((element) => element['id'].toString() == _selectedRouterId, orElse: () => null);
-      rName = r?['router_name'] ?? r?['name'] ?? r?['router'];
+      rName = r?['router_name'] ?? r?['name'] ?? r?['router'] ?? _selectedRouterId;
     }
 
     final res = await _apiService.getVouchers(
@@ -132,11 +142,13 @@ class _VouchersScreenState extends State<VouchersScreen> {
     bool isModalLoading = false;
     List<dynamic> modalPlans = [];
 
-    // Helper to resolve name from ID
     void resolveName() {
       if (currentRouterId != null) {
         final r = _routers.firstWhere((element) => element['id'].toString() == currentRouterId, orElse: () => null);
         currentRouterName = r?['router_name'] ?? r?['name'] ?? r?['router'];
+        debugPrint('[VOUCHERS] Resolved Name: $currentRouterName for ID: $currentRouterId');
+      } else {
+        currentRouterName = null;
       }
     }
     resolveName();
@@ -148,7 +160,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
       }
       
       setModalState(() { isModalLoading = true; selectedPlan = null; });
-      debugPrint('[VOUCHERS] Fetching plans for router_id: $rId');
+      debugPrint('[VOUCHERS] Requesting plans for Router ID: $rId');
 
       final plansRes = await _apiService.getPlans(rId);
       if (mounted) {
@@ -170,8 +182,10 @@ class _VouchersScreenState extends State<VouchersScreen> {
 
           if (modalPlans.isNotEmpty) {
             selectedPlan = modalPlans[0]['name']?.toString();
+            debugPrint('[VOUCHERS] Auto-selected plan: $selectedPlan');
           } else {
             selectedPlan = null;
+            debugPrint('[VOUCHERS] No plans found in response: $plansRes');
           }
           isModalLoading = false;
         });
@@ -195,15 +209,16 @@ class _VouchersScreenState extends State<VouchersScreen> {
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
             decoration: BoxDecoration(
               color: PaceColors.getBackground(isDark),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
               border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
+              boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, spreadRadius: 0)],
             ),
             child: Column(
               children: [
                 const SizedBox(height: 12),
                 Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark).withOpacity(0.5), borderRadius: BorderRadius.circular(2))),
                 const SizedBox(height: 20),
-                Text('GENERATE MULTI-ACCESS VOUCHERS', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
+                Text('GENERATE MULTI-ACCESS VOUCHERS', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 2)),
                 const SizedBox(height: 24),
                 Expanded(
                   child: SingleChildScrollView(
@@ -217,41 +232,61 @@ class _VouchersScreenState extends State<VouchersScreen> {
                           value: currentRouterId,
                           items: _routers.map((r) {
                             final name = (r['router_name'] ?? r['name'] ?? r['router'])?.toString();
-                            return DropdownMenuItem<String>(value: r['id'].toString(), child: Text(name?.toUpperCase() ?? 'UNKNOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
+                            return DropdownMenuItem<String>(value: r['id'].toString(), child: Text(name?.toUpperCase() ?? 'STATION', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
                           }).toList(),
                           onChanged: (val) {
-                            setModalState(() => currentRouterId = val);
-                            resolveName();
+                            setModalState(() {
+                               currentRouterId = val;
+                               resolveName();
+                            });
                             loadModalPlans(val, setModalState);
                           },
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         _buildModalLabel('Select Access Plan', isDark),
                         isModalLoading 
                           ? const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: PaceSkeleton(height: 48))
-                          : _buildModalDropdown(
-                              isDark: isDark,
-                              value: selectedPlan,
-                              items: modalPlans.map((p) {
-                                final pName = p['name']?.toString() ?? 'PLAN';
-                                final pPrice = (p['price'] ?? p['amount'] ?? '0').toString();
-                                return DropdownMenuItem<String>(value: pName, child: Text('${pName.toUpperCase()} — KES $pPrice', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
-                              }).toList(),
-                              onChanged: (val) => setModalState(() => selectedPlan = val),
-                            ),
-                        const SizedBox(height: 24),
+                          : (modalPlans.isEmpty && currentRouterId != null)
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.withOpacity(0.1))),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.error_outline_rounded, size: 16, color: Colors.red),
+                                    const SizedBox(width: 12),
+                                    Text('No access plans configured for this node.', style: GoogleFonts.figtree(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              )
+                            : _buildModalDropdown(
+                                isDark: isDark,
+                                value: selectedPlan,
+                                items: modalPlans.map((p) {
+                                  final pName = p['name']?.toString() ?? 'PLAN';
+                                  final pPrice = (p['price'] ?? p['amount'] ?? '0').toString();
+                                  return DropdownMenuItem<String>(value: pName, child: Text('${pName.toUpperCase()} — KES $pPrice', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
+                                }).toList(),
+                                onChanged: (val) => setModalState(() => selectedPlan = val),
+                              ),
+                        const SizedBox(height: 28),
                         _buildModalLabel('Bulk Quantity', isDark),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: PaceColors.getSurface(isDark), 
-                            borderRadius: BorderRadius.circular(12), 
+                            borderRadius: BorderRadius.circular(14), 
                             border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)
                           ),
                           child: Row(
                             children: [
                               Expanded(
-                                child: Text('Count: ${quantity.toString().padLeft(2, '0')}', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('GENERATION COUNT', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)),
+                                    Text(quantity.toString().padLeft(2, '0'), style: GoogleFonts.jetBrainsMono(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                                  ],
+                                ),
                               ),
                               _buildSpinAction(Icons.remove_rounded, () => setModalState(() { if (quantity > 1) quantity--; }), isDark),
                               const SizedBox(width: 8),
@@ -259,8 +294,18 @@ class _VouchersScreenState extends State<VouchersScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text('Generate up to 50 unique vouchers at once.', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded, size: 14, color: PaceColors.purple),
+                              const SizedBox(width: 12),
+                              Expanded(child: Text('Voucher codes will be automatically synced with the selected station node.', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.purple, fontWeight: FontWeight.bold))),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -291,14 +336,14 @@ class _VouchersScreenState extends State<VouchersScreen> {
                               backgroundColor: PaceColors.purple, 
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
                             child: isModalLoading 
                               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.add_rounded, size: 18),
+                                    const Icon(Icons.auto_awesome_rounded, size: 18),
                                     const SizedBox(width: 8),
                                     Text('GENERATE VOUCHERS', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, letterSpacing: 0.5, fontSize: 11)),
                                   ],
@@ -352,7 +397,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     }
   }
 
-  Widget _buildModalLabel(String label, bool isDark) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
+  Widget _buildModalLabel(String label, bool isDark) => Padding(padding: const EdgeInsets.only(left: 4, bottom: 10), child: Text(label.toUpperCase(), style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)));
 
   Widget _buildModalDropdown({required bool isDark, required String? value, required List<DropdownMenuItem<String>> items, required Function(String?) onChanged}) {
     String? effectiveValue;
@@ -361,10 +406,10 @@ class _VouchersScreenState extends State<VouchersScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: PaceColors.getSurface(isDark), 
-        borderRadius: BorderRadius.circular(12), 
+        borderRadius: BorderRadius.circular(14), 
         border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)
       ),
       child: DropdownButtonHideUnderline(
@@ -372,7 +417,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
           value: effectiveValue,
           isExpanded: true,
           dropdownColor: PaceColors.getCard(isDark),
-          hint: Text('Select...', style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+          hint: Text('Select Option...', style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
           items: items.isEmpty ? null : items,
           onChanged: onChanged,
         ),
@@ -382,11 +427,11 @@ class _VouchersScreenState extends State<VouchersScreen> {
 
   Widget _buildSpinAction(IconData icon, VoidCallback onTap, bool isDark) => InkWell(
     onTap: onTap, 
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(10),
     child: Container(
-      padding: const EdgeInsets.all(8), 
-      decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(8)), 
-      child: Icon(icon, color: PaceColors.purple, size: 20)
+      padding: const EdgeInsets.all(10), 
+      decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(10)), 
+      child: Icon(icon, color: PaceColors.purple, size: 18)
     )
   );
 
@@ -443,7 +488,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               Text('Prepaid Vouchers', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
               Row(
                 children: [
-                   Text('SELECTED NODE: ', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
+                   Text('NODE: ', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
                   Text(_selectedRouterId == 'all' ? 'ALL STATIONS' : (_routers.firstWhere((e) => e['id'].toString() == _selectedRouterId, orElse: () => {'router_name': 'NODE'})['router_name']?.toString().toUpperCase() ?? 'NODE'), style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 9, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),
                   Text('TOTAL: ', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
