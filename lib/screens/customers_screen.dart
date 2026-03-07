@@ -27,44 +27,55 @@ class _CustomersScreenState extends State<CustomersScreen> {
   int _onlineCount = 0;
   int _monthlyCount = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchStats();
-    _fetchCustomers();
-    _scrollController.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    if (_scrollController.offset >= _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMore) {
-        _fetchMoreCustomers();
-      }
-    }
-  }
-
   Future<void> _fetchStats() async {
-    final widgets = await _apiService.getSummaryWidgets();
-    if (mounted) {
-      setState(() {
-        _onlineCount = int.tryParse(widgets?['data']?['widgets']?['online_customers']?['value']?.toString() ?? '0') ?? 0;
-        _monthlyCount = int.tryParse(widgets?['data']?['widgets']?['customers_month']?['value']?.toString() ?? '0') ?? 0;
-      });
-    }
+    // 1. Silent Cache
+    final cached = await _apiService.getSummaryWidgets(forceRefresh: false);
+    if (mounted && cached != null) _processStats(cached);
+    
+    // 2. Live Refresh
+    final live = await _apiService.getSummaryWidgets(forceRefresh: true);
+    if (mounted && live != null) _processStats(live);
+  }
+
+  void _processStats(Map<String, dynamic> widgets) {
+    setState(() {
+      _onlineCount = int.tryParse(widgets['data']?['widgets']?['online_customers']?['value']?.toString() ?? '0') ?? 0;
+      _monthlyCount = int.tryParse(widgets['data']?['widgets']?['customers_month']?['value']?.toString() ?? '0') ?? 0;
+    });
   }
 
   Future<void> _fetchCustomers({bool force = false}) async {
-    if (!force) setState(() => _isLoading = true);
-    final res = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: force);
-    if (mounted) {
-      setState(() {
-        _customers = res?['data']?['customers'] ?? res?['data'] ?? [];
-        _hasMore = res?['pagination']?['has_more'] ?? res?['data']?['pagination']?['has_more'] ?? false;
-        _total = res?['pagination']?['total'] ?? res?['data']?['pagination']?['total'] ?? 0;
-        _page = 1;
+    if (!force) {
+      // 1. SILENT CACHE LOAD
+      final cached = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: false);
+      if (mounted && cached != null) {
+        _processCustomers(cached, 1);
         _isLoading = false;
-      });
+      } else {
+        setState(() => _isLoading = true);
+      }
     }
+
+    // 2. LIVE REFRESH
+    final live = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: true);
+    if (mounted && live != null) {
+      _processCustomers(live, 1);
+      _isLoading = false;
+    }
+  }
+
+  void _processCustomers(Map<String, dynamic> res, int page) {
+    setState(() {
+      final newItems = res['data']?['customers'] ?? res['data'] ?? [];
+      if (page == 1) {
+        _customers = newItems;
+      } else {
+        _customers.addAll(newItems);
+      }
+      _hasMore = res['pagination']?['has_more'] ?? res['data']?['pagination']?['has_more'] ?? false;
+      _total = res['pagination']?['total'] ?? res['data']?['pagination']?['total'] ?? 0;
+      _page = page;
+    });
   }
 
   Future<void> _fetchMoreCustomers() async {
