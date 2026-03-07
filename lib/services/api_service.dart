@@ -141,6 +141,7 @@ class ApiService {
     else if (slug == 'income') phpFile = '/income.php';
     else if (slug == 'entries') phpFile = '/entries.php';
     else if (slug == 'customers') phpFile = '/customers.php';
+    else if (slug == 'customer_history') phpFile = '/customer_history.php';
     else if (slug == 'plans') phpFile = '/hotspot_plans.php';
     else if (slug == 'logs') phpFile = '/logs.php';
     else if (slug == 'routers') phpFile = '/routers.php';
