@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../theme/colors.dart';
@@ -40,10 +39,10 @@ class SettingsScreen extends StatelessWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(color: isActive ? PaceColors.purple : PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(10)),
-                    child: Text(acc.subdomain[0].toUpperCase(), style: GoogleFonts.figtree(color: isActive ? Colors.white : PaceColors.purple, fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: Text(acc.subdomain[0].toUpperCase(), style: TextStyle(color: isActive ? Colors.white : PaceColors.purple, fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-                  title: Text("${acc.subdomain}.${acc.domain}", style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
-                  subtitle: Text(acc.accountName.toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  title: Text("${acc.subdomain}.${acc.domain}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+                  subtitle: Text(acc.accountName.toUpperCase(), style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                   trailing: isActive ? const Icon(Icons.check_circle_rounded, color: PaceColors.purple, size: 22) : null,
                   onTap: () => settings.switchAccount(index),
                 );
@@ -55,7 +54,7 @@ class SettingsScreen extends StatelessWidget {
                   decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.add_link_rounded, color: PaceColors.purple, size: 20),
                 ),
-                title: Text('ADD NEW INSTANCE', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+                title: Text('ADD NEW INSTANCE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
                 },
@@ -126,7 +125,7 @@ class SettingsScreen extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
-                label: Text('SIGN OUT OF ALL SESSIONS', style: GoogleFonts.figtree(color: Colors.redAccent, fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 13)),
+                label: Text('SIGN OUT OF ALL SESSIONS', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 13)),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.redAccent.withOpacity(0.05),
                   shape: RoundedRectangleBorder(
@@ -147,9 +146,9 @@ class SettingsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PREFERENCES', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+        Text('PREFERENCES', style: TextStyle(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         const SizedBox(height: 4),
-        Text('MANAGE CORE ACCOUNTS & SYSTEM BEHAVIOR', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 2)),
+        Text('MANAGE CORE ACCOUNTS & SYSTEM BEHAVIOR', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
       ],
     );
   }
@@ -170,17 +169,17 @@ class SettingsScreen extends StatelessWidget {
           Container(
             width: 64, height: 64,
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white.withOpacity(0.2))),
-            child: Center(child: Text(acc?.subdomain[0].toUpperCase() ?? 'P', style: GoogleFonts.figtree(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900))),
+            child: Center(child: Text(acc?.subdomain[0].toUpperCase() ?? 'P', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
           ),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('ACTIVE INSTANCE', style: GoogleFonts.figtree(color: Colors.white.withOpacity(0.6), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                Text('ACTIVE INSTANCE', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
                 const SizedBox(height: 4),
-                Text(acc?.accountName.toUpperCase() ?? 'GUEST USER', style: GoogleFonts.figtree(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                Text("${acc?.subdomain}.${acc?.domain}", style: GoogleFonts.jetBrainsMono(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                Text(acc?.accountName.toUpperCase() ?? 'GUEST USER', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                Text("${acc?.subdomain}.${acc?.domain}", style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
               ],
             ),
           ),
@@ -192,7 +191,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildSectionTitle(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 12),
-      child: Text(title, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2)),
+      child: Text(title, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
     );
   }
 
@@ -215,8 +214,8 @@ class SettingsScreen extends StatelessWidget {
         decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: iconColor, size: 20),
       ),
-      title: Text(title, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
-      subtitle: Text(subtitle, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1)),
+      title: Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1)),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
@@ -237,8 +236,9 @@ class SettingsScreen extends StatelessWidget {
         decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: c, size: 20),
       ),
-      title: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-      trailing: Text(value, style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w900, color: valueColor ?? PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+      title: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+      trailing: Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
     );
   }
 }
+
