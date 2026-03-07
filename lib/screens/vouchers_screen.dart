@@ -29,7 +29,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   String _search = '';
-  String _selectedRouterName = 'all';
+  String _selectedRouterId = 'all'; // Store ID instead of Name for better sync
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
   }
 
   Future<void> _fetchInitialData() async {
-    debugPrint('[VOUCHER] Initializing screen...');
+    debugPrint('[VOUCHERS] Initializing...');
     if (mounted) setState(() => _isLoading = true);
     
     try {
@@ -55,23 +55,20 @@ class _VouchersScreenState extends State<VouchersScreen> {
       if (mounted) {
         final dynamic raw = routersRes?['data'] ?? routersRes?['routers'];
         if (raw is List) {
-          final Set<String> uniqueNames = {};
+          final Set<String> uniqueIds = {};
           _routers = [];
           for (var r in raw) {
-            final name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
-            if (name != null) {
-              final lower = name.toLowerCase().trim();
-              if (lower != 'all' && lower != 'all routers' && lower != 'any' && !uniqueNames.contains(lower)) {
-                uniqueNames.add(lower);
-                _routers.add(r);
-              }
+            final id = (r is Map) ? r['id']?.toString() : null;
+            if (id != null && !uniqueIds.contains(id)) {
+              uniqueIds.add(id);
+              _routers.add(r);
             }
           }
         }
-        debugPrint('[VOUCHER] Fetched ${_routers.length} nodes');
+        debugPrint('[VOUCHERS] Loaded ${_routers.length} nodes');
       }
     } catch (e) {
-      debugPrint('[VOUCHER] Error loading routers: $e');
+      debugPrint('[VOUCHERS] Error loading nodes: $e');
     }
 
     await _fetchVouchers(page: 1, forceRefresh: true);
@@ -89,10 +86,17 @@ class _VouchersScreenState extends State<VouchersScreen> {
       if (mounted) setState(() => _isLoadingMore = true);
     }
 
+    // Get current router name for legacy compatibility if needed
+    String? rName;
+    if (_selectedRouterId != 'all') {
+      final r = _routers.firstWhere((element) => element['id'].toString() == _selectedRouterId, orElse: () => null);
+      rName = r?['router_name'] ?? r?['name'] ?? r?['router'];
+    }
+
     final res = await _apiService.getVouchers(
       search: _search, 
       page: page, 
-      router: _selectedRouterName == 'all' ? null : _selectedRouterName, 
+      router: rName, 
       forceRefresh: forceRefresh
     );
 
@@ -121,47 +125,37 @@ class _VouchersScreenState extends State<VouchersScreen> {
   }
 
   void _showCreateModal(bool isDark) async {
-    String? selectedRouter = _selectedRouterName == 'all' ? null : _selectedRouterName;
+    String? currentRouterId = _selectedRouterId == 'all' ? null : _selectedRouterId;
+    String? currentRouterName;
     String? selectedPlan;
     int quantity = 1;
     bool isModalLoading = false;
     List<dynamic> modalPlans = [];
 
-    Future<void> loadModalPlans(String? rName, Function setModalState) async {
-      if (rName == null || rName == 'all') {
+    // Helper to resolve name from ID
+    void resolveName() {
+      if (currentRouterId != null) {
+        final r = _routers.firstWhere((element) => element['id'].toString() == currentRouterId, orElse: () => null);
+        currentRouterName = r?['router_name'] ?? r?['name'] ?? r?['router'];
+      }
+    }
+    resolveName();
+
+    Future<void> loadModalPlans(String? rId, Function setModalState) async {
+      if (rId == null || rId == 'all') {
         setModalState(() { modalPlans = []; selectedPlan = null; isModalLoading = false; });
         return;
       }
       
       setModalState(() { isModalLoading = true; selectedPlan = null; });
-      debugPrint('[VOUCHER] Loading plans for node: $rName');
-      
-      String? routerId;
-      for (var r in _routers) {
-        final name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
-        if (name == rName) {
-          routerId = (r is Map) ? (r['id'] ?? r['router_id'])?.toString() : r.toString();
-          break;
-        }
-      }
-      
-      if (routerId == null) {
-        debugPrint('[VOUCHER] Error: Could not resolve ID for $rName');
-        setModalState(() => isModalLoading = false);
-        return;
-      }
+      debugPrint('[VOUCHERS] Fetching plans for router_id: $rId');
 
-      final plansRes = await _apiService.getPlans(routerId);
-      debugPrint('[VOUCHER] RAW PLANS JSON: $plansRes');
-
+      final plansRes = await _apiService.getPlans(rId);
       if (mounted) {
         setModalState(() {
-          // Check various nesting levels common in your API
-          // Web dashboard uses plansRes.plans
           final dynamic raw = plansRes?['plans'] ?? plansRes?['data']?['plans'] ?? plansRes?['data'] ?? [];
           final allPlans = (raw is List) ? raw : [];
           
-          // De-duplicate plans by name and filter nulls
           final Set<String> uniquePlanNames = {};
           modalPlans = [];
           for (var p in allPlans) {
@@ -170,27 +164,23 @@ class _VouchersScreenState extends State<VouchersScreen> {
               if (pName != null && pName.isNotEmpty && !uniquePlanNames.contains(pName)) {
                 uniquePlanNames.add(pName);
                 modalPlans.add(p);
-                debugPrint('[VOUCHER] Added Plan: $pName (Price: ${p['price'] ?? p['amount']})');
               }
             }
           }
 
-          debugPrint('[VOUCHER] Total Unique Plans Extracted: ${modalPlans.length}');
           if (modalPlans.isNotEmpty) {
             selectedPlan = modalPlans[0]['name']?.toString();
-            debugPrint('[VOUCHER] Auto-selected: $selectedPlan');
           } else {
             selectedPlan = null;
-            debugPrint('[VOUCHER] No plans found for node $rName');
           }
           isModalLoading = false;
         });
       }
     }
 
-    if (selectedRouter != null) {
+    if (currentRouterId != null) {
        Future.delayed(Duration.zero, () {
-        loadModalPlans(selectedRouter, (fn) => fn());
+        loadModalPlans(currentRouterId, (fn) => fn());
       });
     }
 
@@ -213,7 +203,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                 const SizedBox(height: 12),
                 Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark).withOpacity(0.5), borderRadius: BorderRadius.circular(2))),
                 const SizedBox(height: 20),
-                Text('NEW VOUCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
+                Text('GENERATE MULTI-ACCESS VOUCHERS', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
                 const SizedBox(height: 24),
                 Expanded(
                   child: SingleChildScrollView(
@@ -221,21 +211,22 @@ class _VouchersScreenState extends State<VouchersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildModalLabel('STATION NODE', isDark),
+                        _buildModalLabel('Select Router Node', isDark),
                         _buildModalDropdown(
                           isDark: isDark,
-                          value: selectedRouter,
+                          value: currentRouterId,
                           items: _routers.map((r) {
-                            final name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
-                            return DropdownMenuItem<String>(value: name, child: Text(name?.toUpperCase() ?? 'UNKNOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
+                            final name = (r['router_name'] ?? r['name'] ?? r['router'])?.toString();
+                            return DropdownMenuItem<String>(value: r['id'].toString(), child: Text(name?.toUpperCase() ?? 'UNKNOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
                           }).toList(),
                           onChanged: (val) {
-                            setModalState(() => selectedRouter = val);
+                            setModalState(() => currentRouterId = val);
+                            resolveName();
                             loadModalPlans(val, setModalState);
                           },
                         ),
                         const SizedBox(height: 20),
-                        _buildModalLabel('ACCESS PLAN', isDark),
+                        _buildModalLabel('Select Access Plan', isDark),
                         isModalLoading 
                           ? const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: PaceSkeleton(height: 48))
                           : _buildModalDropdown(
@@ -249,40 +240,73 @@ class _VouchersScreenState extends State<VouchersScreen> {
                               onChanged: (val) => setModalState(() => selectedPlan = val),
                             ),
                         const SizedBox(height: 24),
-                        _buildModalLabel('QUANTITY', isDark),
-                        Row(
-                          children: [
-                            _buildSpinButton(Icons.remove, () => setModalState(() { if (quantity > 1) quantity--; }), isDark),
-                            Expanded(child: Center(child: Text(quantity.toString().padLeft(2, '0'), style: GoogleFonts.jetBrainsMono(fontSize: 24, fontWeight: FontWeight.bold, color: PaceColors.purple)))),
-                            _buildSpinButton(Icons.add, () => setModalState(() { if (quantity < 50) quantity++; }), isDark),
-                          ],
+                        _buildModalLabel('Bulk Quantity', isDark),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: PaceColors.getSurface(isDark), 
+                            borderRadius: BorderRadius.circular(12), 
+                            border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text('Count: ${quantity.toString().padLeft(2, '0')}', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                              ),
+                              _buildSpinAction(Icons.remove_rounded, () => setModalState(() { if (quantity > 1) quantity--; }), isDark),
+                              const SizedBox(width: 8),
+                              _buildSpinAction(Icons.add_rounded, () => setModalState(() { if (quantity < 50) quantity++; }), isDark),
+                            ],
+                          ),
                         ),
+                        const SizedBox(height: 8),
+                        Text('Generate up to 50 unique vouchers at once.', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: (selectedRouter == null || selectedPlan == null || isModalLoading) ? null : () async {
-                        setModalState(() => isModalLoading = true);
-                        final success = await _handleCreate(selectedRouter!, selectedPlan!, quantity);
-                        if (success && mounted) Navigator.pop(context);
-                        else if (mounted) setModalState(() => isModalLoading = false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: PaceColors.purple, 
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('CANCEL', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                        ),
                       ),
-                      child: isModalLoading 
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text('GENERATE VOUCHERS', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13)),
-                    ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: (currentRouterName == null || selectedPlan == null || isModalLoading) ? null : () async {
+                              setModalState(() => isModalLoading = true);
+                              final success = await _handleCreate(currentRouterName!, selectedPlan!, quantity);
+                              if (success && mounted) Navigator.pop(context);
+                              else if (mounted) setModalState(() => isModalLoading = false);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: PaceColors.purple, 
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: isModalLoading 
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.add_rounded, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text('GENERATE VOUCHERS', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, letterSpacing: 0.5, fontSize: 11)),
+                                  ],
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -295,8 +319,8 @@ class _VouchersScreenState extends State<VouchersScreen> {
 
   Future<bool> _handleCreate(String routerName, String planName, int count) async {
     final res = await _apiService.createVoucher({'router_name': routerName, 'plan': planName, 'count': count});
-    if (res?['status'] == 'success' || res?['status'] == 200) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generation Success'), backgroundColor: Colors.green));
+    if (res?['status'] == 'success') {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vouchers generated successfully!'), backgroundColor: Colors.green));
       _fetchVouchers(page: 1, forceRefresh: true);
       return true;
     } else {
@@ -310,8 +334,8 @@ class _VouchersScreenState extends State<VouchersScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getCard(Provider.of<SettingsProvider>(context, listen: false).isDarkMode),
-        title: Text('Cleanup Assets', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: Text('Remove ${ids.length} selected voucher(s)?', style: GoogleFonts.figtree(fontSize: 13)),
+        title: Text('Delete Vouchers', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, fontSize: 15)),
+        content: Text('This will permanently remove ${ids.length} voucher(s). Confirm?', style: GoogleFonts.figtree(fontSize: 13)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCEL', style: GoogleFonts.figtree(color: PaceColors.getDimText(true), fontSize: 12))),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('DELETE', style: GoogleFonts.figtree(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12))),
@@ -328,10 +352,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
     }
   }
 
-  Widget _buildModalLabel(String label, bool isDark) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)));
+  Widget _buildModalLabel(String label, bool isDark) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
 
   Widget _buildModalDropdown({required bool isDark, required String? value, required List<DropdownMenuItem<String>> items, required Function(String?) onChanged}) {
-    // Critical: Ensure value is actually in the items list, otherwise Flutter throws an assertion error
     String? effectiveValue;
     if (value != null && items.any((item) => item.value == value)) {
       effectiveValue = value;
@@ -350,20 +373,20 @@ class _VouchersScreenState extends State<VouchersScreen> {
           isExpanded: true,
           dropdownColor: PaceColors.getCard(isDark),
           hint: Text('Select...', style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-          items: items.isEmpty ? null : items, // Handle empty items case
+          items: items.isEmpty ? null : items,
           onChanged: onChanged,
         ),
       ),
     );
   }
 
-  Widget _buildSpinButton(IconData icon, VoidCallback onTap, bool isDark) => InkWell(
+  Widget _buildSpinAction(IconData icon, VoidCallback onTap, bool isDark) => InkWell(
     onTap: onTap, 
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(8),
     child: Container(
-      padding: const EdgeInsets.all(12), 
-      decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(12)), 
-      child: Icon(icon, color: PaceColors.purple, size: 24)
+      padding: const EdgeInsets.all(8), 
+      decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(8)), 
+      child: Icon(icon, color: PaceColors.purple, size: 20)
     )
   );
 
@@ -417,11 +440,11 @@ class _VouchersScreenState extends State<VouchersScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('PREPAID VOUCHERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 16, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              Text('Prepaid Vouchers', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
               Row(
                 children: [
-                   Text('NODE: ', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
-                  Text(_selectedRouterName.toUpperCase(), style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 9, fontWeight: FontWeight.bold)),
+                   Text('SELECTED NODE: ', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
+                  Text(_selectedRouterId == 'all' ? 'ALL STATIONS' : (_routers.firstWhere((e) => e['id'].toString() == _selectedRouterId, orElse: () => {'router_name': 'NODE'})['router_name']?.toString().toUpperCase() ?? 'NODE'), style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 9, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),
                   Text('TOTAL: ', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
                   Text(_total.toString(), style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 9, fontWeight: FontWeight.bold)),
@@ -432,7 +455,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
           ElevatedButton.icon(
             onPressed: () => _showCreateModal(isDark),
             icon: const Icon(Icons.add_rounded, size: 16),
-            label: Text('GENERATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+            label: Text('NEW VOUCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
             style: ElevatedButton.styleFrom(
               backgroundColor: PaceColors.purple, 
               foregroundColor: Colors.white, 
@@ -465,7 +488,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                     onChanged: (val) { _search = val; _fetchVouchers(page: 1); },
                     style: GoogleFonts.figtree(color: PaceColors.getPrimaryText(isDark), fontSize: 13, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
-                      hintText: 'Lookup PIN code...', 
+                      hintText: 'Search vouchers...', 
                       hintStyle: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 12), 
                       border: InputBorder.none, 
                       icon: Icon(Icons.search_rounded, size: 18, color: PaceColors.getDimText(isDark))
@@ -483,17 +506,17 @@ class _VouchersScreenState extends State<VouchersScreen> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _selectedRouterName,
+                    value: _selectedRouterId,
                     dropdownColor: PaceColors.getCard(isDark),
-                    icon: const Icon(Icons.router_rounded, size: 14, color: PaceColors.purple),
+                    icon: const Icon(Icons.wifi_tethering_rounded, size: 14, color: PaceColors.purple),
                     items: [
-                      DropdownMenuItem(value: 'all', child: Text('ALL NODES', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)))),
+                      DropdownMenuItem(value: 'all', child: Text('ALL STATIONS', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)))),
                       ..._routers.map((r) {
-                        final name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
-                        return DropdownMenuItem(value: name, child: Text(name?.toUpperCase() ?? 'NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
+                        final name = (r['router_name'] ?? r['name'] ?? r['router'])?.toString();
+                        return DropdownMenuItem(value: r['id'].toString(), child: Text(name?.toUpperCase() ?? 'NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))));
                       }),
                     ],
-                    onChanged: (val) { setState(() => _selectedRouterName = val!); _fetchVouchers(page: 1); },
+                    onChanged: (val) { setState(() => _selectedRouterId = val!); _fetchVouchers(page: 1); },
                   ),
                 ),
               ),
@@ -506,12 +529,12 @@ class _VouchersScreenState extends State<VouchersScreen> {
               decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), border: Border.all(color: Colors.red.withOpacity(0.1)), borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
-                   Text('${_selectedIds.length} ASSETS SELECTED', style: GoogleFonts.figtree(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                   Text('SELECTED: ${_selectedIds.length}', style: GoogleFonts.figtree(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   const Spacer(),
                   TextButton.icon(
                     onPressed: () => _handleDelete(_selectedIds.toList()),
                     icon: const Icon(Icons.delete_forever_rounded, size: 16, color: Colors.red),
-                    label: Text('DELETE', style: GoogleFonts.figtree(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                    label: Text('DELETE SELECTED', style: GoogleFonts.figtree(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -543,9 +566,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(flex: 3, child: Text('IDENTIFIER', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-          Expanded(flex: 2, child: Center(child: Text('STATUS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)))),
-          Expanded(flex: 2, child: Text('SOURCE', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 3, child: Text('Voucher PIN', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
+          Expanded(flex: 2, child: Center(child: Text('Status', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)))),
+          Expanded(flex: 2, child: Text('Station', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
         ],
       ),
     );
@@ -556,7 +579,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     final bool isSelected = _selectedIds.contains(id);
     final status = (voucher['status']?.toString() ?? '').toLowerCase();
     final usedFlag = voucher['used'];
-    final bool isUsed = status == 'used' || status == 'exhausted' || usedFlag == 1 || usedFlag == '1';
+    final bool isUsed = status == 'used' || status == 'exhausted' || usedFlag == 1 || usedFlag == '1' || usedFlag == true;
     
     return InkWell(
       onTap: () => setState(() => isSelected ? _selectedIds.remove(id) : _selectedIds.add(id)),
@@ -580,8 +603,8 @@ class _VouchersScreenState extends State<VouchersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(voucher['voucher_code'] ?? 'NULL', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
-                  Text(voucher['plan']?.toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                  Text(voucher['voucher_code'] ?? 'NULL', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
+                  Text(voucher['plan']?.toString().toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -589,7 +612,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               flex: 2,
               child: Center(
                 child: PaceBadge(
-                  label: isUsed ? 'USED' : 'ACTIVE', 
+                  label: isUsed ? 'Used' : 'Available', 
                   variant: isUsed ? BadgeVariant.secondary : BadgeVariant.success,
                 ),
               ),
@@ -599,7 +622,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(voucher['router_name']?.toUpperCase() ?? 'NODE', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.bold)),
+                  Text(voucher['router_name']?.toString().toUpperCase() ?? 'STATION', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.bold)),
                   Text(voucher['created_at']?.split(' ')[0] ?? '', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.normal)),
                 ],
               ),
@@ -617,7 +640,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
         children: [
           Icon(Icons.airplane_ticket_rounded, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.2)),
           const SizedBox(height: 16),
-          Text('NO RESULTS', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark).withOpacity(0.5), letterSpacing: 2, fontSize: 11)),
+          Text('NO VOUCHERS FOUND', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark).withOpacity(0.5), letterSpacing: 2, fontSize: 10)),
         ],
       ),
     );
