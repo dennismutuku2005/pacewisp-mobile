@@ -5,11 +5,11 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background">
 
-    <!-- Solid Overlay -->
+    <!-- Subtle Premium Gradient Overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#D91A0B2E" />
+        android:background="#E61A0B2E" />
 
     <!-- Content -->
     <LinearLayout
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:text="*** Entries"
             android:textColor="#22C55E"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:layout_marginTop="2dp" />
             
@@ -59,7 +59,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SECURE DATA • TAP TO TOGGLE"
+            android:text="SECURE DATA • TAP TO REVEAL"
             android:textColor="#66FFFFFF"
             android:textSize="8sp"
             android:layout_marginTop="8dp"
