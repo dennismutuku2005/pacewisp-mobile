@@ -73,7 +73,7 @@ class _PlansScreenState extends State<PlansScreen> {
       final unitRaw = match.group(2)!;
       String? unit;
       _unitMap.forEach((key, value) {
-        if (unitRaw.startsWith(key.substring(0, 3))) { 
+        if (unitRaw.startsWith(key) || key.startsWith(unitRaw)) { 
           unit = (double.parse(num) == 1) ? key : value;
         }
       });
@@ -111,8 +111,9 @@ class _PlansScreenState extends State<PlansScreen> {
               const SizedBox(height: 24),
               Text(editingPlan != null ? 'EDIT PLAN CONFIG' : 'GENERATE NEW PLAN', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
               const SizedBox(height: 8),
-              Text('ROUTER NODE: ${_routers.firstWhere((r) => r['id'].toString() == _selectedRouterId)['router_name']?.toString().toUpperCase()}', 
-                style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+              if (_routers.any((r) => r['id'].toString() == _selectedRouterId))
+                Text('ROUTER NODE: ${_routers.firstWhere((r) => r['id'].toString() == _selectedRouterId)['router_name']?.toString().toUpperCase()}', 
+                  style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
               
               Flexible(
                 child: SingleChildScrollView(
