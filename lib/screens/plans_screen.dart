@@ -109,7 +109,7 @@ class _PlansScreenState extends State<PlansScreen> {
               const SizedBox(height: 12),
               Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 24),
-              Text(editingPlan != null ? 'EDIT PLAN CONFIG' : 'GENERATE NEW PLAN', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
+              Text(editingPlan != null ? 'EDIT PLAN CONFIG' : 'GENERATE NEW PLAN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.2)),
               const SizedBox(height: 8),
               if (_routers.any((r) => r['id'].toString() == _selectedRouterId))
                 Text('ROUTER NODE: ${_routers.firstWhere((r) => r['id'].toString() == _selectedRouterId)['router_name']?.toString().toUpperCase()}', 
@@ -216,7 +216,7 @@ class _PlansScreenState extends State<PlansScreen> {
                     style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                     child: isSaving 
                       ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(editingPlan != null ? 'UPDATE CONFIG' : 'COMMIT PLAN', style: GoogleFonts.figtree(fontWeight: FontWeight.w900, letterSpacing: 2)),
+                      : Text(editingPlan != null ? 'UPDATE CONFIG' : 'COMMIT PLAN', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                   )
                 ),
               ),
@@ -228,23 +228,24 @@ class _PlansScreenState extends State<PlansScreen> {
   }
 
   InputDecoration _inputDecoration(IconData icon, bool isDark) => InputDecoration(
-    prefixIcon: Icon(icon, color: PaceColors.purple, size: 20),
+    prefixIcon: Icon(icon, color: PaceColors.purple, size: 18),
     filled: true,
     fillColor: PaceColors.getSurface(isDark),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: PaceColors.getBorder(isDark), width: 1.5)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: PaceColors.getBorder(isDark), width: 1.5)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: PaceColors.purple, width: 2)),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: PaceColors.getBorder(isDark), width: 1.2)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: PaceColors.getBorder(isDark), width: 1.2)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: PaceColors.purple, width: 1.5)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   );
 
-  Widget _buildLabel(String text, bool isDark) => Padding(padding: const EdgeInsets.only(bottom: 8, left: 4), child: Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)));
+  Widget _buildLabel(String text, bool isDark) => Padding(padding: const EdgeInsets.only(bottom: 6, left: 4), child: Text(text, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark).withOpacity(0.7), letterSpacing: 1.5)));
 
   Widget _buildTextField(TextEditingController ctrl, String hint, IconData icon, bool isDark, {TextInputType kType = TextInputType.text, bool enabled = true, Function(String)? onChanged}) => TextField(
     controller: ctrl, 
     keyboardType: kType,
     enabled: enabled,
     onChanged: onChanged,
-    style: GoogleFonts.figtree(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.bold, fontSize: 13),
-    decoration: _inputDecoration(icon, isDark).copyWith(hintText: hint, hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 12)),
+    style: GoogleFonts.figtree(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.bold, fontSize: 12),
+    decoration: _inputDecoration(icon, isDark).copyWith(hintText: hint, hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 11)),
   );
 
   @override
