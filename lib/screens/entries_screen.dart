@@ -45,7 +45,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
 
   Future<void> _fetchInitialData() async {
     setState(() => _isLoading = true);
-    final results = await Future.wait([
+    final results = await Future.wait<Map<String, dynamic>?>([
       _apiService.getEntries(search: _search, page: 1, router: _selectedRouterId),
       _apiService.getRouters(),
     ]);
@@ -58,7 +58,16 @@ class _EntriesScreenState extends State<EntriesScreen> {
         _entries = res0?['data']?['entries'] ?? res0?['data']?['recent_transactions'] ?? res0?['entries'] ?? res0?['data'] ?? [];
         _hasMore = res0?['pagination']?['has_more'] ?? res0?['data']?['pagination']?['has_more'] ?? false;
         _total = res0?['pagination']?['total'] ?? res0?['data']?['pagination']?['total'] ?? 0;
-        _routers = res1?['data']?['routers'] ?? res1?['routers'] ?? res1?['data'] ?? [];
+        
+        // Robust router extraction
+        final dynamic rawRouters = res1?['data']?['routers'] ?? res1?['routers'] ?? res1?['data'] ?? [];
+        final Set<String> unique = {'all'}; // Internal ID for all
+        _routers = [];
+        if (rawRouters is List) {
+          for (var r in rawRouters) {
+             _routers.add(r);
+          }
+        }
         _isLoading = false;
       });
     }
@@ -194,13 +203,13 @@ class _EntriesScreenState extends State<EntriesScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('REVENUE ENTRIES', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-              Text('TRANSACTIONAL LEDGER FLOW', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 2)),
+              Text('REVENUE ENTRIES', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              Text('TRANSACTIONAL LEDGER FLOW', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
             ],
           ),
           IconButton(
             onPressed: () => _fetchEntries(),
-            icon: const Icon(Icons.refresh_rounded, color: PaceColors.purple),
+            icon: const Icon(Icons.refresh_rounded, color: PaceColors.purple, size: 20),
           )
         ],
       ),
@@ -238,8 +247,12 @@ class _EntriesScreenState extends State<EntriesScreen> {
                 dropdownColor: PaceColors.getCard(isDark),
                 icon: const Icon(Icons.tune_rounded, size: 14, color: PaceColors.purple),
                 items: [
-                  DropdownMenuItem(value: 'all', child: Text('ALL NODES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)))),
-                  ..._routers.map((r) => DropdownMenuItem(value: r['id'].toString(), child: Text(r['router_name'].toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))))),
+                  DropdownMenuItem(value: 'all', child: Text('ALL NODES', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark)))),
+                  ..._routers.map((r) {
+                    final String name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString().toUpperCase() ?? 'NODE' : r.toString().toUpperCase();
+                    final String id = (r is Map) ? r['id']?.toString() ?? name : r.toString();
+                    return DropdownMenuItem(value: id, child: Text(name, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))));
+                  }),
                 ],
                 onChanged: (val) { setState(() => _selectedRouterId = val!); _fetchEntries(); },
               ),
@@ -256,9 +269,9 @@ class _EntriesScreenState extends State<EntriesScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('IDENTIFICATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-          Expanded(flex: 2, child: Center(child: Text('PAID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 3, child: Text('IDENTIFICATION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 2, child: Center(child: Text('PAID', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
         ],
       ),
     );
@@ -278,15 +291,15 @@ class _EntriesScreenState extends State<EntriesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry['phone'] ?? 'SYSTEM', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: -0.5)),
+                   Text(entry['phone'] ?? 'SYSTEM', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: -0.5)),
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Text(entry['code']?.toString().toUpperCase() ?? 'NO_CODE', style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      Text(entry['code']?.toString().toUpperCase() ?? 'NO_CODE', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1)),
                       const SizedBox(width: 4),
                       Text('•', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8)),
                       const SizedBox(width: 4),
-                      Text((entry['router'] ?? entry['router_name'])?.toString().toUpperCase() ?? 'NODE', style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900)),
+                      Text((entry['router'] ?? entry['router_name'] ?? 'NODE').toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -295,7 +308,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
             Expanded(
               flex: 2,
               child: Center(
-                child: Text('KES ${entry['amount']}', style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.emerald)),
+                child: Text('KES ${entry['amount']}', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.emerald)),
               ),
             ),
             Expanded(
@@ -308,7 +321,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
                     variant: isActive ? BadgeVariant.success : BadgeVariant.secondary
                   ),
                   const SizedBox(height: 4),
-                  Text(entry['created'] ?? entry['created_at'] ?? '', style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark))),
+                  Text(entry['created'] ?? entry['created_at'] ?? '', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
