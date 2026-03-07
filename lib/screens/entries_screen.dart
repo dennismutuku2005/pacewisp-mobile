@@ -34,9 +34,29 @@ class _EntriesScreenState extends State<EntriesScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSyncMemory();
     _fetchCachedThenLive();
     _loadRouters();
     _scrollController.addListener(_onScroll);
+  }
+
+  void _loadSyncMemory() {
+    final filters = _parseDateRange(_selectedDateRange);
+    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
+    final mem = _apiService.getMemoryCached('entries', params: {
+      'search': _search,
+      'router': router,
+      'startDate': filters['startDate'],
+      'endDate': filters['endDate'],
+      'page': 1
+    });
+
+    if (mem != null) {
+      _entries = _extractEntries(mem);
+      _hasMore = _extractHasMore(mem);
+      _total = _extractTotal(mem);
+      _isLoading = false;
+    }
   }
 
   void _onScroll() {
@@ -106,14 +126,18 @@ class _EntriesScreenState extends State<EntriesScreen> {
       endDate: filters['endDate'],
       forceRefresh: true
     );
-    if (mounted && live != null) {
-      setState(() {
-        _entries = _extractEntries(live);
-        _hasMore = _extractHasMore(live);
-        _total = _extractTotal(live);
-        _page = 1;
-        _isLoading = false;
-      });
+    if (mounted) {
+      if (live != null) {
+        setState(() {
+          _entries = _extractEntries(live);
+          _hasMore = _extractHasMore(live);
+          _total = _extractTotal(live);
+          _page = 1;
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -157,6 +181,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
     return Container(
       color: PaceColors.getBackground(isDark),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(isDark),
           _buildGlobalFilters(isDark),
