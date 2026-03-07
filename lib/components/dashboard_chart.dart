@@ -107,7 +107,7 @@ class DashboardChart extends StatelessWidget {
             fitInsideHorizontally: true,
             fitInsideVertically: true,
             getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((spot) {
+              return touchedSpots.map<LineTooltipItem>((spot) {
                 final isRevenue = spot.barIndex == 0;
                 return LineTooltipItem(
                   isRevenue ? 'REVENUE: KSH ${spot.y.toInt()}' : 'ENTRIES: ${spot.y.toInt()}',
