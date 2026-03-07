@@ -56,6 +56,16 @@ class SettingsScreen extends StatelessWidget {
           ),
           
           const Divider(height: 32),
+          _buildSectionTitle('HOME WIDGET CONFIGURATION', isDark),
+          _buildSettingGroup(
+            isDark,
+            [
+              _buildWidgetAccountTile(context, settings, isDark),
+              _buildSwitchTile('WIDGET BLUR', 'HIDE DATA ON WIDGET BY DEFAULT', Icons.blur_on_rounded, settings.isWidgetBlurred, (val) => settings.toggleWidgetBlur(), isDark, Colors.blueGrey),
+            ],
+          ),
+          
+          const Divider(height: 32),
           _buildSectionTitle('APPEARANCE & SECURITY', isDark),
           _buildSettingGroup(
             isDark,
@@ -254,6 +264,60 @@ class SettingsScreen extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       title: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
       trailing: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+    );
+  }
+
+  Widget _buildWidgetAccountTile(BuildContext context, SettingsProvider settings, bool isDark) {
+    final widgetAcc = settings.widgetAccount;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      leading: const Icon(Icons.widgets_rounded, color: Colors.blueGrey, size: 24),
+      title: Text('WIDGET DATA SOURCE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+      subtitle: Text(widgetAcc != null ? "${widgetAcc.accountName.toUpperCase()} (${widgetAcc.subdomain})" : 'SELECT SOURCE', style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1)),
+      trailing: Icon(Icons.chevron_right_rounded, color: PaceColors.getDimText(isDark), size: 20),
+      onTap: () => _showWidgetAccountPicker(context, settings, isDark),
+    );
+  }
+
+  void _showWidgetAccountPicker(BuildContext context, SettingsProvider settings, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaceColors.getBackground(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Text('SELECT WIDGET DATA SOURCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: settings.accounts.length,
+                itemBuilder: (ctx, index) {
+                  final acc = settings.accounts[index];
+                  final isSelected = settings.widgetAccountIndex == index;
+                  return ListTile(
+                    leading: Icon(Icons.account_balance_rounded, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                    title: Text(acc.accountName.toUpperCase(), style: TextStyle(color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, fontSize: 13)),
+                    subtitle: Text("${acc.subdomain}.${acc.domain}", style: TextStyle(fontSize: 11, color: PaceColors.getDimText(isDark))),
+                    trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: PaceColors.purple) : null,
+                    onTap: () {
+                      settings.setWidgetAccount(index);
+                      Navigator.pop(ctx);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
