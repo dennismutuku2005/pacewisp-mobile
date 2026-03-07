@@ -105,9 +105,9 @@ class SettingsScreen extends StatelessWidget {
           _buildSettingGroup(
             isDark,
             [
-              _buildReadOnlyTile('VERSION', '1.2.6 ENTERPRISE STABLE', Icons.verified_rounded, isDark, iconColor: Colors.blue),
-              const Divider(height: 1, indent: 56),
-              _buildReadOnlyTile('SYSTEM STATUS', 'CORE API ONLINE', Icons.bolt_rounded, isDark, valueColor: PaceColors.emerald, iconColor: PaceColors.emerald),
+              _buildReadOnlyTile('VERSION', '1.2.6 ENTERPRISE STABLE', isDark),
+              const Divider(height: 1),
+              _buildReadOnlyTile('SYSTEM STATUS', 'CORE API ONLINE', isDark, valueColor: PaceColors.emerald),
             ],
           ),
           const SizedBox(height: 40),
@@ -227,15 +227,9 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReadOnlyTile(String label, String value, IconData icon, bool isDark, {Color? valueColor, Color? iconColor}) {
-    final c = iconColor ?? PaceColors.purple;
+  Widget _buildReadOnlyTile(String label, String value, bool isDark, {Color? valueColor}) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, color: c, size: 20),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       title: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
       trailing: Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
     );
