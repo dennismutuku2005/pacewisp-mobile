@@ -5,24 +5,22 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background">
 
-    <!-- Content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="20dp"
+        android:padding="12dp"
         android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/tv_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PaceWisp Admin"
+            android:text="PaceWisp"
             android:textColor="#BB99FF"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textStyle="bold"
-            android:textAllCaps="true"
-            android:letterSpacing="0.15" />
+            android:textAllCaps="true" />
 
         <TextView
             android:id="@+id/tv_income"
@@ -30,9 +28,9 @@
             android:layout_height="wrap_content"
             android:text="KSH ***"
             android:textColor="#FFFFFF"
-            android:textSize="26sp"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="2dp" />
 
         <TextView
             android:id="@+id/tv_entries"
@@ -40,24 +38,7 @@
             android:layout_height="wrap_content"
             android:text="*** Entries"
             android:textColor="#22C55E"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:layout_marginTop="2dp" />
-            
-        <View 
-            android:layout_width="40dp"
-            android:layout_height="1.5dp"
-            android:background="#33FFFFFF"
-            android:layout_marginTop="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="TAP TO REVEAL SECURE DATA"
-            android:textColor="#66FFFFFF"
-            android:textSize="8sp"
-            android:layout_marginTop="8dp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1" />
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </FrameLayout>
