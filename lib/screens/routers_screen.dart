@@ -213,7 +213,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
                 _handleRestart(router);
               },
               icon: const Icon(Icons.power_settings_new_rounded, size: 18),
-              label: Text('RESTART ROUTER', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              label: Text('RESTART ROUTER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.withOpacity(0.1),
                 foregroundColor: Colors.red,
