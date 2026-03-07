@@ -74,10 +74,14 @@ class DashboardChart extends StatelessWidget {
   }
 
   Widget _buildLineChart(bool isDark) {
-    List<FlSpot> spots = [];
+    List<FlSpot> revenueSpots = [];
+    List<FlSpot> entrySpots = [];
+    
     for (int i = 0; i < chartData.length; i++) {
        final amount = double.tryParse(chartData[i]['amount'].toString()) ?? 0;
-       spots.add(FlSpot(i.toDouble(), amount));
+       final entries = double.tryParse(chartData[i]['entries'].toString()) ?? 0;
+       revenueSpots.add(FlSpot(i.toDouble(), amount));
+       entrySpots.add(FlSpot(i.toDouble(), entries));
     }
 
     return LineChart(
@@ -87,16 +91,26 @@ class DashboardChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => PaceColors.purple.withOpacity(0.9),
-            getTooltipItems: (touchedSpots) => touchedSpots.map((s) => LineTooltipItem(
-              'KSH ${s.y.toInt()}',
-              GoogleFonts.figtree(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
-            )).toList(),
+            getTooltipColor: (_) => PaceColors.getCard(isDark).withOpacity(0.95),
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                final isRevenue = spot.barIndex == 0;
+                return LineTooltipItem(
+                  isRevenue ? 'REVENUE: KSH ${spot.y.toInt()}' : 'ENTRIES: ${spot.y.toInt()}',
+                  GoogleFonts.figtree(
+                    color: isRevenue ? PaceColors.purple : const Color(0xFF22C55E),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                );
+              }).toList();
+            },
           ),
         ),
         lineBarsData: [
+          // Revenue Line (Purple)
           LineChartBarData(
-            spots: spots,
+            spots: revenueSpots,
             isCurved: true,
             color: PaceColors.purple,
             barWidth: 3,
@@ -106,6 +120,23 @@ class DashboardChart extends StatelessWidget {
               show: true,
               gradient: LinearGradient(
                 colors: [PaceColors.purple.withOpacity(0.15), PaceColors.purple.withOpacity(0.0)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          // Entries Line (Green)
+          LineChartBarData(
+            spots: entrySpots,
+            isCurved: true,
+            color: const Color(0xFF22C55E),
+            barWidth: 2,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [const Color(0xFF22C55E).withOpacity(0.1), const Color(0xFF22C55E).withOpacity(0.0)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -176,7 +207,9 @@ class DashboardChart extends StatelessWidget {
     double max = 1000;
     for (var d in chartData) {
       double val = double.tryParse(d['amount'].toString()) ?? 0;
+      double entries = double.tryParse(d['entries'].toString()) ?? 0;
       if (val > max) max = val;
+      if (entries > max) max = entries;
     }
     return max * 1.2;
   }
