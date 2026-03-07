@@ -215,8 +215,8 @@ class _PlansScreenState extends State<PlansScreen> {
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                     child: isSaving 
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(editingPlan != null ? 'UPDATE CONFIG' : 'COMMIT PLAN', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : Text(editingPlan != null ? 'UPDATE CONFIG' : 'COMMIT PLAN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
                   )
                 ),
               ),
@@ -290,8 +290,8 @@ class _PlansScreenState extends State<PlansScreen> {
                   backgroundColor: PaceColors.purple,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],
