@@ -60,7 +60,7 @@ class SettingsScreen extends StatelessWidget {
           _buildSettingGroup(
             isDark,
             [
-              _buildSwitchTile('DARK MODE', 'ADAPTIVE VISUAL INTERFACE', Icons.dark_mode_rounded, settings.isDarkMode, (val) => settings.toggleDarkMode(), isDark, Colors.amber),
+              _buildSwitchTile('DARK MODE', 'ADAPTIVE VISUAL INTERFACE', Icons.dark_mode_rounded, settings.isDarkMode, (val) => settings.toggleDarkMode(), isDark, Colors.blueGrey),
               _buildSwitchTile('SYSTEM APP LOCK', 'SECURE WITH BIOMETRICS', Icons.fingerprint_rounded, settings.isAppLockEnabled, (val) async {
                   if (val) {
                     final success = await LockService().authenticate();
@@ -69,7 +69,7 @@ class SettingsScreen extends StatelessWidget {
                     final success = await LockService().authenticate();
                     if (success) settings.toggleAppLock(false);
                   }
-              }, isDark, PaceColors.emerald),
+              }, isDark, Colors.blueGrey),
             ],
           ),
           
