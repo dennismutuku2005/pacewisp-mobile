@@ -13,16 +13,17 @@ class SettingsScreen extends StatelessWidget {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(isDark),
-          const SizedBox(height: 24),
-          
-          _buildActiveAccountCard(settings, isDark),
+    return Column(
+      children: [
+        _buildHeader(isDark),
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildActiveAccountCard(settings, isDark),
           const SizedBox(height: 32),
 
           _buildSectionTitle('SWITCH INSTANCE', isDark),
@@ -138,13 +139,23 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('PREFERENCES', style: TextStyle(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-        const SizedBox(height: 4),
-        Text('MANAGE CORE ACCOUNTS & SYSTEM BEHAVIOR', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
-      ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('PREFERENCES', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              const Icon(Icons.settings_rounded, color: PaceColors.purple, size: 24),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('MANAGE CORE ACCOUNTS & SYSTEM BEHAVIOR', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        ],
+      ),
     );
   }
 
