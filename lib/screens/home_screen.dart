@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSectionHeader('RECENT ACTIVITY', 'LIVE CONNECTIONS', isDark),
               _buildActivityTable(isDark),
               const SizedBox(height: 48),
-              _buildSectionHeader('NETWORK STATIONS', 'CORE NODES STATUS', isDark),
+              _buildSectionHeader('NETWORK ROUTERS', 'CORE NODES STATUS', isDark),
               _buildStationTable(isDark),
             ],
             const SizedBox(height: 100),
@@ -210,6 +210,19 @@ class _HomeScreenState extends State<HomeScreen> {
              ]),
              const SizedBox(width: 12),
              Row(children: [_buildLegend(PaceColors.purple, 'REVENUE'), const SizedBox(width: 12), _buildLegend(const Color(0xFF22C55E), 'ACTIVITY')]),
+          ] else if (title == 'NETWORK ROUTERS') ...[
+             const Spacer(),
+             CustomPaint(
+               painter: DashedBorderPainter(color: PaceColors.purple.withOpacity(0.5), strokeWidth: 1.0, radius: 10),
+               child: InkWell(
+                 onTap: () {},
+                 borderRadius: BorderRadius.circular(10),
+                 child: Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                   child: Text('SEE IN ROUTERS PAGE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1)),
+                 ),
+               ),
+             ),
           ]
         ],
       ),
@@ -432,4 +445,45 @@ class ListActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2), child: ListTile(onTap: onTap, dense: true, selected: isSelected, selectedTileColor: PaceColors.purple.withOpacity(0.08), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: Icon(icon, size: 18, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)), title: Text(label, style: GoogleFonts.figtree(fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark))), trailing: isSelected ? const Icon(Icons.check_circle_rounded, size: 18, color: PaceColors.purple) : null));
   }
+}
+
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double radius;
+  final double dashWidth;
+  final double dashSpace;
+
+  DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.0,
+    this.radius = 12.0,
+    this.dashWidth = 4.0,
+    this.dashSpace = 4.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+      
+    final RRect rrect = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius));
+    final Path path = Path()..addRRect(rrect);
+    
+    Path dashPath = Path();
+    for (PathMetric measurePath in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < measurePath.length) {
+        dashPath.addPath(measurePath.extractPath(distance, distance + dashWidth), Offset.zero);
+        distance += dashWidth + dashSpace;
+      }
+    }
+    
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
