@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'cache_service.dart';
 
@@ -44,8 +45,7 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     
-    final protocols = ['https'];
-    List<String> pathsToTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
+    debugPrint('API: Token presence check: ${token != null ? "HAS TOKEN" : "NO TOKEN"}');
 
     Map<String, String> headers = {
       'Accept': 'application/json',
@@ -53,6 +53,9 @@ class ApiService {
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
+
+    final protocols = ['https'];
+    List<String> pathsToTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
 
     for (var protocol in protocols) {
       for (var path in pathsToTry) {
@@ -64,7 +67,7 @@ class ApiService {
         final url = '$protocol://$host$separator$endpoint';
         
         try {
-          print('API: Probing URL: $url');
+          debugPrint('API: Probing URL: $url');
           final response = await _dio.request(
             url,
             data: data,
@@ -121,7 +124,7 @@ class ApiService {
     }
 
     final data = await _requestWithFallback(phpFile, queryParameters: params);
-    if (data != null && (data['status'] == 'success' || data['status'] == 200)) {
+    if (data != null && (data['status'] == 'success' || data['status'] == 200 || data['status'] == '200')) {
       await _cache.save(cacheKey, data, subdomain: subdomainKey);
     }
     return data;
@@ -179,7 +182,7 @@ class ApiService {
   
   // Routers
   Future<Map<String, dynamic>?> getRouters({bool forceRefresh = false}) async => 
-    fetchData(slug: 'widgets', params: {'action': 'get_routers'}, forceRefresh: forceRefresh); // Use dashboard.php for the list
+    fetchData(slug: 'widgets', params: {'action': 'get_routers'}, forceRefresh: forceRefresh);
 
   Future<Map<String, dynamic>?> getRouterStatus({int limit = 5, bool forceRefresh = false}) async => 
     fetchData(slug: 'widgets', params: {'action': 'router_status', 'limit': limit}, forceRefresh: forceRefresh);
