@@ -275,77 +275,102 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
     );
   }
 
+  Widget _buildTableHeader(bool isDark) {
+    final headerStyle = GoogleFonts.figtree(
+      fontSize: 8, fontWeight: FontWeight.bold,
+      color: PaceColors.getDimText(isDark), letterSpacing: 1.5,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02),
+        border: Border(
+          top: BorderSide(color: PaceColors.getBorder(isDark)),
+          bottom: BorderSide(color: PaceColors.getBorder(isDark)),
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 36),
+          const SizedBox(width: 8),
+          SizedBox(width: 70, child: Text('USER', style: headerStyle)),
+          SizedBox(width: 64, child: Text('ACTION', style: headerStyle)),
+          const SizedBox(width: 8),
+          Expanded(child: Text('DESCRIPTION', style: headerStyle)),
+          SizedBox(width: 72, child: Text('IP', style: headerStyle)),
+          SizedBox(width: 58, child: Text('STATUS', style: headerStyle, textAlign: TextAlign.right)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLogRow(dynamic log, bool isDark) {
     final String status = (log['status'] ?? '').toString().toLowerCase();
     final bool isFailed = status == 'failed' || status == 'error';
     final String user = log['user']?.toString() ?? 'SYSTEM';
     final String initial = user.isNotEmpty ? user[0].toUpperCase() : 'S';
     final String message = log['description'] ?? log['message'] ?? 'Event recorded';
-    final String timestamp = log['time'] ?? log['created_at'] ?? 'N/A';
     final String action = log['action']?.toString().toUpperCase() ?? 'LOG';
     final String ip = log['ip'] ?? '0.0.0.0';
     final Color statusColor = isFailed ? Colors.red : PaceColors.emerald;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isFailed ? Colors.red.withOpacity(0.15) : PaceColors.getBorder(isDark),
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        color: isFailed ? Colors.red.withOpacity(0.02) : Colors.transparent,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Avatar initial
+            Container(
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                color: PaceColors.purple.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(initial, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+            ),
+            const SizedBox(width: 8),
+            // User name
+            SizedBox(
+              width: 70,
+              child: Text(user, overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+            ),
+            // Action badge
+            SizedBox(
+              width: 64,
+              child: PaceBadge(label: action, variant: isFailed ? BadgeVariant.error : BadgeVariant.standard),
+            ),
+            const SizedBox(width: 8),
+            // Description
+            Expanded(
+              child: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
+            ),
+            // IP
+            SizedBox(
+              width: 72,
+              child: Text(ip,
+                style: GoogleFonts.jetBrainsMono(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+            ),
+            // Status
+            SizedBox(
+              width: 58,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(width: 6, height: 6, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Text(status.isEmpty ? 'OK' : status.toUpperCase(),
+                    style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: statusColor, letterSpacing: 0.5)),
+                ],
+              ),
+            ),
+          ],
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // User Avatar Initial
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: PaceColors.purple.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: PaceColors.getBorder(isDark)),
-            ),
-            alignment: Alignment.center,
-            child: Text(initial, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(user.toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-                    ),
-                    Text(timestamp, style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(message, style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), height: 1.4)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    PaceBadge(label: action, variant: isFailed ? BadgeVariant.error : BadgeVariant.standard),
-                    const SizedBox(width: 8),
-                    Text(ip, style: GoogleFonts.jetBrainsMono(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                    const Spacer(),
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(status.toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: statusColor, letterSpacing: 0.5)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
