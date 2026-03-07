@@ -14,6 +14,7 @@ import 'settings_screen.dart';
 import 'landing_screen.dart';
 import 'loading_screen.dart';
 import 'lock_screen.dart';
+import '../services/lock_service.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -22,14 +23,72 @@ class MainScaffold extends StatefulWidget {
   State<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<MainScaffold> {
+class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver {
   int _selectedIndex = 0;
-  bool _isUnlocked = false;
+  bool _isLocked = false;
+  bool _isAuthenticating = false;
+  DateTime? _lastUnlockTime;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkAuth();
+    _checkLock();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkLock();
+    }
+  }
+
+  Future<void> _checkLock() async {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    if (!settings.isAppLockEnabled) {
+      if (mounted && _isLocked) setState(() => _isLocked = false);
+      return;
+    }
+
+    if (_isLocked || _isAuthenticating) return;
+
+    if (_lastUnlockTime != null) {
+      if (DateTime.now().difference(_lastUnlockTime!).inSeconds < 5) {
+        return;
+      }
+    }
+
+    // Authenticate first to avoid deadlock
+    final success = await _authenticate();
+    if (!success && mounted) {
+      setState(() => _isLocked = true);
+    }
+  }
+
+  Future<bool> _authenticate() async {
+    if (_isAuthenticating) return false;
+    setState(() => _isAuthenticating = true);
+    
+    final lockService = LockService();
+    final bool success = await lockService.authenticate();
+
+    if (mounted) {
+      setState(() {
+        _isAuthenticating = false;
+        if (success) {
+          _isLocked = false;
+          _lastUnlockTime = DateTime.now();
+        }
+      });
+    }
+    return success;
   }
 
   void _checkAuth() {
@@ -58,8 +117,13 @@ class _MainScaffoldState extends State<MainScaffold> {
 
     if (settings.isLoading) return const LoadingScreen();
     
-    if (settings.isAppLockEnabled && !_isUnlocked) {
-      return LockScreen(onUnlocked: () => setState(() => _isUnlocked = true));
+    if (_isLocked) {
+      return LockScreen(onUnlocked: () {
+        setState(() {
+          _isLocked = false;
+          _lastUnlockTime = DateTime.now();
+        });
+      });
     }
 
     return Scaffold(
@@ -143,11 +207,6 @@ class _MainScaffoldState extends State<MainScaffold> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: PaceColors.purple,
-            child: ClipOval(child: Image.asset('assets/images/logoc.png', errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white))),
-          ),
           const SizedBox(height: 16),
           Text(
             settings.accountName?.toUpperCase() ?? 'ADMINISTRATOR',
