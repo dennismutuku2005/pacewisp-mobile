@@ -169,9 +169,24 @@ class _EntriesScreenState extends State<EntriesScreen> {
     }
   }
 
-  List<dynamic> _extractEntries(Map<String, dynamic> res) => res['data']?['entries'] ?? res['entries'] ?? res['data'] ?? [];
-  bool _extractHasMore(Map<String, dynamic> res) => res['pagination']?['has_more'] ?? res['data']?['pagination']?['has_more'] ?? false;
-  int _extractTotal(Map<String, dynamic> res) => res['pagination']?['total'] ?? res['data']?['pagination']?['total'] ?? 0;
+  List<dynamic> _extractEntries(Map<String, dynamic> res) {
+    final d = res['data'];
+    if (d is List) return d;
+    if (d is Map) return d['entries'] ?? d['recent_transactions'] ?? d['data'] ?? [];
+    return res['entries'] ?? [];
+  }
+
+  bool _extractHasMore(Map<String, dynamic> res) {
+    final p = res['pagination'] ?? res['data']?['pagination'];
+    if (p is Map) return p['has_more'] ?? false;
+    return false;
+  }
+
+  int _extractTotal(Map<String, dynamic> res) {
+    final p = res['pagination'] ?? res['data']?['pagination'];
+    if (p is Map) return p['total'] ?? 0;
+    return 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,12 +230,14 @@ class _EntriesScreenState extends State<EntriesScreen> {
 
   Widget _buildHeader(bool isDark) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text('CONNECTION ENTRIES', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-          Text('REAL-TIME ACCESS LOGS & SESSIONS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('CONNECTION ENTRIES', textAlign: TextAlign.left, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+          Text('REAL-TIME ACCESS LOGS & SESSIONS', textAlign: TextAlign.left, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ],
       ),
     );
