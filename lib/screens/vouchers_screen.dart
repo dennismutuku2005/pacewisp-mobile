@@ -146,30 +146,42 @@ class _VouchersScreenState extends State<VouchersScreen> {
       }
       
       if (routerId == null) {
+        debugPrint('[VOUCHER] Error: Could not resolve ID for $rName');
         setModalState(() => isModalLoading = false);
         return;
       }
 
       final plansRes = await _apiService.getPlans(routerId);
+      debugPrint('[VOUCHER] RAW PLANS JSON: $plansRes');
+
       if (mounted) {
         setModalState(() {
-          final raw = plansRes?['data']?['plans'] ?? plansRes?['plans'] ?? plansRes?['data'] ?? [];
+          // Check various nesting levels common in your API
+          // Web dashboard uses plansRes.plans
+          final dynamic raw = plansRes?['plans'] ?? plansRes?['data']?['plans'] ?? plansRes?['data'] ?? [];
           final allPlans = (raw is List) ? raw : [];
           
-          // De-duplicate plans by name
+          // De-duplicate plans by name and filter nulls
           final Set<String> uniquePlanNames = {};
           modalPlans = [];
           for (var p in allPlans) {
-            final pName = p['name']?.toString();
-            if (pName != null && !uniquePlanNames.contains(pName)) {
-              uniquePlanNames.add(pName);
-              modalPlans.add(p);
+            if (p is Map) {
+              final pName = p['name']?.toString();
+              if (pName != null && pName.isNotEmpty && !uniquePlanNames.contains(pName)) {
+                uniquePlanNames.add(pName);
+                modalPlans.add(p);
+                debugPrint('[VOUCHER] Added Plan: $pName (Price: ${p['price'] ?? p['amount']})');
+              }
             }
           }
 
-          debugPrint('[VOUCHER] Loaded ${modalPlans.length} unique plans');
+          debugPrint('[VOUCHER] Total Unique Plans Extracted: ${modalPlans.length}');
           if (modalPlans.isNotEmpty) {
             selectedPlan = modalPlans[0]['name']?.toString();
+            debugPrint('[VOUCHER] Auto-selected: $selectedPlan');
+          } else {
+            selectedPlan = null;
+            debugPrint('[VOUCHER] No plans found for node $rName');
           }
           isModalLoading = false;
         });
