@@ -291,10 +291,9 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
       ),
       child: Row(
         children: [
-          const SizedBox(width: 36),
-          const SizedBox(width: 8),
+        children: [
           SizedBox(width: 70, child: Text('USER', style: headerStyle)),
-          SizedBox(width: 64, child: Text('ACTION', style: headerStyle)),
+          SizedBox(width: 80, child: Text('ACTION', style: headerStyle)),
           const SizedBox(width: 8),
           Expanded(child: Text('DESCRIPTION', style: headerStyle)),
           SizedBox(width: 72, child: Text('IP', style: headerStyle)),
@@ -315,24 +314,14 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
     final Color statusColor = isFailed ? Colors.red : PaceColors.emerald;
 
     return InkWell(
-      onTap: () {},
+    return InkWell(
+      onTap: () => _showLogDetailsModal(log, isDark),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         color: isFailed ? Colors.red.withOpacity(0.02) : Colors.transparent,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Avatar initial
-            Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                color: PaceColors.purple.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Text(initial, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-            ),
-            const SizedBox(width: 8),
             // User name
             SizedBox(
               width: 70,
@@ -341,8 +330,11 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
             ),
             // Action badge
             SizedBox(
-              width: 64,
-              child: PaceBadge(label: action, variant: isFailed ? BadgeVariant.error : BadgeVariant.standard),
+              width: 80,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: PaceBadge(label: action, variant: isFailed ? BadgeVariant.error : BadgeVariant.standard),
+              ),
             ),
             const SizedBox(width: 8),
             // Description
@@ -372,6 +364,118 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
           ],
         ),
       ),
+    );
+  }
+
+  void _showLogDetailsModal(dynamic log, bool isDark) {
+    final String status = (log['status'] ?? '').toString().toLowerCase();
+    final bool isFailed = status == 'failed' || status == 'error';
+    final String user = log['user']?.toString() ?? 'SYSTEM';
+    final String message = log['description'] ?? log['message'] ?? 'Event recorded';
+    final String time = log['time'] ?? log['created_at'] ?? 'No time provided';
+    final String action = log['action']?.toString().toUpperCase() ?? 'LOG';
+    final String ip = log['ip'] ?? 'Unknown Location / IP';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: (isFailed ? Colors.red : PaceColors.purple).withOpacity(0.1), shape: BoxShape.circle),
+                    child: Icon(isFailed ? Icons.error_outline_rounded : Icons.info_outline_rounded, 
+                      color: isFailed ? Colors.red : PaceColors.purple, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('AUDIT TRACE DETAILS', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                        const SizedBox(height: 2),
+                        Text(action, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close_rounded, color: PaceColors.getDimText(isDark)),
+                  )
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Content Box
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: PaceColors.getSurface(isDark),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: PaceColors.getBorder(isDark)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('DESCRIPTION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                    const SizedBox(height: 6),
+                    Text(message, style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getPrimaryText(isDark), height: 1.5)),
+                    
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1)),
+                    
+                    Row(
+                      children: [
+                        Expanded(child: _buildModalStat('ACTOR / USER', user, Icons.person_outline_rounded, isDark)),
+                        Expanded(child: _buildModalStat('STATUS', status.toUpperCase(), isFailed ? Icons.warning_rounded : Icons.check_circle_outline_rounded, isDark, 
+                          color: isFailed ? Colors.red : PaceColors.emerald)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: _buildModalStat('TIMESTAMP', time, Icons.schedule_rounded, isDark)),
+                        Expanded(child: _buildModalStat('NETWORK IP', ip, Icons.public_rounded, isDark)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModalStat(String label, String value, IconData icon, bool isDark, {Color? color}) {
+    final c = color ?? PaceColors.getPrimaryText(isDark);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(icon, size: 14, color: c.withOpacity(0.7)),
+            const SizedBox(width: 6),
+            Expanded(child: Text(value, style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: c), overflow: TextOverflow.ellipsis)),
+          ],
+        ),
+      ],
     );
   }
 
