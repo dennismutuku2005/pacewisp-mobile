@@ -167,7 +167,7 @@ class ApiService {
   Future<Map<String, dynamic>?> deleteCustomer(String phone) async => _requestWithFallback('/customers.php?action=delete', method: 'POST', data: {'phone': phone});
 
   // Plans
-  Future<Map<String, dynamic>?> getPlans(String routerId, {bool forceRefresh = false}) async => fetchData(slug: 'plans', params: {'router': routerId}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getPlans(String routerId, {bool forceRefresh = false}) async => fetchData(slug: 'plans', params: {'router_id': routerId}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> createPlan(Map<String, dynamic> data) async => _requestWithFallback('/hotspot_plans.php?action=create', method: 'POST', data: data);
   Future<Map<String, dynamic>?> deletePlan(String id) async => _requestWithFallback('/hotspot_plans.php?action=delete', method: 'POST', data: {'id': id});
 
