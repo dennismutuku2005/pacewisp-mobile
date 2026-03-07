@@ -130,6 +130,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     final isDark = settings.isDarkMode;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(isDark),
         _buildStatsBar(isDark),
