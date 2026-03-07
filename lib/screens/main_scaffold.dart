@@ -98,9 +98,22 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     }
   }
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const VouchersScreen(),
+  bool _triggerVouchersModal = false;
+
+  void _onGenerateVoucher() {
+    setState(() {
+      _selectedIndex = 1; // Go to Vouchers tab
+      _triggerVouchersModal = true;
+    });
+    // Reset the trigger after a short delay or when the screen changes
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) setState(() => _triggerVouchersModal = false);
+    });
+  }
+
+  List<Widget> get _screens => [
+    HomeScreen(onGenerateVoucher: _onGenerateVoucher),
+    VouchersScreen(openModal: _triggerVouchersModal),
     const IncomeScreen(),
     const EntriesScreen(),
     const CustomersScreen(),
