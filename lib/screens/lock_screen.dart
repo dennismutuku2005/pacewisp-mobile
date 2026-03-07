@@ -134,7 +134,7 @@ class _LockScreenState extends State<LockScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _authenticate,
                           icon: const Icon(Icons.fingerprint_rounded, size: 24),
-                          label: Text('UNLOCK TO CONTINUE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                          label: Text('UNLOCK TO CONTINUE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: PaceColors.purple,
                             foregroundColor: Colors.white,
