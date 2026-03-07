@@ -5,63 +5,74 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background">
 
-    <!-- Background Image with clipping handled by parent if supported -->
+    <!-- Background Image -->
     <ImageView
         android:id="@+id/iv_bg"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/sidebar_bg"
         android:scaleType="centerCrop"
-        android:alpha="0.4" />
+        android:alpha="0.25" />
+
+    <!-- Solid Overlay for better Contrast -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#D91A0B2E" />
 
     <!-- Content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="24dp"
+        android:padding="20dp"
         android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/tv_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PaceWisp System Data"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
+            android:text="PaceWisp Admin"
+            android:textColor="#BB99FF"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:alpha="0.7"
             android:textAllCaps="true"
-            android:letterSpacing="0.1" />
+            android:letterSpacing="0.15" />
 
         <TextView
             android:id="@+id/tv_income"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Income: ***"
+            android:text="KSH 0"
             android:textColor="#FFFFFF"
-            android:textSize="22sp"
+            android:textSize="26sp"
             android:textStyle="bold"
-            android:layout_marginTop="12dp" />
+            android:layout_marginTop="8dp" />
 
         <TextView
             android:id="@+id/tv_entries"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Entries: ***"
-            android:textColor="#BDBDBD"
-            android:textSize="14sp"
+            android:text="0 Entries"
+            android:textColor="#22C55E"
+            android:textSize="15sp"
             android:textStyle="bold"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="2dp" />
             
+        <View 
+            android:layout_width="40dp"
+            android:layout_height="1.5dp"
+            android:background="#33FFFFFF"
+            android:layout_marginTop="16dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TAP TO REVEAL SECURE DATA"
+            android:text="SECURE DATA • TAP TO TOGGLE"
             android:textColor="#66FFFFFF"
             android:textSize="8sp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:textStyle="bold"
-            android:letterSpacing="0.05" />
+            android:letterSpacing="0.1" />
     </LinearLayout>
 </FrameLayout>
