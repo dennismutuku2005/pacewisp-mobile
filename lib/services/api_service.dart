@@ -175,7 +175,8 @@ class ApiService {
   Future<Map<String, dynamic>?> getIncome({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async => fetchData(slug: 'income', params: {'router': router, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
 
   // Entries
-  Future<Map<String, dynamic>?> getEntries({String? search, String? router, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'entries', params: {'search': search, 'router': router, 'page': page}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getEntries({String? search, String? router, String? startDate, String? endDate, int page = 1, bool forceRefresh = false}) async => 
+    fetchData(slug: 'entries', params: {'search': search, 'router': router, 'startDate': startDate, 'endDate': endDate, 'page': page}, forceRefresh: forceRefresh);
 
   // System Logs
   Future<Map<String, dynamic>?> getLogs({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'logs', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
