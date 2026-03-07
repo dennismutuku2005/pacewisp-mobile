@@ -13,16 +13,16 @@ import es.antonborri.home_widget.HomeWidgetProvider
 class AppWidgetProvider : HomeWidgetProvider() {
     companion object {
         const val ACTION_TOGGLE_BLUR = "com.pacewisp.pacewisp.ACTION_TOGGLE_BLUR"
+        // The default filename used by home_widget plugin
+        const val PREFS_NAME = "HomeWidgetPreferences"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_TOGGLE_BLUR) {
-            // Get the specific SharedPreferences used by home_widget
-            val prefs = context.getSharedPreferences("HomeWidgetPrefs", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val current = prefs.getBoolean("is_blurred", true)
             prefs.edit().putBoolean("is_blurred", !current).apply()
 
-            // Notify update
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val thisAppWidget = ComponentName(context.packageName, AppWidgetProvider::class.java.name)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(thisAppWidget)
@@ -37,24 +37,24 @@ class AppWidgetProvider : HomeWidgetProvider() {
                 val isBlurred = widgetData.getBoolean("is_blurred", true)
                 val income = widgetData.getString("income", "0") ?: "0"
                 val entries = widgetData.getString("entries", "0") ?: "0"
-                val accountName = widgetData.getString("account_name", "PaceWisp System Data") ?: "PaceWisp System Data"
+                val accountName = widgetData.getString("account_name", "PaceWisp Admin") ?: "PaceWisp Admin"
 
                 setTextViewText(R.id.tv_title, accountName)
                 
                 if (isBlurred) {
-                    setTextViewText(R.id.tv_income, "Income: ***")
-                    setTextViewText(R.id.tv_entries, "Entries: ***")
+                    setTextViewText(R.id.tv_income, "KSH ***")
+                    setTextViewText(R.id.tv_entries, "*** Entries")
                 } else {
-                    setTextViewText(R.id.tv_income, "Income: $income")
-                    setTextViewText(R.id.tv_entries, "Entries: $entries")
+                    // Handled formatting on Flutter side, but ensuring clean display here
+                    setTextViewText(R.id.tv_income, if (income.contains("KSH")) income else "KSH $income")
+                    setTextViewText(R.id.tv_entries, if (entries.contains("Entries")) entries else "$entries Entries")
                 }
 
-                // Create a Broadcast Intent instead of Activity Intent
                 val intent = Intent(context, AppWidgetProvider::class.java).apply {
                     action = ACTION_TOGGLE_BLUR
                 }
                 val pendingIntent = PendingIntent.getBroadcast(
-                    context, 0, intent, 
+                    context, widgetId, intent, 
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 setOnClickPendingIntent(R.id.widget_root, pendingIntent)
