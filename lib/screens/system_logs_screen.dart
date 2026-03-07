@@ -150,19 +150,32 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> with SingleTickerPr
                 color: PaceColors.purple,
                 child: _filteredLogs.isEmpty
                   ? _buildEmpty(isDark)
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      itemCount: _filteredLogs.length + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == _filteredLogs.length) {
-                          return const Center(child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2),
-                          ));
-                        }
-                        return _buildLogRow(_filteredLogs[index], isDark);
-                      },
+                  : Column(
+                      children: [
+                        _buildTableHeader(isDark),
+                        Expanded(
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            padding: EdgeInsets.zero,
+                            itemCount: _filteredLogs.length + (_isLoadingMore ? 1 : 0),
+                            separatorBuilder: (_, __) => Divider(
+                              height: 1,
+                              color: PaceColors.getBorder(isDark),
+                              indent: 16,
+                              endIndent: 16,
+                            ),
+                            itemBuilder: (context, index) {
+                              if (index == _filteredLogs.length) {
+                                return const Center(child: Padding(
+                                  padding: EdgeInsets.all(20),
+                                  child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2),
+                                ));
+                              }
+                              return _buildLogRow(_filteredLogs[index], isDark);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
               ),
         ),
