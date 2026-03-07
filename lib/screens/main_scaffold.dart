@@ -142,6 +142,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     return Scaffold(
       backgroundColor: PaceColors.getBackground(isDark),
       appBar: AppBar(
+        centerTitle: false,
         title: Image.asset('assets/images/logoc.png', height: 26, errorBuilder: (_, __, ___) => const Text('PaceWISP')),
         backgroundColor: PaceColors.getBackground(isDark),
         foregroundColor: PaceColors.getPrimaryText(isDark),
