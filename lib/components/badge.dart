@@ -14,12 +14,13 @@ class PaceBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Color bgColor;
     Color textColor;
 
     switch (variant) {
       case BadgeVariant.success:
-        bgColor = const Color(0xFF2CB34A).withOpacity(0.1);
+        bgColor = const Color(0xFF2CB34A).withOpacity(0.12);
         textColor = const Color(0xFF2CB34A);
         break;
       case BadgeVariant.error:
@@ -28,7 +29,7 @@ class PaceBadge extends StatelessWidget {
         break;
       case BadgeVariant.secondary:
         bgColor = const Color(0xFF9CA3AF).withOpacity(0.1);
-        textColor = const Color(0xFF4B5563);
+        textColor = const Color(0xFF9CA3AF);
         break;
       case BadgeVariant.info:
         bgColor = const Color(0xFF3B82F6).withOpacity(0.1);
@@ -36,8 +37,8 @@ class PaceBadge extends StatelessWidget {
         break;
       case BadgeVariant.standard:
       default:
-        bgColor = const Color(0xFFF3F4F6);
-        textColor = const Color(0xFF4B5563);
+        bgColor = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFEEEFF1);
+        textColor = isDark ? Colors.white.withOpacity(0.75) : const Color(0xFF4B5563);
         break;
     }
 
