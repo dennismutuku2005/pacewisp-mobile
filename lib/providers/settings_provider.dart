@@ -10,6 +10,8 @@ class SettingsProvider with ChangeNotifier {
   bool _isDarkMode = false;
   bool _isLoading = true;
   bool _isAppLockEnabled = false;
+  int _widgetAccountIndex = -1;
+  bool _isWidgetBlurred = true;
 
   List<PaceAccount> get accounts => _accounts;
   PaceAccount? get activeAccount => _activeAccountIndex != -1 && _activeAccountIndex < _accounts.length ? _accounts[_activeAccountIndex] : null;
@@ -17,6 +19,9 @@ class SettingsProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => activeAccount != null;
   bool get isAppLockEnabled => _isAppLockEnabled;
+  int get widgetAccountIndex => _widgetAccountIndex;
+  bool get isWidgetBlurred => _isWidgetBlurred;
+  PaceAccount? get widgetAccount => _widgetAccountIndex != -1 && _widgetAccountIndex < _accounts.length ? _accounts[_widgetAccountIndex] : activeAccount;
 
   // Legacy getters for backward compatibility
   String? get accountName => activeAccount?.accountName;
@@ -39,6 +44,8 @@ class SettingsProvider with ChangeNotifier {
     }
 
     _activeAccountIndex = prefs.getInt('active_account_index') ?? (_accounts.isNotEmpty ? 0 : -1);
+    _widgetAccountIndex = prefs.getInt('widget_account_index') ?? (_activeAccountIndex);
+    _isWidgetBlurred = prefs.getBool('is_widget_blurred') ?? true;
     
     if (activeAccount != null) {
       await ApiService().init();
@@ -53,6 +60,8 @@ class SettingsProvider with ChangeNotifier {
     await prefs.setString('pace_accounts', jsonEncode(_accounts.map((a) => a.toJson()).toList()));
     await prefs.setInt('active_account_index', _activeAccountIndex);
     await prefs.setBool('app_lock_enabled', _isAppLockEnabled);
+    await prefs.setInt('widget_account_index', _widgetAccountIndex);
+    await prefs.setBool('is_widget_blurred', _isWidgetBlurred);
     
     if (activeAccount != null) {
       await prefs.setString('subdomain', activeAccount!.subdomain);
@@ -129,5 +138,18 @@ class SettingsProvider with ChangeNotifier {
     if (_activeAccountIndex != -1) {
       await removeAccount(_activeAccountIndex);
     }
+  }
+
+  Future<void> setWidgetAccount(int index) async {
+    _widgetAccountIndex = index;
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  void toggleWidgetBlur() async {
+    _isWidgetBlurred = !_isWidgetBlurred;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_widget_blurred', _isWidgetBlurred);
+    notifyListeners();
   }
 }
