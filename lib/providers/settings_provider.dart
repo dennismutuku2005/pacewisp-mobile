@@ -6,11 +6,10 @@ import '../services/api_service.dart';
 
 class SettingsProvider with ChangeNotifier {
   List<PaceAccount> _accounts = [];
-  int _activeAccountIndex = -1; // Restored this missing field
+  int _activeAccountIndex = -1;
   bool _isDarkMode = false;
   bool _isLoading = true;
   bool _isAppLockEnabled = false;
-  String? _appPin;
 
   List<PaceAccount> get accounts => _accounts;
   PaceAccount? get activeAccount => _activeAccountIndex != -1 && _activeAccountIndex < _accounts.length ? _accounts[_activeAccountIndex] : null;
@@ -18,7 +17,6 @@ class SettingsProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => activeAccount != null;
   bool get isAppLockEnabled => _isAppLockEnabled;
-  String? get appPin => _appPin;
 
   // Legacy getters for backward compatibility
   String? get accountName => activeAccount?.accountName;
@@ -33,7 +31,6 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _isAppLockEnabled = prefs.getBool('app_lock_enabled') ?? false;
-    _appPin = prefs.getString('app_pin');
     
     final accountsJson = prefs.getString('pace_accounts');
     if (accountsJson != null) {
@@ -56,7 +53,6 @@ class SettingsProvider with ChangeNotifier {
     await prefs.setString('pace_accounts', jsonEncode(_accounts.map((a) => a.toJson()).toList()));
     await prefs.setInt('active_account_index', _activeAccountIndex);
     await prefs.setBool('app_lock_enabled', _isAppLockEnabled);
-    if (_appPin != null) await prefs.setString('app_pin', _appPin!);
     
     if (activeAccount != null) {
       await prefs.setString('subdomain', activeAccount!.subdomain);
@@ -80,9 +76,8 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleAppLock(String? pin) async {
-    _isAppLockEnabled = pin != null;
-    _appPin = pin;
+  void toggleAppLock(bool enabled) async {
+    _isAppLockEnabled = enabled;
     await _saveSettings();
     notifyListeners();
   }
