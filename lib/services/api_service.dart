@@ -193,7 +193,13 @@ class ApiService {
 
   // Customers
   Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customers', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getCustomerHistory({required String phone, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customer_history', params: {'phone': phone, 'page': page}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> deleteCustomer(String phone) async => _requestWithFallback('/customers.php?action=delete', method: 'POST', data: {'phone': phone});
+
+  // Blacklist / STK Push Control (uses block_stk.php)
+  Future<Map<String, dynamic>?> checkBlockStatus(String phone) async => _requestWithFallback('/block_stk.php?phone=$phone&t=${DateTime.now().millisecondsSinceEpoch}');
+  Future<Map<String, dynamic>?> blockNumber(String phone, {String reason = 'Manual Block'}) async => _requestWithFallback('/block_stk.php', method: 'POST', data: {'phone': phone, 'reason': reason});
+  Future<Map<String, dynamic>?> unblockNumber(String phone) async => _requestWithFallback('/block_stk.php?phone=$phone', method: 'DELETE');
 
   // Plans
   Future<Map<String, dynamic>?> getPlans(String routerId, {bool forceRefresh = false}) async => fetchData(slug: 'plans', params: {'router_id': routerId}, forceRefresh: forceRefresh);
