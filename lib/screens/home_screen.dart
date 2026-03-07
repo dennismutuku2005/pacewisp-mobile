@@ -39,11 +39,30 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSyncMemory();
+    _loadRouters();
     _fetchCachedThenLive();
-    _loadInitialFilters();
   }
 
-  Future<void> _loadInitialFilters() async {
+  void _loadSyncMemory() {
+    final filters = _parseDateRange(_selectedDateRange);
+    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
+    
+    final wMem = _apiService.getMemoryCached('widgets', params: {'action': 'widgets', 'router': router, 'startDate': filters['startDate'], 'endDate': filters['endDate']});
+    final cMem = _apiService.getMemoryCached('charts', params: {'action': 'charts', 'router': router, 'startDate': filters['startDate'], 'endDate': filters['endDate']});
+    final tMem = _apiService.getMemoryCached('recent_transactions', params: {'action': 'recent_transactions', 'limit': 5, 'router': router, 'startDate': filters['startDate'], 'endDate': filters['endDate']});
+    final rMem = _apiService.getMemoryCached('widgets', params: {'action': 'router_status', 'limit': 5});
+
+    if (wMem != null || cMem != null || tMem != null || rMem != null) {
+      _widgets = _extractData(wMem, 'widgets');
+      _charts = cMem?['data']?['charts']?['revenue_over_time'] ?? cMem?['charts']?['revenue_over_time'] ?? cMem?['data']?['revenue_over_time'] ?? [];
+      _transactions = _extractData(tMem, 'recent_transactions') ?? [];
+      _routerStatus = _extractData(rMem, 'router_status') ?? [];
+      _isLoading = false; // Instant data available
+    }
+  }
+  
+  Future<void> _loadRouters() async {
     try {
       final res = await _apiService.getRouters(forceRefresh: true);
       if (res != null) {
@@ -143,24 +162,28 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeader(isDark),
             const SizedBox(height: 24),
             _buildGlobalFilters(isDark),
             const SizedBox(height: 32),
-            _buildMetricsGrid(isDark),
-            const SizedBox(height: 48),
-            _buildQuickAccessGrid(isDark),
-            const SizedBox(height: 48),
-            _buildSectionHeader('ACTIVITY & GROWTH', 'NETWORK UTILIZATION TRENDS', isDark),
-            _buildChartCard(isDark),
-            const SizedBox(height: 48),
-            _buildSectionHeader('RECENT ACTIVITY', 'LIVE CONNECTIONS', isDark),
-            _buildActivityTable(isDark),
-            const SizedBox(height: 48),
-            _buildSectionHeader('NETWORK STATIONS', 'CORE NODES STATUS', isDark),
-            _buildStationTable(isDark),
+            if (_isLoading && _widgets == null)
+              const SkeletonGrid(count: 4)
+            else ...[
+              _buildMetricsGrid(isDark),
+              const SizedBox(height: 48),
+              _buildQuickAccessGrid(isDark),
+              const SizedBox(height: 48),
+              _buildSectionHeader('ACTIVITY & GROWTH', 'NETWORK UTILIZATION TRENDS', isDark),
+              _buildChartCard(isDark),
+              const SizedBox(height: 48),
+              _buildSectionHeader('RECENT ACTIVITY', 'LIVE CONNECTIONS', isDark),
+              _buildActivityTable(isDark),
+              const SizedBox(height: 48),
+              _buildSectionHeader('NETWORK STATIONS', 'CORE NODES STATUS', isDark),
+              _buildStationTable(isDark),
+            ],
             const SizedBox(height: 100),
           ],
         ),
