@@ -14,35 +14,30 @@ class DashboardChart extends StatelessWidget {
       return const Center(child: Text('No data available'));
     }
 
-    // Convert list to FlSpot
-    List<FlSpot> revenueSpots = [];
-    List<FlSpot> entrySpots = [];
-    
-    for (int i = 0; i < chartData.length; i++) {
-      final amount = double.tryParse(chartData[i]['amount'].toString()) ?? 0;
-      final entries = double.tryParse(chartData[i]['entries'].toString()) ?? 0;
-      revenueSpots.add(FlSpot(i.toDouble(), amount));
-      entrySpots.add(FlSpot(i.toDouble(), entries));
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 5000,
-          getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: PaceColors.getBorder(Theme.of(context).brightness == Brightness.dark).withOpacity(0.5),
-              strokeWidth: 1,
-              dashArray: [5, 5],
-            );
-          },
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: _getMaxY(),
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => PaceColors.getCard(isDark).withOpacity(0.9),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              return BarTooltipItem(
+                'KSH ${rod.toY.toInt()}',
+                GoogleFonts.figtree(
+                  color: PaceColors.purple,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              );
+            },
+          ),
         ),
         titlesData: FlTitlesData(
           show: true,
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -50,11 +45,11 @@ class DashboardChart extends StatelessWidget {
                 int index = value.toInt();
                 if (index >= 0 && index < chartData.length) {
                   return Padding(
-                    padding: const EdgeInsets.only(top: 12.0),
+                    padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                      chartData[index]['day']?.toString().toUpperCase() ?? '',
+                      chartData[index]['day']?.toString().split(' ')[0].toUpperCase() ?? '',
                       style: GoogleFonts.figtree(
-                        color: PaceColors.getDimText(Theme.of(context).brightness == Brightness.dark),
+                        color: PaceColors.getDimText(isDark),
                         fontWeight: FontWeight.bold,
                         fontSize: 8,
                         letterSpacing: 1,
@@ -62,20 +57,21 @@ class DashboardChart extends StatelessWidget {
                     ),
                   );
                 }
-                return const Text('');
+                return const SizedBox();
               },
+              reservedSize: 22,
             ),
           ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
-                if (value == 0) return const Text('');
+                if (value == 0) return const SizedBox();
                 String label = value >= 1000 ? '${(value / 1000).toStringAsFixed(0)}k' : value.toStringAsFixed(0);
                 return Text(
                   label,
                   style: GoogleFonts.figtree(
-                    color: PaceColors.getDimText(Theme.of(context).brightness == Brightness.dark),
+                    color: PaceColors.getDimText(isDark),
                     fontWeight: FontWeight.bold,
                     fontSize: 8,
                   ),
@@ -84,69 +80,56 @@ class DashboardChart extends StatelessWidget {
               reservedSize: 28,
             ),
           ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: _getInterval(),
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: PaceColors.getBorder(isDark).withOpacity(0.5),
+            strokeWidth: 1,
+            dashArray: [4, 4],
+          ),
         ),
         borderData: FlBorderData(show: false),
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => PaceColors.getCard(Theme.of(context).brightness == Brightness.dark).withOpacity(0.9),
-            getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((spot) {
-                final isRevenue = spot.barIndex == 0;
-                return LineTooltipItem(
-                  isRevenue ? 'REVENUE: KSH ${spot.y.toInt()}' : 'ENTRIES: ${spot.y.toInt()}',
-                  GoogleFonts.figtree(
-                    color: isRevenue ? PaceColors.purple : const Color(0xFF22C55E),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                  ),
-                );
-              }).toList();
-            },
-          ),
-        ),
-        lineBarsData: [
-          // Revenue Line (Purple)
-          LineChartBarData(
-            spots: revenueSpots,
-            isCurved: true,
-            color: PaceColors.purple,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  PaceColors.purple.withOpacity(0.15),
-                  PaceColors.purple.withOpacity(0.0),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+        barGroups: List.generate(chartData.length, (i) {
+          final amount = double.tryParse(chartData[i]['amount'].toString()) ?? 0;
+          return BarChartGroupData(
+            x: i,
+            barRods: [
+              BarChartRodData(
+                toY: amount,
+                color: PaceColors.purple,
+                width: 12,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                backDrawRodData: BackgroundBarChartRodData(
+                  show: true,
+                  toY: _getMaxY(),
+                  color: PaceColors.purple.withOpacity(0.05),
+                ),
               ),
-            ),
-          ),
-          // Entries Line (Green)
-          LineChartBarData(
-            spots: entrySpots,
-            isCurved: true,
-            color: const Color(0xFF22C55E),
-            barWidth: 2,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF22C55E).withOpacity(0.1),
-                  const Color(0xFF22C55E).withOpacity(0.0),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ],
+            ],
+          );
+        }),
       ),
     );
+  }
+
+  double _getMaxY() {
+    double max = 1000;
+    for (var d in chartData) {
+      double val = double.tryParse(d['amount'].toString()) ?? 0;
+      if (val > max) max = val;
+    }
+    return max * 1.2;
+  }
+
+  double _getInterval() {
+    double max = _getMaxY();
+    if (max <= 5000) return 1000;
+    if (max <= 20000) return 5000;
+    return 10000;
   }
 }
