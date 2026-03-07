@@ -295,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: isLoading
             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : Text(label, style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 16)),
+            : Text(label, style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 13)),
       ),
     );
   }
