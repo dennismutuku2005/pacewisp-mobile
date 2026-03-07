@@ -44,12 +44,29 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final res = await _apiService.getRouters(forceRefresh: true);
       if (res != null) {
-        debugPrint("API: Routers Response received: ${res.keys}");
-        final List<dynamic> fetched = _extractData(res, 'routers') ?? [];
-        debugPrint("API: Fetched ${fetched.length} routers");
+        debugPrint("API: Routers Response keys: ${res.keys}");
+        final dynamic raw = res['data'] ?? res['routers'];
+        List<dynamic> fetched = [];
+        
+        if (raw is List) {
+          fetched = raw;
+        } else if (raw is Map && raw['routers'] is List) {
+          fetched = raw['routers'];
+        }
+
+        debugPrint("API: Parsed ${fetched.length} routers from raw data");
+        
         if (mounted) {
           setState(() {
-            _routerNames = ['All Routers', ...fetched.map((r) => r['name']?.toString() ?? r['router_name']?.toString() ?? r.toString())];
+            _routerNames = ['All Routers'];
+            for (var r in fetched) {
+              if (r is String) {
+                _routerNames.add(r);
+              } else if (r is Map) {
+                final name = r['name']?.toString() ?? r['router_name']?.toString() ?? r['router']?.toString();
+                if (name != null) _routerNames.add(name);
+              }
+            }
           });
         }
       } else {
@@ -111,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
       _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
       _apiService.getRecentTransactions(router: router, startDate: filters['startDate'], endDate: filters['endDate'], limit: 5, forceRefresh: true),
-      _apiService.getRouterStatus(limit: 4, forceRefresh: true),
+      _apiService.getRouterStatus(limit: 5, forceRefresh: true),
     ]);
 
     if (mounted) {
@@ -122,12 +139,17 @@ class _HomeScreenState extends State<HomeScreen> {
         _routerStatus = _extractData(live[3], 'router_status') ?? [];
         _isLoading = false;
       });
+      debugPrint("API: Live sync complete. Txs: ${_transactions.length}, Nodes: ${_routerStatus.length}");
     }
   }
 
   dynamic _extractData(Map<String, dynamic>? res, String key) {
     if (res == null) return null;
-    return res['data']?[key] ?? res[key] ?? res['data'];
+    final dynamic data = res['data'];
+    if (data is Map) {
+      return data[key] ?? data;
+    }
+    return res[key] ?? data;
   }
 
   @override
