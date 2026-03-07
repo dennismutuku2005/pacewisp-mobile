@@ -111,8 +111,17 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     });
   }
 
+  void _onNavigateToRouters() {
+    setState(() {
+      _selectedIndex = 6; // Go to Routers tab
+    });
+  }
+
   List<Widget> get _screens => [
-    HomeScreen(onGenerateVoucher: _onGenerateVoucher),
+    HomeScreen(
+      onGenerateVoucher: _onGenerateVoucher,
+      onNavigateToRouters: _onNavigateToRouters,
+    ),
     VouchersScreen(openModal: _triggerVouchersModal),
     const IncomeScreen(),
     const EntriesScreen(),
