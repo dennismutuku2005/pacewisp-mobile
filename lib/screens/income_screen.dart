@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
@@ -17,22 +18,52 @@ class IncomeScreen extends StatefulWidget {
 class _IncomeScreenState extends State<IncomeScreen> {
   final ApiService _apiService = ApiService();
   Map<String, dynamic>? _incomeData;
+  List<dynamic> _routers = ['All Routers'];
+  
   bool _isLoading = true;
   String _selectedRouter = 'All Routers';
   String _selectedRange = 'This Month';
+  final _currencyFormat = NumberFormat("#,###", "en_US");
 
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    _fetchCachedThenLive();
+    _loadRouters();
   }
 
-  Future<void> _fetchData({bool force = false}) async {
-    if (!force) setState(() => _isLoading = true);
-    final res = await _apiService.getIncome(router: _selectedRouter, forceRefresh: force);
-    if (mounted) {
+  Future<void> _loadRouters() async {
+    final res = await _apiService.getRouters(forceRefresh: true);
+    if (res != null) {
+      final dynamic raw = res['data'] ?? res['routers'];
+      if (raw is List) {
+        final Set<String> unique = {'All Routers'};
+        for (var r in raw) {
+          String? name = (r is Map) ? (r['name'] ?? r['router_name'])?.toString() : r.toString();
+          if (name != null) unique.add(name);
+        }
+        if (mounted) setState(() => _routers = unique.toList());
+      }
+    }
+  }
+
+  Future<void> _fetchCachedThenLive() async {
+    // 1. SILENT CACHE LOAD
+    final cached = await _apiService.getIncome(router: _selectedRouter == 'All Routers' ? null : _selectedRouter, forceRefresh: false);
+    if (mounted && cached != null) {
       setState(() {
-        _incomeData = res?['data'] ?? res;
+        _incomeData = cached['data'] ?? cached;
+        _isLoading = false;
+      });
+    } else if (mounted) {
+       setState(() => _isLoading = true);
+    }
+
+    // 2. LIVE REFRESH
+    final live = await _apiService.getIncome(router: _selectedRouter == 'All Routers' ? null : _selectedRouter, forceRefresh: true);
+    if (mounted && live != null) {
+      setState(() {
+        _incomeData = live['data'] ?? live;
         _isLoading = false;
       });
     }
@@ -43,320 +74,232 @@ class _IncomeScreenState extends State<IncomeScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Container(
-      color: PaceColors.getBackground(isDark),
-      child: _isLoading 
-        ? _buildSkeletonBody(isDark)
-        : RefreshIndicator(
-            onRefresh: () => _fetchData(force: true),
-            color: PaceColors.purple,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(isDark),
-                  const SizedBox(height: 24),
-                  _buildMetricsGrid(isDark),
-                  const SizedBox(height: 32),
-                  _buildChartSection(isDark),
-                  const SizedBox(height: 32),
-                  _buildPlanDistribution(isDark),
-                  const SizedBox(height: 32),
-                  _buildTicketValueSection(isDark),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
+    return Scaffold(
+      backgroundColor: PaceColors.getBackground(isDark),
+      body: RefreshIndicator(
+        onRefresh: () => _fetchCachedThenLive(),
+        color: PaceColors.purple,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(isDark),
+              const SizedBox(height: 24),
+              _buildFilters(isDark),
+              const SizedBox(height: 32),
+              if (_isLoading && _incomeData == null) 
+                 const SkeletonGrid(count: 9)
+              else ...[
+                _buildMetricsGrid(isDark),
+                const SizedBox(height: 32),
+                _buildChartCard(isDark),
+                const SizedBox(height: 32),
+                _buildPlanDistribution(isDark),
+                const SizedBox(height: 32),
+                _buildTicketValue(isDark),
+              ],
+              const SizedBox(height: 100),
+            ],
           ),
-    );
-  }
-
-  Widget _buildSkeletonBody(bool isDark) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const PaceSkeleton(height: 40, width: 220),
-          const SizedBox(height: 24),
-          const SkeletonGrid(count: 6),
-          const SizedBox(height: 24),
-          const PaceSkeleton(height: 350, borderRadius: 20),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('REVENUE ANALYTICS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-        Text('FINANCIAL PERFORMANCE & GROWTH INSIGHTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
-      ],
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('REVENUE ANALYTICS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+      Text('FINANCIAL PERFORMANCE & GROWTH INSIGHTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+    ]);
+  }
+
+  Widget _buildFilters(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedRouter,
+          isExpanded: true,
+          dropdownColor: PaceColors.getCard(isDark),
+          items: _routers.map((r) => DropdownMenuItem(value: r.toString(), child: Text(r.toString(), style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))))).toList(),
+          onChanged: (v) { if (v != null) { setState(() => _selectedRouter = v); _fetchCachedThenLive(); } },
+        ),
+      ),
     );
   }
 
   Widget _buildMetricsGrid(bool isDark) {
-    final metrics = _incomeData?['metrics'];
-    if (metrics == null) return const SizedBox();
+    final m = _incomeData?['metrics'];
+    if (m == null) return const SizedBox();
 
     final cardData = [
-      {'label': 'TODAY', 'value': metrics['today']?['value'] ?? 0, 'trend': metrics['today']?['trend'] ?? 0, 'icon': Icons.account_balance_wallet_rounded, 'color': PaceColors.purple},
-      {'label': 'THIS WEEK', 'value': metrics['week']?['value'] ?? 0, 'trend': metrics['week']?['trend'] ?? 0, 'icon': Icons.calendar_month_rounded, 'color': PaceColors.sapphire},
-      {'label': 'THIS MONTH', 'value': metrics['month']?['value'] ?? 0, 'trend': metrics['month']?['trend'] ?? 0, 'icon': Icons.trending_up_rounded, 'color': PaceColors.emerald},
-      {'label': 'LAST MONTH', 'value': metrics['last_month']?['value'] ?? 0, 'trend': 0, 'icon': Icons.history_rounded, 'color': Colors.orange},
-      {'label': 'THIS YEAR', 'value': metrics['year']?['value'] ?? 0, 'trend': metrics['year']?['trend'] ?? 0, 'icon': Icons.payments_rounded, 'color': Colors.teal},
-      {'label': 'AVG DAILY', 'value': metrics['avg_daily'] ?? 0, 'trend': 0, 'icon': Icons.bar_chart_rounded, 'color': Colors.indigo},
+      {'label': "TODAY", 'value': m['today']?['value'] ?? 0, 'trend': m['today']?['trend'] ?? 0, 'icon': Icons.account_balance_wallet_rounded, 'color': PaceColors.purple},
+      {'label': "THIS WEEK", 'value': m['week']?['value'] ?? 0, 'trend': m['week']?['trend'] ?? 0, 'icon': Icons.calendar_today_rounded, 'color': Colors.blue},
+      {'label': "THIS MONTH", 'value': m['month']?['value'] ?? 0, 'trend': m['month']?['trend'] ?? 0, 'icon': Icons.trending_up_rounded, 'color': Colors.green},
+      {'label': "LAST MONTH", 'value': m['last_month']?['value'] ?? 0, 'trend': 0, 'icon': Icons.history_rounded, 'color': Colors.orange},
+      {'label': "THIS YEAR", 'value': m['year']?['value'] ?? 0, 'trend': m['year']?['trend'] ?? 0, 'icon': Icons.payments_rounded, 'color': Colors.teal},
+      {'label': "LAST YEAR", 'value': m['last_year']?['value'] ?? 0, 'trend': 0, 'icon': Icons.arrow_downward_rounded, 'color': Colors.grey},
+      {'label': "AVG DAILY", 'value': m['avg_daily'] ?? 0, 'trend': 0, 'icon': Icons.bar_chart_rounded, 'color': Colors.indigo},
+      {'label': "AVG WEEKLY", 'value': m['avg_weekly'] ?? 0, 'trend': 0, 'icon': Icons.layers_rounded, 'color': Colors.pink},
+      {'label': "AVG MONTHLY", 'value': m['avg_monthly'] ?? 0, 'trend': 0, 'icon': Icons.show_chart_rounded, 'color': Colors.deepPurple},
     ];
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.4,
-      ),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.4),
       itemCount: cardData.length,
       itemBuilder: (context, index) {
-        final data = cardData[index];
-        final bool isUp = (data['trend'] as num) >= 0;
-        final color = data['color'] as Color;
+        final d = cardData[index];
+        final color = d['color'] as Color;
+        final trendNum = d['trend'] as num;
+        final bool isUp = trendNum >= 0;
 
         return Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: PaceColors.getCard(isDark),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
-                    child: Icon(data['icon'] as IconData, color: color, size: 18),
-                  ),
-                  if (data['trend'] != 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: (isUp ? Colors.green : Colors.red).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                      child: Row(
-                        children: [
-                          Icon(isUp ? Icons.trending_up_rounded : Icons.trending_down_rounded, size: 10, color: isUp ? Colors.green : Colors.red),
-                          const SizedBox(width: 2),
-                          Text('${data['trend']}%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: isUp ? Colors.green : Colors.red)),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              const Spacer(),
-              Text(data['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-              Text('KSH ${_format(data['value'])}', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
-            ],
-          ),
+          decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+               Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Icon(d['icon'] as IconData, color: color, size: 16)),
+               if (trendNum != 0) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: (isUp ? Colors.green : Colors.red).withOpacity(0.1), borderRadius: BorderRadius.circular(6)), child: Text('${isUp ? '+' : ''}$trendNum%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: isUp ? Colors.green : Colors.red))),
+             ]),
+             const Spacer(),
+             Text(d['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+             Text('KSH ${_format(d['value'])}', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+          ]),
         );
       },
     );
   }
 
-  Widget _buildChartSection(bool isDark) {
+  Widget _buildChartCard(bool isDark) {
     final trend = _incomeData?['charts']?['revenue_trend'] ?? [];
+    if (trend.isEmpty) return const SizedBox();
+
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('INCOME TREND', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
-          Text('DAILY REVENUE FLOW LOGS', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 250,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (val) => FlLine(color: PaceColors.getBorder(isDark), strokeWidth: 1)),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 22, getTitlesWidget: (val, meta) {
-                    if (trend.isEmpty || val % (trend.length / 5).ceil() != 0) return const SizedBox();
-                    final index = val.toInt();
-                    if (index >= trend.length) return const SizedBox();
-                    return Text(trend[index]['day']?.toString().substring(0, 3).toUpperCase() ?? '', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900));
-                  })),
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (val, meta) => Text(_format(val), style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900)))),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: trend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['amount'] ?? 0).toDouble())).toList(),
-                    isCurved: true,
-                    color: PaceColors.purple,
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [PaceColors.purple.withOpacity(0.2), PaceColors.purple.withOpacity(0)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
-                  ),
-                ],
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('INCOME TREND', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple)),
+        Text('DAILY REVENUE FLOW LOGS', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        const SizedBox(height: 32),
+        SizedBox(
+          height: 250,
+          child: LineChart(
+            LineChartData(
+              gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: _getInterval(trend), getDrawingHorizontalLine: (val) => FlLine(color: PaceColors.getBorder(isDark), strokeWidth: 1, dashArray: [4, 4])),
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 22, getTitlesWidget: (v, m) {
+                   int i = v.toInt();
+                   if (i >= 0 && i < trend.length && i % (trend.length > 10 ? 3 : 1) == 0) {
+                      return Text(trend[i]['day']?.toString().substring(0, 3).toUpperCase() ?? '', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900));
+                   }
+                   return const SizedBox();
+                })),
+                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 45, getTitlesWidget: (v, m) {
+                   if (v == 0) return const SizedBox();
+                   return Text(v >= 1000 ? '${(v/1000).toStringAsFixed(1)}k' : v.toInt().toString(), style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900));
+                })),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
+              borderData: FlBorderData(show: false),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: trend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), double.tryParse(e.value['amount'].toString()) ?? 0)).toList(),
+                  isCurved: true,
+                  color: PaceColors.purple,
+                  barWidth: 4,
+                  isStrokeCapRound: true,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [PaceColors.purple.withOpacity(0.15), PaceColors.purple.withOpacity(0)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 
   Widget _buildPlanDistribution(bool isDark) {
     final dist = _incomeData?['charts']?['plan_distribution'] ?? [];
+    if (dist.isEmpty) return const SizedBox();
+
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
-                  Text('REVENUE SHARE BY TIER', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                ],
-              ),
-              const Icon(Icons.pie_chart_rounded, color: PaceColors.purple, size: 24),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              SizedBox(
-                width: 150,
-                height: 150,
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 4,
-                    centerSpaceRadius: 40,
-                    sections: dist.map<PieChartSectionData>((item) => PieChartSectionData(
-                      color: _parseColor(item['color']),
-                      value: (item['value'] ?? 0).toDouble(),
-                      title: '',
-                      radius: 25,
-                    )).toList(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Column(
-                  children: dist.map<Widget>((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: _parseColor(item['color']), shape: BoxShape.circle)),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(item['name']?.toUpperCase() ?? '', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)))),
-                        Text('${item['value']}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.purple, fontFamily: 'monospace')),
-                      ],
-                    ),
-                  )).toList(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+         Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple)),
+         Text('REVENUE SHARE BY TIER', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+         const SizedBox(height: 32),
+         Row(children: [
+           SizedBox(width: 140, height: 140, child: PieChart(PieChartData(sectionsSpace: 4, centerSpaceRadius: 35, sections: dist.map<PieChartSectionData>((it) => PieChartSectionData(color: _parseColor(it['color']), value: double.tryParse(it['value'].toString()) ?? 0, title: '', radius: 20)).toList()))),
+           const SizedBox(width: 24),
+           Expanded(child: Column(children: dist.map<Widget>((it) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: _parseColor(it['color']), shape: BoxShape.circle)), const SizedBox(width: 8), Expanded(child: Text(it['name']?.toString().toUpperCase() ?? '', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Text('${it['value']}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.purple))]))).toList())),
+         ]),
+      ]),
     );
   }
 
-  Widget _buildTicketValueSection(bool isDark) {
+  Widget _buildTicketValue(bool isDark) {
     final trend = _incomeData?['charts']?['revenue_trend'] ?? [];
+    if (trend.isEmpty) return const SizedBox();
+
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('TICKET VALUE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
-                  Text('AVG REVENUE PER TRANSACTION', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                ],
-              ),
-              const Icon(Icons.leaderboard_rounded, color: PaceColors.sapphire, size: 24),
-            ],
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 200,
-            child: BarChart(
-              BarChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (val, meta) {
-                    if (trend.isEmpty) return const SizedBox();
-                    final index = val.toInt();
-                    if (index >= trend.length || index % (trend.length / 5).ceil() != 0) return const SizedBox();
-                    return Text(trend[index]['day']?.toString().substring(0, 3).toUpperCase() ?? '', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900));
-                  })),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: trend.asMap().entries.map((e) {
-                  final amount = (e.value['amount'] ?? 0).toDouble();
-                  final entries = (e.value['entries'] ?? 1).toDouble();
-                  final avg = amount / (entries == 0 ? 1 : entries);
-                  return BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: avg, color: PaceColors.sapphire, width: 12, borderRadius: BorderRadius.circular(4))]);
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+         Text('TICKET VALUE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple)),
+         Text('AVG REVENUE PER TRANSACTION', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+         const SizedBox(height: 32),
+         SizedBox(
+           height: 200,
+           child: BarChart(BarChartData(
+             gridData: const FlGridData(show: false),
+             titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, m) {
+                   int i = v.toInt();
+                   if (i >= 0 && i < trend.length && i % (trend.length > 10 ? 4 : 1) == 0) {
+                      return Text(trend[i]['day']?.toString().substring(0, 3).toUpperCase() ?? '', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w900));
+                   }
+                   return const SizedBox();
+                })),
+                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+             ), 
+             borderData: FlBorderData(show: false),
+             barGroups: trend.asMap().entries.map((e) {
+               double amt = double.tryParse(e.value['amount'].toString()) ?? 0;
+               double ent = double.tryParse(e.value['entries'].toString()) ?? 0;
+               double avg = ent == 0 ? 0 : amt / ent;
+               return BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: avg, color: Colors.blue, width: 12, borderRadius: BorderRadius.circular(4))]);
+             }).toList()
+           ))),
+      ]),
     );
   }
 
-  String _format(dynamic val) {
-    if (val == null) return "0";
-    final num n = val is num ? val : num.tryParse(val.toString()) ?? 0;
-    if (n >= 1000) return "${(n / 1000).toStringAsFixed(1)}K";
-    return n.toStringAsFixed(0);
+  double _getInterval(List<dynamic> trend) {
+    double max = 0;
+    for (var d in trend) {
+      double v = double.tryParse(d['amount'].toString()) ?? 0;
+      if (v > max) max = v;
+    }
+    if (max == 0) return 1000;
+    return (max / 4).clamp(1.0, double.infinity);
   }
 
-  Color _parseColor(String? colorStr) {
-    if (colorStr == null) return PaceColors.purple;
-    try {
-      return Color(int.parse(colorStr.replaceFirst('#', '0xFF')));
-    } catch (e) {
-      return PaceColors.purple;
-    }
+  String _format(dynamic val) { if (val == null) return "0"; try { final double n = double.parse(val.toString()); return _currencyFormat.format(n.toInt()); } catch (e) { return val.toString(); } }
+  
+  Color _parseColor(dynamic c) {
+    if (c == null) return PaceColors.purple;
+    String s = c.toString();
+    if (!s.startsWith('#')) return PaceColors.purple;
+    try { return Color(int.parse(s.replaceFirst('#', '0xFF'))); } catch (e) { return PaceColors.purple; }
   }
 }
