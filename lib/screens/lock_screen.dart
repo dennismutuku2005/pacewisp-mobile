@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/lock_service.dart';
 import '../theme/colors.dart';
 import 'package:provider/provider.dart';
@@ -91,10 +90,10 @@ class _LockScreenState extends State<LockScreen> {
               
               Text(
                 accountName,
-                style: GoogleFonts.figtree(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 22,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.bold,
                   letterSpacing: 4,
                 ),
                 textAlign: TextAlign.center,
@@ -115,7 +114,7 @@ class _LockScreenState extends State<LockScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'SECURED ENVIRONMENT',
-                      style: GoogleFonts.jetBrainsMono(
+                      style: TextStyle(
                         color: PaceColors.purple,
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
@@ -133,7 +132,7 @@ class _LockScreenState extends State<LockScreen> {
                   children: [
                     const CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 3),
                     const SizedBox(height: 16),
-                    Text('SCANNING...', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 2)),
+                    Text('SCANNING...', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 2)),
                   ],
                 )
               else
@@ -147,7 +146,7 @@ class _LockScreenState extends State<LockScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _authenticate,
                           icon: const Icon(Icons.fingerprint_rounded, size: 24),
-                          label: Text('UNLOCK TO CONTINUE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                          label: Text('UNLOCK TO CONTINUE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: PaceColors.purple,
                             foregroundColor: Colors.white,
@@ -173,7 +172,7 @@ class _LockScreenState extends State<LockScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 _error,
-                                style: GoogleFonts.figtree(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                                style: TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                               ),
                             ],
                           ),
