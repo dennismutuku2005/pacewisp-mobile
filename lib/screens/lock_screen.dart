@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/lock_service.dart';
 import '../theme/colors.dart';
 import 'package:provider/provider.dart';
@@ -36,7 +37,7 @@ class _LockScreenState extends State<LockScreen> {
     } else {
       setState(() {
         _isAuthenticating = false;
-        _error = 'Security check failed';
+        _error = 'BIOMETRIC MISMATCH OR CANCELLED';
       });
     }
   }
@@ -44,10 +45,12 @@ class _LockScreenState extends State<LockScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
-    final isDark = settings.isDarkMode;
+
+    // Dynamic app name based on active account or default
+    final accountName = settings.activeAccount?.accountName.toUpperCase() ?? 'PACE WISP';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFF0F172A), // Deep premium dark background
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -62,46 +65,77 @@ class _LockScreenState extends State<LockScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
+              
+              // Profile Logo Container
               Container(
+                width: 120, height: 120,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withOpacity(0.04),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(color: PaceColors.purple.withOpacity(0.15), blurRadius: 40, spreadRadius: 10),
+                  ],
                 ),
                 child: Image.asset(
                   'assets/images/logo.png',
-                  height: 80,
                   errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.fingerprint_rounded,
-                    size: 80,
+                    Icons.security_rounded,
+                    size: 56,
                     color: Colors.white,
                   ),
                 ),
               ),
               const SizedBox(height: 32),
-              const Text(
-                'PACEWISP SECURE',
-                style: TextStyle(
+              
+              Text(
+                accountName,
+                style: GoogleFonts.figtree(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 4,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              Text(
-                'AUTHENTICATION REQUIRED',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+              
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: PaceColors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: PaceColors.purple.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_rounded, size: 12, color: PaceColors.purple),
+                    const SizedBox(width: 8),
+                    Text(
+                      'SECURED ENVIRONMENT',
+                      style: GoogleFonts.jetBrainsMono(
+                        color: PaceColors.purple,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              
               const Spacer(),
+              
               if (_isAuthenticating)
-                const CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 3)
+                Column(
+                  children: [
+                    const CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 3),
+                    const SizedBox(height: 16),
+                    Text('SCANNING...', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 2)),
+                  ],
+                )
               else
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 48),
@@ -109,30 +143,46 @@ class _LockScreenState extends State<LockScreen> {
                     children: [
                       SizedBox(
                         width: double.infinity,
-                        height: 56,
+                        height: 60,
                         child: ElevatedButton.icon(
                           onPressed: _authenticate,
-                          icon: const Icon(Icons.fingerprint_rounded),
-                          label: const Text('UNLOCK SYSTEM', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                          icon: const Icon(Icons.fingerprint_rounded, size: 24),
+                          label: Text('UNLOCK TO CONTINUE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: PaceColors.purple,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            elevation: 10,
+                            shadowColor: PaceColors.purple.withOpacity(0.4),
                           ),
                         ),
                       ),
                       if (_error.isNotEmpty) ...[
                         const SizedBox(height: 24),
-                        Text(
-                          _error.toUpperCase(),
-                          style: const TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 14),
+                              const SizedBox(width: 8),
+                              Text(
+                                _error,
+                                style: GoogleFonts.figtree(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ],
                   ),
                 ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 56),
             ],
           ),
         ),
