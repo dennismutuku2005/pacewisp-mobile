@@ -182,7 +182,7 @@ class ApiService {
   
   // Routers
   Future<Map<String, dynamic>?> getRouters({bool forceRefresh = false}) async => 
-    fetchData(slug: 'widgets', params: {'action': 'get_routers'}, forceRefresh: forceRefresh);
+    fetchData(slug: 'routers', params: {'limit': 100}, forceRefresh: forceRefresh);
 
   Future<Map<String, dynamic>?> getRouterStatus({int limit = 5, bool forceRefresh = false}) async => 
     fetchData(slug: 'widgets', params: {'action': 'router_status', 'limit': limit}, forceRefresh: forceRefresh);
