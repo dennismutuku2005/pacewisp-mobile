@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 class WidgetService {
   static const String _groupId = 'group.com.pacewisp.pacewisp'; // For iOS if needed later
   static const String _androidWidgetName = 'AppWidgetProvider';
+  static const String _androidClassName = 'com.pacewisp.pacewisp.AppWidgetProvider';
 
   static Future<void> updateWidgetData({
     required String accountName,
@@ -28,7 +29,7 @@ class WidgetService {
     
     await HomeWidget.updateWidget(
       name: _androidWidgetName,
-      androidName: _androidWidgetName,
+      androidName: _androidClassName,
     );
   }
 
@@ -37,7 +38,7 @@ class WidgetService {
     await HomeWidget.saveWidgetData<bool>('is_blurred', !(currentBlur ?? true));
     await HomeWidget.updateWidget(
       name: _androidWidgetName,
-      androidName: _androidWidgetName,
+      androidName: _androidClassName,
     );
   }
 }
