@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/account.dart';
 import '../services/api_service.dart';
@@ -142,12 +143,18 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> setWidgetAccount(int index) async {
     _widgetAccountIndex = index;
+    if (widgetAccount != null) {
+      await HomeWidget.saveWidgetData<String>('account_name', widgetAccount!.accountName);
+      await HomeWidget.updateWidget(name: 'AppWidgetProvider', androidName: 'com.pacewisp.pacewisp.AppWidgetProvider');
+    }
     await _saveSettings();
     notifyListeners();
   }
 
   void toggleWidgetBlur() async {
     _isWidgetBlurred = !_isWidgetBlurred;
+    await HomeWidget.saveWidgetData<bool>('is_blurred', _isWidgetBlurred);
+    await HomeWidget.updateWidget(name: 'AppWidgetProvider', androidName: 'com.pacewisp.pacewisp.AppWidgetProvider');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_widget_blurred', _isWidgetBlurred);
     notifyListeners();
