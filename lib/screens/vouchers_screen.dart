@@ -47,39 +47,23 @@ class _VouchersScreenState extends State<VouchersScreen> {
   }
 
   Future<void> _fetchInitialData() async {
-    debugPrint('[VOUCHERS] Initializing...');
-    if (mounted) setState(() => _isLoading = true);
+    debugPrint('[VOUCHERS] Initializing silent load...');
     
-    try {
-      final routersRes = await _apiService.getRouters(forceRefresh: true);
-      if (mounted) {
-        // Handle routers.php response correctly (Maps list from 'data' field)
-        final dynamic raw = routersRes?['data'] ?? routersRes?['routers'];
-        if (raw is List) {
-          final Set<String> uniqueIds = {};
-          _routers = [];
-          for (var r in raw) {
-            String? id;
-            if (r is Map) {
-              id = (r['id'] ?? r['router_id'] ?? r['router_name'] ?? r['name'])?.toString();
-            } else {
-              id = r.toString();
-            }
+    // CACHE LOAD FIRST
+    final cachedRouters = await _apiService.getRouters(forceRefresh: false);
+    if (mounted && cachedRouters != null) {
+      _processRouters(cachedRouters);
+    }
+    await _fetchVouchers(page: 1, forceRefresh: false);
 
-            if (id != null && !uniqueIds.contains(id)) {
-              uniqueIds.add(id);
-              if (r is! Map) {
-                _routers.add({'id': r, 'router_name': r, 'name': r});
-              } else {
-                _routers.add(r);
-              }
-            }
-          }
-        }
-        debugPrint('[VOUCHERS] Loaded ${_routers.length} nodes metadata');
+    // LIVE REFRESH IN BACKGROUND
+    try {
+      final liveRouters = await _apiService.getRouters(forceRefresh: true);
+      if (mounted && liveRouters != null) {
+        _processRouters(liveRouters);
       }
     } catch (e) {
-      debugPrint('[VOUCHERS] Error loading nodes: $e');
+      debugPrint('[VOUCHERS] Live router error: $e');
     }
 
     await _fetchVouchers(page: 1, forceRefresh: true);
@@ -90,9 +74,40 @@ class _VouchersScreenState extends State<VouchersScreen> {
     }
   }
 
+  void _processRouters(Map<String, dynamic>? res) {
+    if (res == null) return;
+    final dynamic raw = res['data'] ?? res['routers'];
+    if (raw is List) {
+      final Set<String> uniqueIds = {};
+      final List<dynamic> processed = [];
+      for (var r in raw) {
+        String? id;
+        if (r is Map) {
+          id = (r['id'] ?? r['router_id'] ?? r['router_name'] ?? r['name'])?.toString();
+        } else {
+          id = r.toString();
+        }
+
+        if (id != null && !uniqueIds.contains(id)) {
+          uniqueIds.add(id);
+          if (r is! Map) {
+            processed.add({'id': r, 'router_name': r, 'name': r});
+          } else {
+            processed.add(r);
+          }
+        }
+      }
+      setState(() => _routers = processed);
+      debugPrint('[VOUCHERS] Processed ${_routers.length} nodes');
+    }
+  }
+
   Future<void> _fetchVouchers({int page = 1, bool forceRefresh = false}) async {
     if (page == 1) {
-      if (mounted) setState(() => _isLoading = true);
+      // Only show skeleton if we have NO data at all
+      if (_vouchers.isEmpty) {
+        if (mounted) setState(() => _isLoading = true);
+      }
     } else {
       if (mounted) setState(() => _isLoadingMore = true);
     }
@@ -118,6 +133,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
         if (page == 1) {
           _vouchers = newVouchers;
         } else {
+          // Deduplicate if needed
           _vouchers.addAll(newVouchers);
         }
         _hasMore = res?['pagination']?['has_more'] ?? res?['data']?['pagination']?['has_more'] ?? false;
@@ -125,7 +141,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
         _page = page;
         _isLoading = false;
         _isLoadingMore = false;
-        _selectedIds.clear();
+        if (page == 1) _selectedIds.clear();
       });
     }
   }
