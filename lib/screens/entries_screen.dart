@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
@@ -25,13 +26,16 @@ class _EntriesScreenState extends State<EntriesScreen> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   String _search = '';
-  String _selectedRouterId = 'all';
-  List<dynamic> _routers = [];
+  
+  String _selectedRouter = 'All Routers';
+  String _selectedDateRange = 'All Time';
+  List<String> _routerNames = ['All Routers'];
 
   @override
   void initState() {
     super.initState();
-    _fetchInitialData();
+    _fetchCachedThenLive();
+    _loadRouters();
     _scrollController.addListener(_onScroll);
   }
 
@@ -43,44 +47,70 @@ class _EntriesScreenState extends State<EntriesScreen> {
     }
   }
 
-  Future<void> _fetchInitialData() async {
-    setState(() => _isLoading = true);
-    final results = await Future.wait<Map<String, dynamic>?>([
-      _apiService.getEntries(search: _search, page: 1, router: _selectedRouterId),
-      _apiService.getRouters(),
-    ]);
-
-    if (mounted) {
-      setState(() {
-        final res0 = results[0];
-        final res1 = results[1];
-        
-        _entries = res0?['data']?['entries'] ?? res0?['data']?['recent_transactions'] ?? res0?['entries'] ?? res0?['data'] ?? [];
-        _hasMore = res0?['pagination']?['has_more'] ?? res0?['data']?['pagination']?['has_more'] ?? false;
-        _total = res0?['pagination']?['total'] ?? res0?['data']?['pagination']?['total'] ?? 0;
-        
-        // Robust router extraction
-        final dynamic rawRouters = res1?['data']?['routers'] ?? res1?['routers'] ?? res1?['data'] ?? [];
-        final Set<String> unique = {'all'}; // Internal ID for all
-        _routers = [];
-        if (rawRouters is List) {
-          for (var r in rawRouters) {
-             _routers.add(r);
-          }
+  Future<void> _loadRouters() async {
+    final res = await _apiService.getRouters(forceRefresh: true);
+    if (res != null) {
+      final dynamic raw = res['data'] ?? res['routers'];
+      if (raw is List) {
+        final Set<String> unique = {'All Routers'};
+        for (var r in raw) {
+          String? name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
+          if (name != null && name.isNotEmpty) unique.add(name);
         }
-        _isLoading = false;
-      });
+        if (mounted) setState(() => _routerNames = unique.toList());
+      }
     }
   }
 
-  Future<void> _fetchEntries() async {
-    setState(() => _isLoading = true);
-    final res = await _apiService.getEntries(search: _search, page: 1, router: _selectedRouterId);
-    if (mounted) {
+  Map<String, String> _parseDateRange(String range) {
+    final now = DateTime.now();
+    final formatter = DateFormat('yyyy-MM-dd');
+    if (range == 'Today') return {'startDate': formatter.format(now), 'endDate': formatter.format(now)};
+    if (range == 'Yesterday') {
+      final yest = now.subtract(const Duration(days: 1));
+      return {'startDate': formatter.format(yest), 'endDate': formatter.format(yest)};
+    }
+    if (range == 'This Week') return {'startDate': formatter.format(now.subtract(const Duration(days: 6))), 'endDate': formatter.format(now)};
+    if (range == 'This Month') return {'startDate': formatter.format(DateTime(now.year, now.month, 1)), 'endDate': formatter.format(now)};
+    return {}; // All Time
+  }
+
+  Future<void> _fetchCachedThenLive() async {
+    final filters = _parseDateRange(_selectedDateRange);
+    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
+
+    // 1. SILENT CACHE LOAD
+    final cached = await _apiService.getEntries(
+      search: _search, 
+      page: 1, 
+      router: router,
+      startDate: filters['startDate'],
+      endDate: filters['endDate'],
+      forceRefresh: false
+    );
+    if (mounted && cached != null && _entries.isEmpty) {
       setState(() {
-        _entries = res?['data']?['entries'] ?? res?['entries'] ?? res?['data']?['recent_transactions'] ?? res?['recent_transactions'] ?? res?['data'] ?? [];
-        _hasMore = res?['pagination']?['has_more'] ?? res?['data']?['pagination']?['has_more'] ?? false;
-        _total = res?['pagination']?['total'] ?? res?['data']?['pagination']?['total'] ?? 0;
+        _entries = _extractEntries(cached);
+        _hasMore = _extractHasMore(cached);
+        _total = _extractTotal(cached);
+        _isLoading = false;
+      });
+    }
+
+    // 2. LIVE REFRESH
+    final live = await _apiService.getEntries(
+      search: _search, 
+      page: 1, 
+      router: router,
+      startDate: filters['startDate'],
+      endDate: filters['endDate'],
+      forceRefresh: true
+    );
+    if (mounted && live != null) {
+      setState(() {
+        _entries = _extractEntries(live);
+        _hasMore = _extractHasMore(live);
+        _total = _extractTotal(live);
         _page = 1;
         _isLoading = false;
       });
@@ -90,71 +120,34 @@ class _EntriesScreenState extends State<EntriesScreen> {
   Future<void> _fetchMoreEntries() async {
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
-    final res = await _apiService.getEntries(search: _search, page: nextPage, router: _selectedRouterId);
-    if (mounted) {
+    final filters = _parseDateRange(_selectedDateRange);
+    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
+
+    final res = await _apiService.getEntries(
+      search: _search, 
+      page: nextPage, 
+      router: router,
+      startDate: filters['startDate'],
+      endDate: filters['endDate'],
+      forceRefresh: true
+    );
+
+    if (mounted && res != null) {
       setState(() {
-        final newItems = res?['data']?['entries'] ?? res?['entries'] ?? res?['data']?['recent_transactions'] ?? res?['recent_transactions'] ?? res?['data'] ?? [];
+        final newItems = _extractEntries(res);
         _entries.addAll(newItems);
-        _hasMore = res?['pagination']?['has_more'] ?? res?['data']?['pagination']?['has_more'] ?? false;
+        _hasMore = _extractHasMore(res);
         _page = nextPage;
         _isLoadingMore = false;
       });
+    } else if (mounted) {
+      setState(() => _isLoadingMore = false);
     }
   }
 
-  void _showDetailModal(dynamic entry, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.5,
-        decoration: BoxDecoration(
-          color: PaceColors.getBackground(isDark),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          border: Border.all(color: PaceColors.getBorder(isDark)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 24),
-            Text('ENTRY DETAILS', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
-            const SizedBox(height: 32),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    _buildDetailRow('PHONE NUMBER', entry['phone'] ?? 'SYSTEM', isDark),
-                    _buildDetailRow('M-PESA CODE', entry['code'] ?? 'NO_CODE', isDark),
-                    _buildDetailRow('MAC ADDRESS', entry['mac'] ?? 'UNKNOWN', isDark),
-                    _buildDetailRow('STATION', entry['router'] ?? 'DEFAULT', isDark),
-                    _buildDetailRow('AMOUNT PAID', 'KES ${entry['amount']}', isDark, valueColor: PaceColors.purple),
-                    _buildDetailRow('STATUS', (entry['active'] == true || entry['active'] == 1) ? 'ACTIVE' : 'EXPIRED', isDark, valueColor: (entry['active'] == true || entry['active'] == 1) ? PaceColors.emerald : Colors.red),
-                    _buildDetailRow('TIMELINE', 'Started: ${entry['created']}\nExpires: ${entry['expires'] ?? 'N/A'}', isDark),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, bool isDark, {Color? valueColor}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(flex: 2, child: Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5))),
-          Expanded(flex: 3, child: Text(value, style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.w700, color: valueColor ?? PaceColors.getPrimaryText(isDark)))),
-        ],
-      ),
-    );
-  }
+  List<dynamic> _extractEntries(Map<String, dynamic> res) => res['data']?['entries'] ?? res['entries'] ?? res['data'] ?? [];
+  bool _extractHasMore(Map<String, dynamic> res) => res['pagination']?['has_more'] ?? res['data']?['pagination']?['has_more'] ?? false;
+  int _extractTotal(Map<String, dynamic> res) => res['pagination']?['total'] ?? res['data']?['pagination']?['total'] ?? 0;
 
   @override
   Widget build(BuildContext context) {
@@ -166,22 +159,26 @@ class _EntriesScreenState extends State<EntriesScreen> {
       child: Column(
         children: [
           _buildHeader(isDark),
-          _buildSearchAndFilter(isDark),
+          _buildGlobalFilters(isDark),
+          _buildSearchBox(isDark),
           _buildTableHeader(isDark),
           Expanded(
-            child: _isLoading 
-              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 8))
+            child: _isLoading && _entries.isEmpty 
+              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
               : RefreshIndicator(
-                  onRefresh: _fetchEntries,
+                  onRefresh: () => _fetchCachedThenLive(),
                   color: PaceColors.purple,
                   child: ListView.separated(
                     controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 80),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
                     itemCount: _entries.length + (_isLoadingMore ? 1 : 0),
                     separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
                     itemBuilder: (context, index) {
-                      if (index == _entries.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                      return _buildEntryTableItem(_entries[index], isDark);
+                      if (index == _entries.length) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
+                      }
+                      return _buildEntryItem(_entries[index], isDark);
                     },
                   ),
                 ),
@@ -194,71 +191,68 @@ class _EntriesScreenState extends State<EntriesScreen> {
   Widget _buildHeader(bool isDark) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('REVENUE ENTRIES', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-              Text('TRANSACTIONAL LEDGER FLOW', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
-            ],
-          ),
-          IconButton(
-            onPressed: () => _fetchEntries(),
-            icon: const Icon(Icons.refresh_rounded, color: PaceColors.purple, size: 20),
-          )
+          Text('CONNECTION ENTRIES', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+          Text('REAL-TIME ACCESS LOGS & SESSIONS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ],
       ),
     );
   }
 
-  Widget _buildSearchAndFilter(bool isDark) {
+  Widget _buildGlobalFilters(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-              child: TextField(
-                onChanged: (val) { setState(() => _search = val); _fetchEntries(); },
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
-                decoration: InputDecoration(
-                  hintText: 'Search Receipt...', 
-                  hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 12), 
-                  icon: Icon(Icons.receipt_long_rounded, color: PaceColors.getDimText(isDark), size: 18), 
-                  border: InputBorder.none, 
-                ),
-              ),
-            ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, bottom: 12),
+      child: Row(children: [
+        Expanded(child: _buildFilterButton(icon: Icons.router_rounded, label: _selectedRouter, onTap: () => _showRouterPicker(isDark), isDark: isDark)),
+        const SizedBox(width: 8),
+        Expanded(child: _buildFilterButton(icon: Icons.calendar_today_rounded, label: _selectedDateRange, onTap: () => _showDatePicker(isDark), isDark: isDark)),
+      ]),
+    );
+  }
+
+  Widget _buildFilterButton({required IconData icon, required String label, required VoidCallback onTap, required bool isDark}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
+        child: Row(children: [Icon(icon, size: 14, color: PaceColors.getDimText(isDark)), const SizedBox(width: 8), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: PaceColors.getDimText(isDark))]),
+      ),
+    );
+  }
+
+  void _showRouterPicker(bool isDark) {
+    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('STATION NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), ..._routerNames.map((r) => _buildListTile(label: r, icon: Icons.router_outlined, isSelected: _selectedRouter == r, isDark: isDark, onTap: () { setState(() => _selectedRouter = r); Navigator.pop(context); _fetchCachedThenLive(); })).toList()])));
+  }
+
+  void _showDatePicker(bool isDark) {
+    final ranges = ['All Time', 'Today', 'Yesterday', 'This Week', 'This Month'];
+    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('TIME RANGE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), ...ranges.map((range) => _buildListTile(label: range, icon: Icons.access_time_rounded, isSelected: _selectedDateRange == range, isDark: isDark, onTap: () { setState(() => _selectedDateRange = range); Navigator.pop(context); _fetchCachedThenLive(); })).toList()])));
+  }
+
+  Widget _buildListTile({required String label, required IconData icon, required bool isSelected, required bool isDark, required VoidCallback onTap}) {
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1), child: ListTile(onTap: onTap, dense: true, selected: isSelected, selectedTileColor: PaceColors.purple.withOpacity(0.08), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: Icon(icon, size: 16, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)), title: Text(label, style: GoogleFonts.figtree(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark)))));
+  }
+
+  Widget _buildSearchBox(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+        child: TextField(
+          onChanged: (val) { setState(() => _search = val); _fetchCachedThenLive(); },
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+          decoration: InputDecoration(
+            hintText: 'Search identifiers, MACs, codes...', 
+            hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 12), 
+            icon: Icon(Icons.search_rounded, color: PaceColors.getDimText(isDark), size: 20), 
+            border: InputBorder.none, 
           ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedRouterId,
-                dropdownColor: PaceColors.getCard(isDark),
-                icon: const Icon(Icons.tune_rounded, size: 14, color: PaceColors.purple),
-                items: [
-                  DropdownMenuItem(value: 'all', child: Text('ALL NODES', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark)))),
-                  ..._routers.map((r) {
-                    final String name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString().toUpperCase() ?? 'NODE' : r.toString().toUpperCase();
-                    final String id = (r is Map) ? r['id']?.toString() ?? name : r.toString();
-                    return DropdownMenuItem(value: id, child: Text(name, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))));
-                  }),
-                ],
-                onChanged: (val) { setState(() => _selectedRouterId = val!); _fetchEntries(); },
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -269,21 +263,21 @@ class _EntriesScreenState extends State<EntriesScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('IDENTIFICATION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-          Expanded(flex: 2, child: Center(child: Text('PAID', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 3, child: Text('IDENTIFICATION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 2, child: Center(child: Text('PAID', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
         ],
       ),
     );
   }
 
-  Widget _buildEntryTableItem(dynamic entry, bool isDark) {
+  Widget _buildEntryItem(dynamic entry, bool isDark) {
     final bool isActive = (entry['active'] == true || entry['active'] == 1);
     
     return InkWell(
       onTap: () => _showDetailModal(entry, isDark),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             Expanded(
@@ -291,15 +285,15 @@ class _EntriesScreenState extends State<EntriesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(entry['phone'] ?? 'SYSTEM', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: -0.5)),
-                  const SizedBox(height: 2),
+                  Text(entry['phone'] ?? 'SYSTEM', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(entry['code']?.toString().toUpperCase() ?? 'NO_CODE', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1)),
-                      const SizedBox(width: 4),
-                      Text('•', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8)),
-                      const SizedBox(width: 4),
-                      Text((entry['router'] ?? entry['router_name'] ?? 'NODE').toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                      Text(entry['code']?.toString().toUpperCase() ?? 'NO_CODE', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                      const SizedBox(width: 6),
+                      Container(width: 3, height: 3, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text((entry['router'] ?? entry['router_name'] ?? 'NODE').toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis)),
                     ],
                   ),
                 ],
@@ -308,7 +302,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
             Expanded(
               flex: 2,
               child: Center(
-                child: Text('KES ${entry['amount']}', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.emerald)),
+                child: Text('KES ${entry['amount']}', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.emerald)),
               ),
             ),
             Expanded(
@@ -316,18 +310,91 @@ class _EntriesScreenState extends State<EntriesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  PaceBadge(
-                    label: isActive ? 'ACTIVE' : 'EXPIRED', 
-                    variant: isActive ? BadgeVariant.success : BadgeVariant.secondary
-                  ),
-                  const SizedBox(height: 4),
-                  Text(entry['created'] ?? entry['created_at'] ?? '', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                  PaceBadge(label: isActive ? 'ACTIVE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
+                  const SizedBox(height: 6),
+                  Text(entry['created'] ?? '', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900)),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showDetailModal(dynamic entry, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32)), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 24),
+            Icon(Icons.smartphone_rounded, color: PaceColors.purple, size: 32),
+            const SizedBox(height: 12),
+            Text('ENTRY LOG DETAILS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+            const SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: GridView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 2.2, crossAxisSpacing: 16, mainAxisSpacing: 16),
+                children: [
+                   _buildPopupItem('PHONE NUMBER', entry['phone'] ?? 'SYSTEM', isDark, isMono: true),
+                   _buildPopupItem('M-PESA CODE', entry['code'] ?? 'NO_CODE', isDark, isMono: true),
+                   _buildPopupItem('MAC ADDRESS', entry['mac'] ?? 'UNKNOWN', isDark, isMono: true, smallValue: true),
+                   _buildPopupItem('STATION', entry['router'] ?? 'DEFAULT', isDark),
+                   _buildPopupItem('AMOUNT PAID', 'KES ${entry['amount']}', isDark, valueColor: PaceColors.purple),
+                   _buildPopupItem('STATUS', (entry['active'] == true || entry['active'] == 1) ? 'ACTIVE' : 'EXPIRED', isDark, valueColor: (entry['active'] == true || entry['active'] == 1) ? PaceColors.emerald : Colors.red),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            Padding(
+               padding: const EdgeInsets.all(24),
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   Text('TIMELINE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                   const SizedBox(height: 8),
+                   Row(children: [
+                     Icon(Icons.circle, size: 6, color: PaceColors.getDimText(isDark)),
+                     const SizedBox(width: 8),
+                     Text('CREATED: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark))),
+                     Text(entry['created'] ?? 'N/A', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                   ]),
+                   const SizedBox(height: 4),
+                   Row(children: [
+                     Icon(Icons.circle, size: 6, color: PaceColors.purple),
+                     const SizedBox(width: 8),
+                     Text('EXPIRES: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple)),
+                     Text(entry['expires'] ?? 'N/A', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                   ]),
+                 ],
+               ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPopupItem(String label, String value, bool isDark, {bool isMono = false, Color? valueColor, bool smallValue = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+        const SizedBox(height: 4),
+        Text(value, style: isMono ? GoogleFonts.jetBrainsMono(fontSize: smallValue ? 10 : 12, fontWeight: FontWeight.w700, color: valueColor ?? PaceColors.purple) : GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark))),
+      ],
     );
   }
 }
