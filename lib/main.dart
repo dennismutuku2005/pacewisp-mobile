@@ -6,6 +6,8 @@ import 'screens/login_screen.dart';
 import 'screens/main_scaffold.dart';
 import 'theme/app_theme.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() {
   runApp(
     MultiProvider(
@@ -26,6 +28,7 @@ class PaceWispApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'PaceWISP',
+      scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
