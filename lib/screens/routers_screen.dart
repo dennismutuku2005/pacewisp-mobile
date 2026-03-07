@@ -33,7 +33,183 @@ class _RoutersScreenState extends State<RoutersScreen> {
         _routers = res?['data'] ?? [];
         _isLoading = false;
       });
+      _startAutoPing();
     }
+  }
+
+  void _startAutoPing() {
+    for (var i = 0; i < _routers.length; i++) {
+      _pingSingleRouter(i);
+    }
+  }
+
+  Future<void> _pingSingleRouter(int index) async {
+    final router = _routers[index];
+    final ip = router['ip_address'];
+    final port = router['winbox_port'] ?? 8728;
+    
+    final res = await _apiService.pingRouter(ip, port);
+    if (mounted && res != null && res['status'] == 'success') {
+      setState(() {
+        _routers[index] = {
+          ..._routers[index],
+          'stats': res['data'],
+          'status': (res['data']?['status'] == 'online' || res['data']?['cpu'] != null) ? 'active' : 'inactive',
+        };
+      });
+    }
+  }
+
+  void _handleRestart(dynamic router) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaceColors.getBackground(true),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('HARDWARE RESTART', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
+        content: Text('Confirm hardware reboot for ${router['router_name']?.toString().replaceAll('_', ' ')}? Active users will be disconnected.', 
+          style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getDimText(true))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCEL', style: GoogleFonts.figtree(color: PaceColors.getDimText(true)))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true), 
+            child: Text('RESTART', style: GoogleFonts.figtree(color: Colors.red, fontWeight: FontWeight.bold))
+          ),
+        ],
+      )
+    );
+
+    if (confirm == true) {
+      final res = await _apiService.restartRouter(router['ip_address'], router['winbox_port'] ?? 8728);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res?['status'] == 'success' ? 'Restart command transmitted successfully.' : 'Failed to transmit restart command.', 
+              style: GoogleFonts.figtree(fontSize: 12)),
+            backgroundColor: res?['status'] == 'success' ? PaceColors.emerald : Colors.red,
+          )
+        );
+      }
+    }
+  }
+
+  void _showControlModal(dynamic router, bool isDark) {
+    final stats = router['stats'];
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        decoration: BoxDecoration(
+          color: PaceColors.getBackground(isDark),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 24),
+            Text('ROUTER CONTROL', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+            Text('Remote hardware operations & diagnostics', style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            
+            // Device Info Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.router_rounded, color: PaceColors.purple, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(router['ip_address'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                        Text('NODE IDENTITY: ${router['router_name']?.toString().toUpperCase()}', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                      ],
+                    ),
+                  ),
+                  PaceBadge(label: (router['status'] == 'active' ? 'ONLINE' : 'OFFLINE'), variant: (router['status'] == 'active' ? BadgeVariant.success : BadgeVariant.error)),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Stats Grid
+            if (stats != null) ...[
+              Row(
+                children: [
+                  Expanded(child: _buildModalStat('CPU LOAD', stats['cpu'] ?? '0%', Icons.speed, isDark)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildModalStat('UPTIME', stats['uptime'] ?? 'N/A', Icons.timer_outlined, isDark)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _buildModalStat('VERSION', 'v${stats['version'] ?? '---'}', Icons.terminal, isDark)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildModalStat('LAST CHECK', 'JUST NOW', Icons.history, isDark)),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            // Actions
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _handleRestart(router);
+              },
+              icon: const Icon(Icons.power_settings_new_rounded, size: 18),
+              label: Text('RESTART HARDWARE', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.withOpacity(0.1),
+                foregroundColor: Colors.red,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.red.withOpacity(0.2))),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('CLOSE PANEL', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModalStat(String label, String value, IconData icon, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.getBorder(isDark))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: PaceColors.getDimText(isDark)),
+              const SizedBox(width: 6),
+              Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(value, style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        ],
+      ),
+    );
   }
 
   void _showBillingModal(dynamic router, bool isDark) {
@@ -280,6 +456,19 @@ class _RoutersScreenState extends State<RoutersScreen> {
                   ],
                 ),
               ),
+              InkWell(
+                onTap: () => _showControlModal(router, isDark),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: PaceColors.getBorder(isDark).withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.more_horiz_rounded, size: 16, color: PaceColors.getDimText(isDark)),
+                ),
+              ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () => _showBillingModal(router, isDark),
                 borderRadius: BorderRadius.circular(8),
