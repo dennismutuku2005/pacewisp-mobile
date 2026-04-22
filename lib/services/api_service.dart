@@ -243,7 +243,13 @@ class ApiService {
   Future<Map<String, dynamic>?> deletePlan(String id) async => _requestWithFallback('/hotspot_plans.php?action=delete', method: 'POST', data: {'id': id});
 
   // Income Report
-  Future<Map<String, dynamic>?> getIncome({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async => fetchData(slug: 'income', params: {'router': router, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getIncome({String? router, String? startDate, String? endDate, bool forceRefresh = false}) async {
+    final params = <String, dynamic>{};
+    if (router != null && router.isNotEmpty) params['router'] = router;
+    if (startDate != null && startDate.isNotEmpty) params['startDate'] = startDate;
+    if (endDate != null && endDate.isNotEmpty) params['endDate'] = endDate;
+    return fetchData(slug: 'income', params: params, forceRefresh: forceRefresh);
+  }
 
   // Entries
   Future<Map<String, dynamic>?> getEntries({String? search, String? router, String? startDate, String? endDate, int page = 1, bool forceRefresh = false}) async => 
