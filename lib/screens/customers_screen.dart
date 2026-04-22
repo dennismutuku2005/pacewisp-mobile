@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
@@ -34,32 +35,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSyncMemory();
     _fetchStats();
     _fetchCustomers();
     _scrollController.addListener(_onScroll);
-  }
-
-  void _loadSyncMemory() {
-    // 1. Stats
-    final sMem = _apiService.getMemoryCached('widgets', params: {'action': 'widgets', 'router': null, 'startDate': null, 'endDate': null});
-    if (sMem != null) _processStats(sMem);
-
-    // 2. Customers
-    final cMem = _apiService.getMemoryCached('customers', params: {'search': _search, 'page': 1});
-    if (cMem != null) {
-      final d = cMem['data'];
-      if (d is List) {
-        _customers = d;
-      } else if (d is Map) {
-        _customers = d['customers'] ?? d['data'] ?? [];
-      }
-      
-      final p = cMem['pagination'] ?? cMem['data']?['pagination'];
-      if (p is Map) _total = p['total'] ?? 0;
-      
-      _isLoading = false;
-    }
   }
 
   void _onScroll() {
@@ -71,69 +49,36 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   Future<void> _fetchStats() async {
-    // 1. Silent Cache
-    final cached = await _apiService.getSummaryWidgets(forceRefresh: false);
-    if (mounted && cached != null) _processStats(cached);
-    
-    // 2. Live Refresh
-    final live = await _apiService.getSummaryWidgets(forceRefresh: true);
-    if (mounted && live != null) _processStats(live);
-  }
-
-  void _processStats(Map<String, dynamic> widgets) {
-    setState(() {
-      _onlineCount = int.tryParse(widgets['data']?['widgets']?['online_customers']?['value']?.toString() ?? '0') ?? 0;
-      _monthlyCount = int.tryParse(widgets['data']?['widgets']?['customers_month']?['value']?.toString() ?? '0') ?? 0;
-    });
+    final res = await _apiService.getSummaryWidgets(forceRefresh: true);
+    if (mounted && res != null) {
+      setState(() {
+        _onlineCount = int.tryParse(res['data']?['widgets']?['online_customers']?['value']?.toString() ?? '0') ?? 0;
+        _monthlyCount = int.tryParse(res['data']?['widgets']?['customers_month']?['value']?.toString() ?? '0') ?? 0;
+      });
+    }
   }
 
   Future<void> _fetchCustomers({bool force = false}) async {
-    if (!force) {
-      // 1. SILENT CACHE LOAD
-      final cached = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: false);
-      if (mounted && cached != null) {
-        _processCustomers(cached, 1);
-        _isLoading = false;
-      } else {
-        setState(() => _isLoading = true);
-      }
-    }
-
-    // 2. LIVE REFRESH
-    final live = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: true);
-    if (mounted && live != null) {
-      _processCustomers(live, 1);
-      _isLoading = false;
+    setState(() => _isLoading = true);
+    final res = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: force);
+    if (mounted && res != null) {
+      _processCustomers(res, 1);
+    } else if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
   void _processCustomers(Map<String, dynamic> res, int page) {
-    if (!mounted) return;
     setState(() {
-      List<dynamic> items = [];
-      final d = res['data'];
-      if (d is List) {
-        items = d;
-      } else if (d is Map) {
-        items = d['customers'] ?? d['data'] ?? [];
-      } else {
-        items = res['customers'] ?? [];
-      }
-
-      if (page == 1) {
-        _customers = items;
-      } else {
-        _customers.addAll(items);
-      }
+      final items = res['data'] is List ? res['data'] : (res['data']?['data'] ?? res['customers'] ?? []);
+      if (page == 1) _customers = items;
+      else _customers.addAll(items);
 
       final p = res['pagination'] ?? res['data']?['pagination'];
       if (p is Map) {
         _hasMore = p['has_more'] ?? false;
         _total = p['total'] ?? 0;
-      } else {
-        _hasMore = false;
       }
-      
       _page = page;
       _isLoading = false;
     });
@@ -142,25 +87,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
   void _onSearchChanged(String val) {
     if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        _search = val;
-        _isLoading = true;
-      });
+      _search = val;
       _fetchCustomers(force: true);
     });
   }
 
   Future<void> _fetchMoreCustomers() async {
-    if (_isLoadingMore) return;
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
     final res = await _apiService.getCustomers(search: _search, page: nextPage);
     if (mounted && res != null) {
       _processCustomers(res, nextPage);
-      setState(() => _isLoadingMore = false);
-    } else if (mounted) {
-      setState(() => _isLoadingMore = false);
     }
+    if (mounted) setState(() => _isLoadingMore = false);
   }
 
   @override
@@ -169,20 +108,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
     final isDark = settings.isDarkMode;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(isDark),
-        _buildStatsBar(isDark),
-        _buildSearchBox(isDark),
+        _buildControlBar(isDark),
         Expanded(
-          child: _isLoading 
+          child: _isLoading && _customers.isEmpty
             ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 8))
             : RefreshIndicator(
                 onRefresh: () async { _fetchStats(); await _fetchCustomers(force: true); },
                 color: PaceColors.purple,
                 child: ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
                   itemCount: _customers.length + (_isLoadingMore ? 1 : 0),
                   separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
                   itemBuilder: (context, index) {
@@ -200,99 +137,54 @@ class _CustomersScreenState extends State<CustomersScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.people_outline_rounded, color: PaceColors.purple, size: 24),
-              const SizedBox(width: 10),
-              Text('PREPAID USERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              Text('CUSTOMERS MASTER LIST', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              Text('MANAGE HOTSPOT USERS, DISTINCT BY PHONE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
             ],
           ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.only(left: 8),
-            decoration: const BoxDecoration(border: Border(left: BorderSide(color: Color(0x334B1D8F), width: 2))),
-            child: Text(
-              'MANAGE HOTSPOT USERS, DISTINCT BY PHONE NUMBER.',
-              style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2, fontStyle: FontStyle.italic),
-            ),
-          ),
+          Row(children: [
+            _buildSmallStatCard(_monthlyCount.toString(), 'MONTHLY', Colors.indigo),
+            const SizedBox(width: 8),
+            _buildSmallStatCard(_onlineCount.toString(), 'ONLINE', PaceColors.emerald),
+          ]),
         ],
       ),
     );
   }
 
-  Widget _buildStatsBar(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          _buildStatItem('MONTHLY', _monthlyCount.toString(), Colors.indigo, isDark),
-          const SizedBox(width: 12),
-          _buildStatItem('ONLINE', _onlineCount.toString(), PaceColors.emerald, isDark, isLive: true),
-        ],
-      ),
+  Widget _buildSmallStatCard(String val, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withOpacity(0.1))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Text(val, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.black, color: color)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.black, color: color, letterSpacing: 0.5)),
+      ]),
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color, bool isDark, {bool isLive = false}) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(value, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
-            const SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (isLive) ...[
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(color: color, shape: BoxShape.circle, boxShadow: [BoxShadow(color: color.withOpacity(0.5), blurRadius: 4, spreadRadius: 1)]),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Text(label, style: GoogleFonts.figtree(color: color.withOpacity(0.8), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchBox(bool isDark) {
+  Widget _buildControlBar(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Row(
         children: [
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: PaceColors.getSurface(isDark), 
-                borderRadius: BorderRadius.circular(16), 
-                border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)
-              ),
+              decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
               child: TextField(
                 onChanged: _onSearchChanged,
-                style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
                   hintText: 'Search MAC or mobile number...', 
-                  hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 11, fontWeight: FontWeight.bold), 
-                  icon: Icon(Icons.search_rounded, color: PaceColors.getDimText(isDark), size: 16), 
+                  hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 11), 
+                  icon: Icon(LucideIcons.search, color: PaceColors.getDimText(isDark), size: 14), 
                   border: InputBorder.none, 
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12)
                 ),
               ),
             ),
@@ -300,201 +192,40 @@ class _CustomersScreenState extends State<CustomersScreen> {
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-            child: Text('${_customers.length} OF $_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+            decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+            child: Text('$_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCustomerItem(dynamic customer, bool isDark) {
-    final bool isActive = customer['status'] == 'Active' || customer['status'] == '1';
-    final String phone = customer['phone'] ?? '0000000000';
-    final String mac = (customer['mac']?.toString().toUpperCase() ?? '00:00:00:00:00:00');
-    
+  Widget _buildCustomerItem(dynamic c, bool isDark) {
+    final status = c['status']?.toString().toLowerCase() ?? 'inactive';
+    final isOnline = status == 'active' || status == 'online';
+
     return InkWell(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: phone))),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: c['phone'].toString()))),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Column(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(phone, style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(Icons.wifi_rounded, size: 10, color: PaceColors.getDimText(isDark).withOpacity(0.5)),
-                          const SizedBox(width: 4),
-                          Text(mac, style: GoogleFonts.jetBrainsMono(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('KES ${customer['totalSpent']}', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.purple)),
-                    Text('AGGREGATE SPEND', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                  ],
-                ),
-              ],
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(c['phone']?.toString() ?? 'PRIVATE', style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.w800, color: PaceColors.purple)),
+                const SizedBox(height: 2),
+                Text(c['mac']?.toString().toUpperCase() ?? '00:00:00:00:00:00', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+              ]),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(6), border: Border.all(color: PaceColors.getBorder(isDark), width: 0.8)),
-                  child: Text('${customer['sessions']} SESSIONS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-                ),
-                const SizedBox(width: 8),
-                PaceBadge(
-                  label: isActive ? 'ACTIVE' : 'INACTIVE', 
-                  variant: isActive ? BadgeVariant.success : BadgeVariant.error
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Icon(Icons.access_time_rounded, size: 10, color: PaceColors.getDimText(isDark)),
-                    const SizedBox(width: 4),
-                    Text(customer['lastSeen']?.toString().toUpperCase() ?? 'NEVER', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                Text('PROFILE →', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)),
-              ],
-            ),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text('KES ${c['totalSpent'] ?? 0}', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+              PaceBadge(label: status.toUpperCase(), variant: isOnline ? BadgeVariant.success : BadgeVariant.error),
+            ]),
+            const SizedBox(width: 16),
+            const Icon(LucideIcons.chevronRight, size: 14, color: Colors.grey),
           ],
         ),
       ),
     );
-  }
-
-  void _showCustomerDetails(dynamic row, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.65,
-        decoration: BoxDecoration(
-          color: PaceColors.getBackground(isDark),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          border: Border.all(color: PaceColors.getBorder(isDark)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 32),
-            const Icon(Icons.account_circle_rounded, color: PaceColors.purple, size: 64),
-            const SizedBox(height: 16),
-            Text(row['phone'] ?? 'Unknown User', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1, fontFamily: 'monospace')),
-            Text(row['id'] ?? 'CUST-ID', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 2)),
-            
-            const SizedBox(height: 32),
-            const Divider(),
-            const SizedBox(height: 24),
-            
-            _buildDetailRow(Icons.data_usage_rounded, 'TOTAL SPENT', 'KES ${row['totalSpent']}', isDark),
-            const SizedBox(height: 20),
-            _buildDetailRow(Icons.history_toggle_off_rounded, 'TOTAL SESSIONS', '${row['sessions']} CONNECTS', isDark),
-            const SizedBox(height: 20),
-            _buildDetailRow(Icons.calendar_month_rounded, 'LAST SEEN', row['lastSeen'] ?? 'N/A', isDark),
-            
-            const Spacer(),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _handleDelete(row['phone']);
-                    },
-                    icon: const Icon(Icons.delete_forever_rounded, size: 18),
-                    label: const Text('PURGE RECORD', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.08),
-                      foregroundColor: Colors.red,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: PaceColors.getSurface(isDark),
-                      foregroundColor: PaceColors.getPrimaryText(isDark),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: PaceColors.getBorder(isDark))),
-                    ),
-                    child: const Text('DISMISS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 13)),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value, bool isDark) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(8)),
-          child: Icon(icon, color: PaceColors.purple, size: 18),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-            const SizedBox(height: 2),
-            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), fontFamily: 'monospace')),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _handleDelete(String phone) async {
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Purge'),
-        content: Text('Delete all connection records for $phone? This action is permanent.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('PURGE', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final res = await _apiService.deleteCustomer(phone);
-      if (res?['status'] == 'success') {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer history purged successfully'), backgroundColor: Colors.green));
-        _fetchCustomers(force: true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Failed to purge records'), backgroundColor: Colors.red));
-      }
-    }
   }
 }
