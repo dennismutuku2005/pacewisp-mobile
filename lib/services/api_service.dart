@@ -59,6 +59,7 @@ class ApiService {
 
     Map<String, String> headers = {
       'Accept': 'application/json',
+      'X-Client': 'WispApp', // Triggers 1-year JWT token in backend
     };
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
