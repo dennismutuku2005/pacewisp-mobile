@@ -35,6 +35,14 @@ class PaceBadge extends StatelessWidget {
         bgColor = const Color(0xFF3B82F6).withOpacity(0.1);
         textColor = const Color(0xFF3B82F6);
         break;
+      case BadgeVariant.primary:
+        bgColor = const Color(0xFF4B1D8F).withOpacity(0.1);
+        textColor = const Color(0xFF4B1D8F);
+        break;
+      case BadgeVariant.warning:
+        bgColor = Colors.orange.withOpacity(0.1);
+        textColor = Colors.orange;
+        break;
       case BadgeVariant.standard:
       default:
         bgColor = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFEEEFF1);
