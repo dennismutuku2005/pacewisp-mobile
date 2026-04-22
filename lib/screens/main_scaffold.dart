@@ -28,6 +28,7 @@ import 'mpesa_transactions_screen.dart';
 import 'invoices_screen.dart';
 import 'notifications_screen.dart';
 import '../services/lock_service.dart';
+import 'block_stk_screen.dart';
 import 'login_screen.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -163,6 +164,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     const SystemConfigScreen(),
     const SystemLogsScreen(),
     const SettingsScreen(),
+    const BlockStkScreen(),
   ];
 
   @override
@@ -244,6 +246,8 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                       _buildDrawerItem(6, 'Monthly Distinct', LucideIcons.calendarDays, isDark),
                     if (settings.hasPolicy('view_active_users'))
                       _buildDrawerItem(7, 'Live Connections', LucideIcons.zap, isDark),
+                    if (settings.hasPolicy('manage_customers'))
+                      _buildDrawerItem(20, 'Blocked STK Push', LucideIcons.shieldAlert, isDark),
 
                     _buildDrawerSection('INFRASTRUCTURE', isDark),
                     if (settings.hasPolicy('view_routers'))
