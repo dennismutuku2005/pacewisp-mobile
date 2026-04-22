@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -123,8 +122,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('REVENUE ANALYTICS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-            Text('FINANCIAL PERFORMANCE & INSIGHTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            Text('REVENUE ANALYTICS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+            Text('FINANCIAL PERFORMANCE & INSIGHTS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ]),
         IconButton(
           onPressed: () {},
@@ -161,7 +160,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
       child: Row(children: [
         Icon(icon, size: 14, color: PaceColors.purple),
         const SizedBox(width: 10),
-        Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
+        Expanded(child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
         const Icon(LucideIcons.chevronDown, size: 12, color: Colors.grey),
       ]),
     );
@@ -174,12 +173,27 @@ class _IncomeScreenState extends State<IncomeScreen> {
       backgroundColor: PaceColors.getBackground(isDark),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: times.map((t) => ListTile(
-          title: Text(t.toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold)),
-          trailing: _selectedTimeline == t ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
-          onTap: () { setState(() => _selectedTimeline = t); Navigator.pop(context); _fetchIncome(); },
-        )).toList()),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('SELECT TIMELINE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...times.map((t) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              trailing: _selectedTimeline == t ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
+              onTap: () { setState(() => _selectedTimeline = t); Navigator.pop(context); _fetchIncome(); },
+            )).toList(),
+          ],
+        ),
       ),
     );
   }
@@ -190,17 +204,41 @@ class _IncomeScreenState extends State<IncomeScreen> {
       backgroundColor: PaceColors.getBackground(isDark),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            title: const Text('ALL ROUTERS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-            onTap: () { setState(() => _activeRouterId = 'all'); Navigator.pop(context); _fetchIncome(); },
-          ),
-          ..._routers.map((r) => ListTile(
-            title: Text(r['router_name'].toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-            onTap: () { setState(() => _activeRouterId = r['id'].toString()); Navigator.pop(context); _fetchIncome(); },
-          )).toList(),
-        ])),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('SELECT ROUTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('ALL ROUTERS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    trailing: _activeRouterId == 'all' ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
+                    onTap: () { setState(() => _activeRouterId = 'all'); Navigator.pop(context); _fetchIncome(); },
+                  ),
+                  ..._routers.map((r) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(r['router_name'].toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    trailing: _activeRouterId == r['id'].toString() ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
+                    onTap: () { setState(() => _activeRouterId = r['id'].toString()); Navigator.pop(context); _fetchIncome(); },
+                  )).toList(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -242,8 +280,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
               ),
             ]),
             const Spacer(),
-            Text(c['l'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-            Text('KES ${_currencyFormat.format(value)}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+            Text(c['l'] as String, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text('KES ${_currencyFormat.format(value)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
           ]),
         );
       },
