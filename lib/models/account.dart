@@ -5,6 +5,7 @@ class PaceAccount {
   final String token;
   final String lastLogin;
   final String type;
+  final String? phone;
   final List<String> policies;
 
   PaceAccount({
@@ -14,6 +15,7 @@ class PaceAccount {
     required this.token,
     required this.lastLogin,
     this.type = 'admin',
+    this.phone,
     this.policies = const [],
   });
 
