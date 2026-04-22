@@ -92,13 +92,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String subdomain, String domain, String accountName, String token) async {
+  Future<void> login(String subdomain, String domain, String accountName, String token, {String type = 'admin', List<String> policies = const []}) async {
     final newAccount = PaceAccount(
       subdomain: subdomain,
       domain: domain,
       accountName: accountName,
       token: token,
       lastLogin: DateTime.now().toIso8601String(),
+      type: type,
+      policies: policies,
     );
 
     int existingIndex = _accounts.indexWhere((a) => a.subdomain == subdomain && a.domain == domain && a.accountName == accountName);
@@ -112,6 +114,12 @@ class SettingsProvider with ChangeNotifier {
 
     await _saveSettings();
     notifyListeners();
+  }
+
+  bool hasPolicy(String policy) {
+    if (activeAccount == null) return false;
+    if (activeAccount!.type == 'superadmin' || activeAccount!.type == 'admin') return true;
+    return activeAccount!.policies.contains(policy);
   }
 
   Future<void> switchAccount(int index) async {
