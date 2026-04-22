@@ -125,6 +125,7 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: MonthlyCustomersScreen.build() called');
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
