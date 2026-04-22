@@ -156,6 +156,10 @@ class ApiService {
     else if (slug == 'notifications') phpFile = '/notifications.php';
     else if (slug == 'monthly_customers') phpFile = '/customers.php';
     else if (slug == 'active_customers') phpFile = '/customers.php';
+    else if (slug == 'themes') phpFile = '/themes.php';
+    else if (slug == 'active_themes') phpFile = '/themes.php';
+    else if (slug == 'system_settings') phpFile = '/system_data.php';
+    else if (slug == 'profile') phpFile = '/account.php';
 
     final cacheKey = "${slug}_${params.toString()}";
     if (!forceRefresh) {
