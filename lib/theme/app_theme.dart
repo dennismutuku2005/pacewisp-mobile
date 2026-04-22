@@ -13,7 +13,7 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: PaceColors.background,
     dividerColor: PaceColors.border,
-    textTheme: GoogleFonts.figtreeTextTheme().apply(
+    textTheme: const TextTheme().apply(
       bodyColor: PaceColors.adminValue,
       displayColor: PaceColors.adminValue,
     ),
@@ -82,7 +82,7 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: PaceColors.backgroundDark,
     dividerColor: PaceColors.borderDark,
-    textTheme: GoogleFonts.figtreeTextTheme().apply(
+    textTheme: const TextTheme().apply(
       bodyColor: PaceColors.adminValueDark,
       displayColor: PaceColors.adminValueDark,
     ),
