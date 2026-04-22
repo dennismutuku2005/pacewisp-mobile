@@ -3,6 +3,7 @@ import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/landing_screen.dart';
+import 'screens/loading_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_scaffold.dart';
 import 'theme/app_theme.dart';
@@ -42,6 +43,9 @@ class PaceWispApp extends StatelessWidget {
   }
 
   Widget _getInitialScreen(SettingsProvider settings) {
+    if (settings.isLoading) {
+      return const LoadingScreen();
+    }
     if (settings.subdomain == null) {
       return const LandingScreen();
     }
