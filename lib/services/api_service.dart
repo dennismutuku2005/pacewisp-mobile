@@ -45,6 +45,8 @@ class ApiService {
   }
 
   final List<String> _possibleApiPaths = [
+    '/pace.com/pace-apis/dashboard/v1',
+    '/pace-apis/dashboard/v1',
     '/dashboard/v1',
     '/dashboard',
     '/portal',
@@ -67,15 +69,25 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final protocols = ['https'];
-    List<String> pathsToTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
-
-    // If we have a detected path, try it first. If it fails with 404, we might be looking for a file in a different folder.
-    List<String> currentTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
+    final protocols = ['https', 'http'];
+    List<String> currentPaths = _detectedPath != null ? [_detectedPath!] : List.from(_possibleApiPaths);
     
-    for (var path in currentTry) {
-      final res = await _doRequest('https', host, path, endpoint, method, data, queryParameters, headers);
-      if (res != null) return res;
+    // Add subdomain-specific path if not already present
+    if (_subdomain != null && _subdomain!.isNotEmpty) {
+      final subPath = '/$_subdomain/dashboard/v1';
+      if (!currentPaths.contains(subPath)) {
+        currentPaths.insert(0, subPath);
+      }
+    }
+    
+    for (var protocol in protocols) {
+      for (var path in currentPaths) {
+        final res = await _doRequest(protocol, host, path, endpoint, method, data, queryParameters, headers);
+        if (res != null) {
+          _detectedPath = path;
+          return res;
+        }
+      }
     }
 
     // If we tried a specific detected path and it failed, try all others.
@@ -184,6 +196,7 @@ class ApiService {
     }
 
     final data = await _requestWithFallback(phpFile, method: method, data: body, queryParameters: params);
+    debugPrint('FETCH DATA [$slug] SUCCESS: ${data != null}');
     if (data != null && (data['status'] == 'success' || data['status'] == 200 || data['status'] == '200')) {
       if (method == 'GET') {
         _memoryCache[cacheKey] = data; // Update memory cache
@@ -226,9 +239,9 @@ class ApiService {
   Future<Map<String, dynamic>?> deleteVouchers(List<String> ids) async => _requestWithFallback('/vouchers.php', method: 'DELETE', data: {'ids': ids});
 
   // Customers
-  Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customers', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getMonthlyCustomers({bool forceRefresh = false}) async => fetchData(slug: 'monthly_customers', params: {'action': 'get_monthly'}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getActiveCustomers({bool forceRefresh = false}) async => fetchData(slug: 'active_customers', params: {'action': 'get_active'}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customers', params: {'search': search, 'page': page, 'limit': 12}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getMonthlyCustomers({bool forceRefresh = false}) async => fetchData(slug: 'monthly_customers', params: {}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getActiveCustomers({bool forceRefresh = false}) async => fetchData(slug: 'active_customers', params: {}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> getCustomerHistory({required String phone, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customer_history', params: {'phone': phone, 'page': page}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> deleteCustomer(String phone) async => _requestWithFallback('/customers.php?action=delete', method: 'POST', data: {'phone': phone});
 
