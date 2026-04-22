@@ -55,7 +55,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
   }
 
   Future<void> _fetchThemes({required int page}) async {
-    final res = await _apiService.fetchData('themes', params: {'page': page, 'limit': 10});
+    final res = await _apiService.fetchData(slug: 'themes', params: {'page': page, 'limit': 10});
     if (mounted && res?['success'] == true) {
       setState(() {
         if (page == 1) {
@@ -81,7 +81,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
   }
 
   Future<void> _fetchActiveThemes() async {
-    final res = await _apiService.fetchData('active_themes');
+    final res = await _apiService.fetchData(slug: 'active_themes');
     if (mounted && res?['success'] == true) {
       setState(() => _activeThemes = res['data'] ?? []);
     }
@@ -89,7 +89,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
 
   Future<void> _activateTheme(String themeId, String routerId) async {
     setState(() => _isActivating = true);
-    final res = await _apiService.fetchData('activate_theme', method: 'POST', body: {
+    final res = await _apiService.fetchData(slug: 'activate_theme', method: 'POST', body: {
       'theme_id': themeId,
       'router_id': routerId,
     });
@@ -175,13 +175,13 @@ class _ThemesScreenState extends State<ThemesScreen> {
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Text(t['theme_name'] ?? 'THEME', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+              Text(t['theme_name'] ?? 'THEME', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
               if (isActive) ...[
                  const SizedBox(width: 8),
                  PaceBadge(label: 'ACTIVE', variant: BadgeVariant.success),
               ],
             ]),
-            Text(t['theme_category']?.toString().toUpperCase() ?? 'GENERAL', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1)),
+            Text(t['theme_category']?.toString().toUpperCase() ?? 'GENERAL', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
           ])),
           ElevatedButton(
             onPressed: () => _showActivateModal(t, isDark),
@@ -230,7 +230,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ACTIVATE DESIGN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1)),
+              Text('ACTIVATE DESIGN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
               const SizedBox(height: 24),
               Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16)), child: Row(children: [
                 Container(width: 48, height: 36, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)), clipBehavior: Clip.antiAlias, child: Image.network(t['preview_url'], fit: BoxFit.cover)),
@@ -238,7 +238,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
                 Text(t['theme_name'], style: const TextStyle(fontWeight: FontWeight.bold)),
               ])),
               const SizedBox(height: 24),
-              Text('TARGET ROUTER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1)),
+              Text('TARGET ROUTER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
               DropdownButton<String>(
                 isExpanded: true,
                 value: selectedRouterId,
