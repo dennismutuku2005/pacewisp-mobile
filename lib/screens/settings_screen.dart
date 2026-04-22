@@ -78,6 +78,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildToggleItem('Receive Error Info', 'Log MikroTik connection errors to dashboard', _systemSettings['receive_error_info'] == 1, (v) => _updateSystem('receive_error_info', v), LucideIcons.activity, isDark),
                       _buildToggleItem('Vouchers as Sale', 'Mark new vouchers as final sales instantly', _systemSettings['vouchers_as_sale'] == 1, (v) => _updateSystem('vouchers_as_sale', v), LucideIcons.tag, isDark),
                     ],
+                    const SizedBox(height: 32),
+                    _buildAccountSwitcherHeader(isDark),
+                    _buildAccountList(settings, isDark),
                   ],
                 ),
               ),
@@ -145,6 +148,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text('Manage global hotspot and billing behavior', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
         ],
       ),
+    );
+  }
+
+  Widget _buildAccountSwitcherHeader(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ACCOUNT SWITCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1.5)),
+          const SizedBox(height: 4),
+          Text('Seamlessly transition between managed ISP instances', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountList(SettingsProvider settings, bool isDark) {
+    return Column(
+      children: List.generate(settings.accounts.length, (index) {
+        final acc = settings.accounts[index];
+        final bool isActive = settings.activeAccount?.subdomain == acc.subdomain && settings.activeAccount?.domain == acc.domain;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: isActive ? PaceColors.purple.withOpacity(0.05) : PaceColors.getSurface(isDark),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isActive ? PaceColors.purple : PaceColors.getBorder(isDark), width: isActive ? 1.5 : 1),
+          ),
+          child: ListTile(
+            dense: true,
+            onTap: isActive ? null : () => settings.switchAccount(index),
+            leading: Icon(LucideIcons.globe, size: 16, color: isActive ? PaceColors.purple : Colors.grey),
+            title: Text(acc.accountName.toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: isActive ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+            subtitle: Text("${acc.subdomain}.${acc.domain}", style: GoogleFonts.figtree(fontSize: 9, color: Colors.grey)),
+            trailing: isActive 
+              ? const Icon(LucideIcons.checkCircle, color: PaceColors.purple, size: 16)
+              : IconButton(icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.redAccent), onPressed: () => settings.removeAccount(index)),
+          ),
+        );
+      }),
     );
   }
 
