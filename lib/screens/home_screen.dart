@@ -277,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))]),
-        child: Row(children: [Icon(icon, size: 16, color: PaceColors.getDimText(isDark)), const SizedBox(width: 10), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: PaceColors.getDimText(isDark))]),
+        child: Row(children: [Icon(icon, size: 16, color: PaceColors.getDimText(isDark)), const SizedBox(width: 10), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: PaceColors.getDimText(isDark))]),
       ),
     );
   }
@@ -305,23 +305,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5), itemCount: metrics.length, itemBuilder: (context, index) {
       final m = metrics[index];
       final bool blurIt = m['label'] == "MONTH REVENUE" && _isRevenueBlurred;
-      return InkWell(onTap: m['label'] == "MONTH REVENUE" ? () => setState(() => _isRevenueBlurred = !_isRevenueBlurred) : null, child: Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: (m['color'] as Color).withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 10))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: m['bg'] as Color, borderRadius: BorderRadius.circular(10)), child: Icon(m['icon'] as IconData, color: m['color'] as Color, size: 16)), const Spacer(), if (blurIt) ClipRect(child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), child: Text("KSH 88,888", style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)))) else Text(m['value'] as String, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)), const SizedBox(height: 2), Text(m['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))])));
+      return InkWell(onTap: m['label'] == "MONTH REVENUE" ? () => setState(() => _isRevenueBlurred = !_isRevenueBlurred) : null, child: Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: (m['color'] as Color).withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 10))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: m['bg'] as Color, borderRadius: BorderRadius.circular(10)), child: Icon(m['icon'] as IconData, color: m['color'] as Color, size: 16)), const Spacer(), if (blurIt) ClipRect(child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), child: Text("KSH 88,888", style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)))) else Text(m['value'] as String, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)), const SizedBox(height: 2), Text(m['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))])));
     });
   }
 
   Widget _buildCreateVoucherButton(bool isDark) {
     return SizedBox(
       width: double.infinity,
-      height: 60,
+      height: 48,
       child: ElevatedButton.icon(
         onPressed: widget.onGenerateVoucher,
-        icon: const Icon(Icons.confirmation_num_rounded, size: 24),
-        label: Text('CREATE VOUCHER', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        icon: const Icon(Icons.confirmation_num_rounded, size: 20),
+        label: const Text('CREATE VOUCHER', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         style: ElevatedButton.styleFrom(
           backgroundColor: PaceColors.purple,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 4,
           shadowColor: PaceColors.purple.withOpacity(0.4),
         ),
       ),
@@ -362,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.swap_horiz_rounded, size: 14, color: PaceColors.purple),
                     const SizedBox(width: 4),
-                    Text('SWAP VIEW', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 0.5)),
+                    Text('SWAP VIEW', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 0.5)),
                   ],
                 ),
               ),
@@ -447,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTableHeader(List<String> titles, bool isDark) {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark).withOpacity(0.5), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))), child: Row(children: titles.asMap().entries.map((e) {
       final bool last = e.key == titles.length - 1;
-      return Expanded(flex: e.key == 0 ? 3 : 2, child: Text(e.value, textAlign: last ? TextAlign.right : TextAlign.left, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
+      return Expanded(flex: e.key == 0 ? 3 : 2, child: Text(e.value, textAlign: last ? TextAlign.right : TextAlign.left, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
     }).toList()));
   }
 
