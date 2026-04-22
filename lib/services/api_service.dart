@@ -131,6 +131,8 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchData({
     required String slug,
     Map<String, dynamic>? params,
+    String method = 'GET',
+    Map<String, dynamic>? body,
     bool forceRefresh = false,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -160,6 +162,12 @@ class ApiService {
     else if (slug == 'active_themes') phpFile = '/themes.php';
     else if (slug == 'system_settings') phpFile = '/system_data.php';
     else if (slug == 'profile') phpFile = '/account.php';
+    else if (slug == 'prepaid_vouchers') phpFile = '/vouchers.php';
+    else if (slug == 'prepaid_plans') phpFile = '/hotspot_plans.php';
+    else if (slug == 'create_vouchers') phpFile = '/vouchers.php';
+    else if (slug == 'delete_vouchers') phpFile = '/vouchers.php';
+    else if (slug == 'activate_theme') phpFile = '/themes.php';
+    else if (slug == 'save_plans') phpFile = '/hotspot_plans.php';
 
     final cacheKey = "${subdomainKey}_${slug}_${params.toString()}";
     if (!forceRefresh) {
@@ -167,10 +175,12 @@ class ApiService {
       if (cached != null) return cached;
     }
 
-    final data = await _requestWithFallback(phpFile, queryParameters: params);
+    final data = await _requestWithFallback(phpFile, method: method, data: body, queryParameters: params);
     if (data != null && (data['status'] == 'success' || data['status'] == 200 || data['status'] == '200')) {
-      _memoryCache[cacheKey] = data; // Update memory cache
-      await _cache.save(cacheKey, data, subdomain: subdomainKey);
+      if (method == 'GET') {
+        _memoryCache[cacheKey] = data; // Update memory cache
+        await _cache.save(cacheKey, data, subdomain: subdomainKey);
+      }
     }
     return data;
   }
