@@ -59,45 +59,43 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     
-    debugPrint('API: Token presence check: ${token != null ? "HAS TOKEN" : "NO TOKEN"}');
+    print('API: Token: ${token != null ? "HAS TOKEN" : "NO TOKEN"}, Host: $host, DetectedPath: $_detectedPath');
 
     Map<String, String> headers = {
       'Accept': 'application/json',
-      'X-Client': 'WispApp', // Triggers 1-year JWT token in backend
+      'X-Client': 'WispApp',
     };
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final protocols = ['https', 'http'];
-    List<String> currentPaths = _detectedPath != null ? [_detectedPath!] : List.from(_possibleApiPaths);
-    
-    // Add subdomain-specific path if not already present
-    if (_subdomain != null && _subdomain!.isNotEmpty) {
-      final subPath = '/$_subdomain/dashboard/v1';
-      if (!currentPaths.contains(subPath)) {
-        currentPaths.insert(0, subPath);
-      }
+    // If we already know the correct path, use it directly — no probing
+    if (_detectedPath != null) {
+      print('API: Using detected path: $_detectedPath');
+      final res = await _doRequest('https', host, _detectedPath!, endpoint, method, data, queryParameters, headers);
+      if (res != null) return res;
+      // Detected path failed — fall through to full discovery
+      print('API: Detected path failed, running full discovery...');
+      _detectedPath = null;
     }
-    
-    for (var protocol in protocols) {
-      for (var path in currentPaths) {
-        final res = await _doRequest(protocol, host, path, endpoint, method, data, queryParameters, headers);
-        if (res != null) {
-          _detectedPath = path;
-          return res;
-        }
+
+    // Full discovery: try each path
+    final pathsToTry = [
+      '/dashboard/v1',
+      '/pace-apis/dashboard/v1',
+      '/dashboard',
+      '/',
+    ];
+
+    for (var path in pathsToTry) {
+      final res = await _doRequest('https', host, path, endpoint, method, data, queryParameters, headers);
+      if (res != null) {
+        _detectedPath = path;
+        print('API: Discovered working path: $path');
+        return res;
       }
     }
 
-    // If we tried a specific detected path and it failed, try all others.
-    if (_detectedPath != null) {
-      for (var path in _possibleApiPaths) {
-        if (path == _detectedPath) continue;
-        final res = await _doRequest('https', host, path, endpoint, method, data, queryParameters, headers);
-        if (res != null) return res;
-      }
-    }
     return null;
   }
 
@@ -110,7 +108,7 @@ class ApiService {
     final url = '$protocol://$host$separator$endpoint';
     
     try {
-      debugPrint('API: Probing URL: $url');
+      print('API: Probing URL: $url');
       final response = await _dio.request(
         url,
         data: data,
@@ -120,14 +118,21 @@ class ApiService {
           headers: headers,
           validateStatus: (s) => true,
         ),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 30));
 
-      debugPrint('API: Status ${response.statusCode} for $url');
-      if (response.statusCode == 200) {
-        // Only set detected path if it's a "standard" data response or we don't have one
+      print('API: Status ${response.statusCode} for $url');
+      if (response.statusCode == 200 || response.statusCode == 401) {
+        // Path is valid even if unauthorized
         if (_detectedPath == null) _detectedPath = cleanPath;
+        
         if (response.data is Map) return response.data as Map<String, dynamic>;
-        if (response.data is String) return jsonDecode(response.data) as Map<String, dynamic>;
+        if (response.data is String) {
+          try {
+             return jsonDecode(response.data) as Map<String, dynamic>;
+          } catch(e) {
+             return {'status': 'error', 'code': response.statusCode, 'message': 'Invalid JSON response'};
+          }
+        }
       }
     } catch (e) {
       debugPrint('API: EXCEPTION at $url: $e');
@@ -197,7 +202,15 @@ class ApiService {
     }
 
     final data = await _requestWithFallback(phpFile, method: method, data: body, queryParameters: params);
-    debugPrint('FETCH DATA [$slug] SUCCESS: ${data != null}');
+    print('FETCH DATA [$slug] SUCCESS: ${data != null}');
+    
+    if (data != null && data['status'] == 'error' && data['message'] != null) {
+      final msg = data['message'].toString().toLowerCase();
+      if (msg.contains('unauthorized') || msg.contains('token')) {
+         print('API: AUTH ERROR detected for $slug: $msg');
+      }
+    }
+
     if (data != null && (data['status'] == 'success' || data['status'] == 200 || data['status'] == '200')) {
       if (method == 'GET') {
         _memoryCache[cacheKey] = data; // Update memory cache
