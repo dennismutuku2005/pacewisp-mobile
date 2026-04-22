@@ -124,15 +124,15 @@ class _StaffScreenState extends State<StaffScreen> {
                       final isSel = policies.contains(p['id']);
                       return InkWell(
                         onTap: () => setM(() { if (isSel) policies.remove(p['id']); else policies.add(p['id']!); }),
-                        child: Container(
+                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(color: isSel ? PaceColors.purple.withOpacity(0.05) : Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(16), border: Border.all(color: isSel ? PaceColors.purple : Colors.white10)),
+                          decoration: BoxDecoration(color: isSel ? PaceColors.purple.withOpacity(0.05) : PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: isSel ? PaceColors.purple : PaceColors.getBorder(isDark))),
                           child: Row(children: [
                             Icon(isSel ? LucideIcons.checkCircle2 : LucideIcons.circle, color: isSel ? PaceColors.purple : Colors.grey, size: 16),
                             const SizedBox(width: 16),
                             Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(p['label']!, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: isSel ? PaceColors.purple : Colors.white)),
-                              Text(p['desc']!, style: GoogleFonts.figtree(fontSize: 8, color: Colors.grey)),
+                              Text(p['label']!, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: isSel ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+                              Text(p['desc']!, style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark))),
                             ])),
                           ]),
                         ),
