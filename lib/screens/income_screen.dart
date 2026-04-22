@@ -269,8 +269,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(children: [
-              Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark)))),
               Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
             ]),
