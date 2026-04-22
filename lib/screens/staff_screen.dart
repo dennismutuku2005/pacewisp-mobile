@@ -82,7 +82,7 @@ class _StaffScreenState extends State<StaffScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setM) => Container(
           height: MediaQuery.of(ctx).size.height * 0.9,
-          decoration: BoxDecoration(color: PaceColors.getBackground(true), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
+          decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
           child: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 48),
             child: Column(
@@ -258,19 +258,19 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  Widget _buildField(String l, TextEditingController c, IconData i, {bool isPass = false, bool enabled = true}) {
+   Widget _buildField(String l, TextEditingController c, IconData i, bool isDark, {bool isPass = false, bool enabled = true}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(l, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1.5)),
+      Text(l, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
       const SizedBox(height: 8),
-      TextField(controller: c, enabled: enabled, obscureText: isPass, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold), decoration: InputDecoration(prefixIcon: Icon(i, size: 14, color: Colors.grey), filled: true, fillColor: Colors.white.withOpacity(0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none))),
+      TextField(controller: c, enabled: enabled, obscureText: isPass, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), decoration: InputDecoration(prefixIcon: Icon(i, size: 14, color: Colors.grey), filled: true, fillColor: PaceColors.getSurface(isDark), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none))),
     ]);
   }
 
-  Widget _buildDropdown(String l, String v, List<String> items, Function(String?) onChange) {
+  Widget _buildDropdown(String l, String v, List<String> items, Function(String?) onChange, bool isDark) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(l, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1.5)),
+      Text(l, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
       const SizedBox(height: 8),
-      Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(16)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: v, isExpanded: true, dropdownColor: const Color(0xFF1A1A1A), items: items.map((it) => DropdownMenuItem(value: it, child: Text(it.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)))).toList(), onChanged: onChange))),
+      Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: v, isExpanded: true, dropdownColor: PaceColors.getCard(isDark), items: items.map((it) => DropdownMenuItem(value: it, child: Text(it.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))))).toList(), onChanged: onChange))),
     ]);
   }
 }
