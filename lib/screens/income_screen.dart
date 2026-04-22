@@ -46,7 +46,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
   }
 
   Future<void> _fetchIncome() async {
-    final res = await _apiService.fetchData('income', params: {
+    final res = await _apiService.fetchData(slug: 'income', params: {
       'router': _activeRouterId,
       'dateRange': _selectedTimeline
     });
@@ -132,7 +132,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
       child: Row(children: [
         Icon(icon, size: 14, color: PaceColors.purple),
         const SizedBox(width: 10),
-        Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), overflow: TextOverflow.ellipsis))),
+        Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
         const Icon(LucideIcons.chevronDown, size: 12, color: Colors.grey),
       ]),
     );
