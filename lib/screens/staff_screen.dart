@@ -152,8 +152,8 @@ class _StaffScreenState extends State<StaffScreen> {
               ],
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
