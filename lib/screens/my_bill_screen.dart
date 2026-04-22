@@ -175,7 +175,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
 
   Widget _buildCalcRow(String tag, String title, String sub, String amount, bool isDark, {Color? iconColor}) {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(width: 36, height: 36, decoration: BoxDecoration(color: (iconColor ?? PaceColors.purple).withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Center(child: Text(tag, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: iconColor ?? PaceColors.purple)))),
+      Container(width: 36, height: 36, decoration: BoxDecoration(color: (iconColor ?? PaceColors.purple).withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Center(child: Text(tag, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: iconColor ?? PaceColors.purple)))),
       const SizedBox(width: 16),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
@@ -213,7 +213,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 20),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
           Text(value, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
         ])),
       ]),
