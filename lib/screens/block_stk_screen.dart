@@ -284,7 +284,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
           'BLOCKED NUMBERS', 
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 0.5)
         ),
-        PaceBadge(label: '${_blocked.length} BLOCKED', type: BadgeType.danger),
+        PaceBadge(label: '${_blocked.length} BLOCKED', variant: BadgeVariant.error),
       ],
     );
   }
