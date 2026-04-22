@@ -36,9 +36,21 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchStats();
-    _fetchCustomers();
+    print('DEBUG: CustomersScreen.initState() called');
+    
+    // Use a small delay or postFrameCallback to ensure the system is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('DEBUG: CustomersScreen postFrameCallback triggered');
+      _refreshAll();
+    });
+    
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _refreshAll() async {
+    print('DEBUG: CustomersScreen _refreshAll() started');
+    _fetchStats();
+    _fetchCustomers(force: true);
   }
 
   @override
@@ -57,42 +69,52 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   Future<void> _fetchStats() async {
+    print('DEBUG: CustomersScreen _fetchStats() calling API...');
     try {
       final res = await _apiService.getSummaryWidgets(forceRefresh: true);
       if (mounted && res != null) {
+        print('DEBUG: CustomersScreen _fetchStats() SUCCESS: ${res.containsKey('data')}');
         setState(() {
           final widgets = res['data']?['widgets'];
           _onlineCount = int.tryParse(widgets?['online_customers']?['value']?.toString() ?? '0') ?? 0;
           _monthlyCount = int.tryParse(widgets?['customers_month']?['value']?.toString() ?? '0') ?? 0;
         });
+      } else {
+        print('DEBUG: CustomersScreen _fetchStats() RETURNED NULL');
       }
     } catch (e) {
-      debugPrint("Stats fetch error: $e");
+      print("DEBUG: Stats fetch error: $e");
     }
   }
 
   Future<void> _fetchCustomers({bool force = false}) async {
-    if (!force && _customers.isNotEmpty) return;
+    print('DEBUG: CustomersScreen _fetchCustomers(force: $force) started');
+    if (!force && _customers.isNotEmpty) {
+      print('DEBUG: CustomersScreen _fetchCustomers() SKIPPED: already has data');
+      return;
+    }
     
     setState(() => _isLoading = true);
     try {
       final res = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: force);
+      print('DEBUG: CustomersScreen _fetchCustomers() API RESULT RECEIVED: ${res != null}');
+      
       if (mounted) {
         if (res != null) {
           _processCustomers(res, 1);
         } else {
+          print('DEBUG: CustomersScreen _fetchCustomers() API RETURNED NULL');
           setState(() => _isLoading = false);
         }
       }
     } catch (e) {
-      debugPrint("Fetch customers error: $e");
+      print("DEBUG: Fetch customers EXCEPTION: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _processCustomers(Map<String, dynamic> res, int page) {
     setState(() {
-      // Robust extraction: backend returns data: [...]
       final dynamic rawData = res['data'];
       List<dynamic> items = [];
       
@@ -104,16 +126,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
         items = res['customers'];
       }
 
+      if (items.isEmpty) {
+        print('DEBUG: CustomersScreen: API returned 0 items. Full Response: $res');
+      }
+      
+      print('DEBUG: CustomersScreen _processCustomers() Items found: ${items.length}');
+
       if (page == 1) {
         _customers = items;
       } else {
         _customers.addAll(items);
       }
 
-      debugPrint('PROCESS_CUSTOMERS: Received ${items.length} items. Total: ${_customers.length}');
-      debugPrint('PROCESS_CUSTOMERS: RAW DATA KEY EXISTS: ${res.containsKey('data')}');
-
-      // Robust pagination extraction
       final dynamic p = res['pagination'] ?? (rawData is Map ? rawData['pagination'] : null);
       if (p is Map) {
         _hasMore = p['has_more'] ?? (page < (p['total_pages'] ?? 1));
@@ -146,7 +170,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
     try {
-      final res = await _apiService.getCustomers(search: _search, page: nextPage);
+      final res = await _apiService.getCustomers(search: _search, page: nextPage, forceRefresh: true);
       if (mounted) {
         if (res != null) {
           _processCustomers(res, nextPage);
@@ -238,58 +262,68 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: CustomersScreen.build() called (Total Items: ${_customers.length}, Loading: $_isLoading)');
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return PaceOverlayLoader(
-      isLoading: _isProcessing,
-      message: 'Processing...',
-      child: Column(
-        children: [
-          _buildHeader(isDark),
-          _buildSearchBox(isDark),
-          // Table header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
-            child: Row(
-              children: [
-                Expanded(flex: 3, child: Text('CUSTOMER PHONE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-                Expanded(flex: 2, child: Text('TOTAL SPENT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-                Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-              ],
+    return Scaffold(
+      backgroundColor: PaceColors.getBackground(isDark),
+      body: PaceOverlayLoader(
+        isLoading: _isProcessing,
+        message: 'Processing...',
+        child: Column(
+          children: [
+            _buildHeader(isDark),
+            _buildSearchBox(isDark),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
+              child: Row(
+                children: [
+                  Expanded(flex: 3, child: Text('CUSTOMER PHONE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+                  Expanded(flex: 2, child: Text('TOTAL SPENT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+                  Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: _isLoading && _customers.isEmpty
-              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
-              : RefreshIndicator(
-                  onRefresh: () async { _fetchStats(); await _fetchCustomers(force: true); },
-                  color: PaceColors.purple,
-                  child: _customers.isEmpty
-                    ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Icon(LucideIcons.users, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-                        const SizedBox(height: 16),
-                        Text('NO CUSTOMERS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                      ]))
-                    : ListView.separated(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.only(bottom: 120),
-                        itemCount: _customers.length + (_isLoadingMore ? 1 : 0),
-                        separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
-                        itemBuilder: (context, index) {
-                          if (index < _customers.length) {
-                            return _buildCustomerRow(_customers[index], isDark);
-                          }
-                          if (index == _customers.length && _isLoadingMore) {
-                             return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                ),
-          ),
-        ],
+            Expanded(
+              child: _isLoading && _customers.isEmpty
+                ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
+                : RefreshIndicator(
+                    onRefresh: () => _refreshAll(),
+                    color: PaceColors.purple,
+                    child: _customers.isEmpty
+                      ? ListView(
+                          children: [
+                            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                            Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Icon(LucideIcons.users, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
+                              const SizedBox(height: 16),
+                              Text('NO CUSTOMERS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                              const SizedBox(height: 12),
+                              TextButton(onPressed: () => _refreshAll(), child: const Text('RETRY FETCH')),
+                            ])),
+                          ],
+                        )
+                      : ListView.separated(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.only(bottom: 120),
+                          itemCount: _customers.length + (_isLoadingMore ? 1 : 0),
+                          separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
+                          itemBuilder: (context, index) {
+                            if (index < _customers.length) {
+                              return _buildCustomerRow(_customers[index], isDark);
+                            }
+                            if (index == _customers.length && _isLoadingMore) {
+                               return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }
