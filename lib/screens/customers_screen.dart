@@ -439,12 +439,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     const SizedBox(width: 8),
                     PaceBadge(
                       label: status.toUpperCase(),
-                      type: status == 'Active' ? BadgeType.success : BadgeType.neutral,
+                      variant: status == 'Active' ? BadgeVariant.success : BadgeVariant.standard,
                     ),
                     const SizedBox(width: 8),
                     PaceBadge(
                       label: used ? 'USED' : 'UNUSED',
-                      type: used ? BadgeType.success : BadgeType.danger,
+                      variant: used ? BadgeVariant.success : BadgeVariant.error,
                     ),
                   ],
                 ),
