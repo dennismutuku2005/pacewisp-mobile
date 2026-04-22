@@ -144,8 +144,13 @@ class ApiService {
     else if (slug == 'customers') phpFile = '/customers.php';
     else if (slug == 'customer_history') phpFile = '/customer_history.php';
     else if (slug == 'plans') phpFile = '/hotspot_plans.php';
+    else if (slug == 'account') phpFile = '/account.php';
     else if (slug == 'logs') phpFile = '/logs.php';
     else if (slug == 'routers') phpFile = '/routers.php';
+    else if (slug == 'expenses') phpFile = '/expenses.php';
+    else if (slug == 'report') phpFile = '/income_report.php';
+    else if (slug == 'staff') phpFile = '/staff.php';
+    else if (slug == 'wa_alerts') phpFile = '/wa-alerts.php';
 
     final cacheKey = "${slug}_${params.toString()}";
     if (!forceRefresh) {
@@ -233,4 +238,33 @@ class ApiService {
 
   Future<Map<String, dynamic>?> restartRouter(String ip, dynamic port) async => 
     _requestWithFallback('/routers.php?action=restart', method: 'POST', data: {'ip': ip, 'port': int.tryParse(port.toString()) ?? 8728});
+
+  // Expenses
+  Future<Map<String, dynamic>?> getExpenses({int? month, int? year, bool forceRefresh = false}) async => 
+    fetchData(slug: 'expenses', params: {'month': month, 'year': year}, forceRefresh: forceRefresh);
+
+  // Staff
+  Future<Map<String, dynamic>?> getStaff({bool forceRefresh = false}) async => 
+    fetchData(slug: 'staff', forceRefresh: forceRefresh);
+
+  // WhatsApp Alerts
+  Future<Map<String, dynamic>?> getWhatsAppAlertsConfig() async => 
+    fetchData(slug: 'wa_alerts', forceRefresh: true);
+
+  Future<Map<String, dynamic>?> performWhatsAppAlertAction(String action, Map<String, dynamic> data) async => 
+    _requestWithFallback('/wa-alerts.php?action=$action', method: 'POST', data: data);
+
+  // My Bill
+  Future<Map<String, dynamic>?> getAccountDetails({bool forceRefresh = false}) async => 
+    fetchData(slug: 'account', forceRefresh: forceRefresh);
+
+  Future<Map<String, dynamic>?> getFinancialReport({int? month, int? year, String? startDate, String? endDate, bool forceRefresh = false}) async => 
+    fetchData(slug: 'report', params: {'month': month, 'year': year, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
+
+  // System Config
+  Future<Map<String, dynamic>?> getSystemConfig(String routerId) async => 
+    _requestWithFallback('/hotspot_plans.php?action=get_system_config&router_id=$routerId');
+
+  Future<Map<String, dynamic>?> saveSystemConfig(String routerId, Map<String, dynamic> data) async => 
+    _requestWithFallback('/hotspot_plans.php?action=save_system_config&router_id=$routerId', method: 'POST', data: data);
 }
