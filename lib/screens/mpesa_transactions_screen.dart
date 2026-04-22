@@ -7,6 +7,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/search_bar.dart';
 
 class MpesaTransactionsScreen extends StatefulWidget {
   const MpesaTransactionsScreen({super.key});
@@ -129,8 +130,8 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('M-PESA TRANSACTIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-              Text('AUTOMATED AUDIT & TRANSACTION LOGS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              Text('M-PESA TRANSACTIONS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              Text('AUTOMATED AUDIT & TRANSACTION LOGS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
             ],
           ),
           IconButton(onPressed: () {}, icon: const Icon(LucideIcons.download, color: PaceColors.purple, size: 20)),
@@ -142,19 +143,10 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
   Widget _buildSearchBox(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-        child: TextField(
-          onChanged: (val) { _search = val; _fetchCachedThenLive(); },
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
-          decoration: InputDecoration(
-            hintText: 'Search by phone, name or M-Pesa code...', 
-            hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 12), 
-            icon: Icon(LucideIcons.search, color: PaceColors.getDimText(isDark), size: 20), 
-            border: InputBorder.none, 
-          ),
-        ),
+      child: PaceSearchBar(
+        hint: 'Search by phone, name or M-Pesa code...',
+        isDark: isDark,
+        onChanged: (val) { _search = val; _fetchCachedThenLive(); },
       ),
     );
   }
@@ -167,7 +159,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(6), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
-            child: Text('$_total RECORDS FOUND', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+            child: Text('$_total RECORDS FOUND', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
           ),
         ],
       ),
@@ -190,21 +182,21 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
               children: [
                 Text(txn['mpesa_receipt_number'] ?? 'N/A', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple)),
                 const SizedBox(height: 2),
-                Text(txn['phone_number'] ?? 'N/A', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                Text(txn['phone_number'] ?? 'N/A', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
                 const SizedBox(height: 4),
-                Text(txn['transaction_date_formatted'] ?? txn['created_at'] ?? '', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                Text(txn['transaction_date_formatted'] ?? txn['created_at'] ?? '', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('KES ${txn['amount']}', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+              Text('KES ${txn['amount']}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                child: Text(status.toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: statusColor)),
+                child: Text(status.toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: statusColor)),
               ),
             ],
           ),
