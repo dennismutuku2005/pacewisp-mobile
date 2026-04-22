@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum BadgeVariant { success, error, secondary, info, standard }
+enum BadgeVariant { success, error, secondary, info, standard, primary, warning }
 
 class PaceBadge extends StatelessWidget {
   final String label;
