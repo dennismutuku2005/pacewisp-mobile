@@ -7,6 +7,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/search_bar.dart';
 import '../components/otp_modal.dart';
 
 class StaffScreen extends StatefulWidget {
@@ -93,8 +94,8 @@ class _StaffScreenState extends State<StaffScreen> {
               children: [
                 Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(2)))),
                 const SizedBox(height: 32),
-                Text(isEdit ? 'UPDATE PERSONNEL' : 'PROVISION ACCOUNT', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
-                Text(isEdit ? 'Modifying ${staff['username']}' : 'Assign credentials for new member', style: GoogleFonts.figtree(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                Text(isEdit ? 'UPDATE PERSONNEL' : 'PROVISION ACCOUNT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
+                Text(isEdit ? 'Modifying ${staff['username']}' : 'Assign credentials for new member', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 32),
                 _buildField('FULL NAME', nameCtrl, LucideIcons.user, isDark),
                 const SizedBox(height: 16),
@@ -114,7 +115,7 @@ class _StaffScreenState extends State<StaffScreen> {
                   Row(children: [
                     const Icon(LucideIcons.shield, color: PaceColors.purple, size: 14),
                     const SizedBox(width: 8),
-                    Text('SYSTEM POLICIES', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+                    Text('SYSTEM POLICIES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
                   ]),
                   const SizedBox(height: 16),
                   GridView.builder(
@@ -134,8 +135,8 @@ class _StaffScreenState extends State<StaffScreen> {
                             Icon(isSel ? LucideIcons.checkCircle2 : LucideIcons.circle, color: isSel ? PaceColors.purple : Colors.grey, size: 16),
                             const SizedBox(width: 16),
                             Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(p['label']!, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: isSel ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
-                              Text(p['desc']!, style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark))),
+                              Text(p['label']!, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSel ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+                              Text(p['desc']!, style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark))),
                             ])),
                           ]),
                         ),
@@ -147,7 +148,7 @@ class _StaffScreenState extends State<StaffScreen> {
                 SizedBox(height: 56, child: ElevatedButton(
                   onPressed: _isSubmitting ? null : () => _handleAction(isEdit, staff?['id'], {'name': nameCtrl.text, 'username': userCtrl.text, 'phone': phoneCtrl.text, 'password': passCtrl.text, 'type': type, 'status': status, 'policies': policies}),
                   style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                  child: _isSubmitting ? const CircularProgressIndicator(color: Colors.white) : Text(isEdit ? 'UPDATE ACCOUNT' : 'CREATE ACCOUNT', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                  child: _isSubmitting ? const CircularProgressIndicator(color: Colors.white) : Text(isEdit ? 'UPDATE ACCOUNT' : 'CREATE ACCOUNT', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 )),
               ],
             ),
@@ -217,8 +218,8 @@ class _StaffScreenState extends State<StaffScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('STAFF MANAGEMENT', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-            Text('ADMIN ACCESS & POLICY CONTROL', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            Text('STAFF MANAGEMENT', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+            Text('ADMIN ACCESS & POLICY CONTROL', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
           ]),
           IconButton(onPressed: () => _showStaffForm(), icon: const Icon(LucideIcons.plusCircle, color: PaceColors.purple)),
         ],
@@ -229,10 +230,10 @@ class _StaffScreenState extends State<StaffScreen> {
   Widget _buildSearch(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      child: TextField(
+      child: PaceSearchBar(
+        hint: 'Search team members...',
+        isDark: isDark,
         onChanged: (v) => setState(() => _search = v),
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-        decoration: InputDecoration(hintText: 'Search team members...', prefixIcon: const Icon(LucideIcons.search, size: 16), filled: true, fillColor: PaceColors.getSurface(isDark), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none)),
       ),
     );
   }
@@ -249,13 +250,13 @@ class _StaffScreenState extends State<StaffScreen> {
           Container(width: 40, height: 40, decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle), child: Center(child: Icon(isAdmin ? LucideIcons.shieldCheck : LucideIcons.user, color: PaceColors.purple, size: 18))),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(s['name'] ?? 'STAFF', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800)),
-            Text(s['username'] ?? '', style: GoogleFonts.figtree(fontSize: 9, color: Colors.grey)),
+            Text(s['name'] ?? 'STAFF', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+            Text(s['username'] ?? '', style: TextStyle(fontSize: 9, color: Colors.grey)),
           ])),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             PaceBadge(label: type, variant: isAdmin ? BadgeVariant.info : BadgeVariant.secondary),
             const SizedBox(height: 6),
-            Text(s['status']?.toString().toUpperCase() ?? 'ACTIVE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: s['status'] == 'active' ? PaceColors.emerald : Colors.red)),
+            Text(s['status']?.toString().toUpperCase() ?? 'ACTIVE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: s['status'] == 'active' ? PaceColors.emerald : Colors.red)),
           ]),
         ]),
       ),
@@ -264,7 +265,7 @@ class _StaffScreenState extends State<StaffScreen> {
 
    Widget _buildField(String l, TextEditingController c, IconData i, bool isDark, {bool isPass = false, bool enabled = true}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(l, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+      Text(l, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
       const SizedBox(height: 8),
       TextField(controller: c, enabled: enabled, obscureText: isPass, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), decoration: InputDecoration(prefixIcon: Icon(i, size: 14, color: Colors.grey), filled: true, fillColor: PaceColors.getSurface(isDark), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none))),
     ]);
@@ -272,7 +273,7 @@ class _StaffScreenState extends State<StaffScreen> {
 
   Widget _buildDropdown(String l, String v, List<String> items, Function(String?) onChange, bool isDark) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(l, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+      Text(l, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
       const SizedBox(height: 8),
       Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: v, isExpanded: true, dropdownColor: PaceColors.getCard(isDark), items: items.map((it) => DropdownMenuItem(value: it, child: Text(it.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))))).toList(), onChanged: onChange))),
     ]);
