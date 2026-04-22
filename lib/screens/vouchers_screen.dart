@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -405,8 +406,6 @@ class _VouchersScreenState extends State<VouchersScreen> {
                   onChanged: (val) { _search = val; _fetchVouchers(pageNum: 1); },
                 ),
               ),
-              const SizedBox(width: 12),
-              _buildMiniRouterPicker(isDark),
             ],
           ),
           if (_selectedVoucherIds.isNotEmpty) ...[
@@ -416,12 +415,12 @@ class _VouchersScreenState extends State<VouchersScreen> {
               decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), border: Border.all(color: Colors.red.withOpacity(0.1)), borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
-                  Text('${_selectedVoucherIds.length} SELECTED', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red)),
+                  Text('${_selectedVoucherIds.length} SELECTED', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red)),
                   const Spacer(),
                   TextButton.icon(
                     onPressed: () => _handleDeleteVouchers(),
                     icon: const Icon(LucideIcons.trash2, size: 12, color: Colors.red),
-                    label: Text('REMOVE ALL', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red)),
+                    label: const Text('REMOVE ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red)),
                   ),
                   IconButton(onPressed: () => setState(() => _selectedVoucherIds.clear()), icon: const Icon(LucideIcons.x, size: 14, color: Colors.grey)),
                 ],
@@ -433,43 +432,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     );
   }
 
-  Widget _buildMiniRouterPicker(bool isDark) {
-    final activeName = _activeRouterId == 'all' ? 'ALL' : _routers.firstWhere((r) => r['id'].toString() == _activeRouterId, orElse: () => {'router_name': 'NODE'})['router_name'];
-    return InkWell(
-      onTap: () => _showRouterPicker(isDark),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.purple.withOpacity(0.2))),
-        child: Row(children: [Text(activeName.toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple)), const SizedBox(width: 4), const Icon(LucideIcons.chevronDown, size: 10, color: PaceColors.purple)]),
-      ),
-    );
-  }
 
-  void _showRouterPicker(bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(LucideIcons.globe, color: _activeRouterId == 'all' ? PaceColors.purple : Colors.grey),
-              title: const Text('ALL ROUTERS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              onTap: () { setState(() => _activeRouterId = 'all'); Navigator.pop(context); _fetchVouchers(pageNum: 1); },
-            ),
-            ..._routers.map((r) => ListTile(
-              leading: Icon(LucideIcons.router, color: r['id'].toString() == _activeRouterId ? PaceColors.purple : Colors.grey),
-              title: Text(r['router_name']?.toUpperCase() ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              onTap: () { setState(() => _activeRouterId = r['id'].toString()); Navigator.pop(context); _fetchVouchers(pageNum: 1); },
-            )).toList(),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildVoucherCard(dynamic v, bool isDark) {
     final bool isUsed = (v['used']?.toString() == '1');
@@ -478,6 +441,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     final bool isSelected = _selectedVoucherIds.contains(id);
 
     return InkWell(
+      onTap: () => _showVoucherDrawer(v, isDark),
       onLongPress: () {
          setState(() {
             if (isSelected) _selectedVoucherIds.remove(id);
@@ -527,7 +491,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                   if (isSale)
                     Text('SALE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.emerald))
                   else
-                    Text(v['created_at'] ?? '', style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                    const Text('NOT SALE', style: TextStyle(fontSize: 9, color: Colors.red, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -541,6 +505,98 @@ class _VouchersScreenState extends State<VouchersScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showVoucherDrawer(dynamic v, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaceColors.getBackground(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('VOUCHER DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                  IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('VOUCHER CODE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                        const SizedBox(height: 4),
+                        Text(v['voucher_code']?.toUpperCase() ?? 'CODE', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 2)),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: v['voucher_code']?.toString() ?? ''));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Voucher code copied to clipboard!')));
+                      },
+                      icon: const Icon(LucideIcons.copy, color: PaceColors.purple),
+                      style: IconButton.styleFrom(backgroundColor: PaceColors.purple.withOpacity(0.1)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(child: _buildDrawerInfo('PLAN', v['plan']?.toUpperCase() ?? 'N/A', isDark)),
+                  Expanded(child: _buildDrawerInfo('ROUTER', v['router_name']?.toString().toUpperCase() ?? 'N/A', isDark)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildDrawerInfo('SALE STATUS', (v['sale']?.toString() == '1') ? 'RECORDED AS SALE' : 'NOT RECORDED AS SALE', isDark, isSaleColor: true)),
+                  Expanded(child: _buildDrawerInfo('VOUCHER STATUS', (v['used']?.toString() == '1') ? 'USED' : 'AVAILABLE', isDark)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildDrawerInfo('CREATED AT', v['created_at']?.toString() ?? 'N/A', isDark)),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDrawerInfo(String label, String value, bool isDark, {bool isSaleColor = false}) {
+    Color valColor = PaceColors.getPrimaryText(isDark);
+    if (isSaleColor) {
+      if (value.contains('NOT')) {
+        valColor = Colors.red;
+      } else {
+        valColor = PaceColors.emerald;
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: valColor)),
+      ],
     );
   }
 }
