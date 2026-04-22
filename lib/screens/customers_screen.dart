@@ -162,8 +162,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withOpacity(0.1))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Text(val, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.black, color: color)),
-        Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.black, color: color, letterSpacing: 0.5)),
+        Text(val, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
       ]),
     );
   }
@@ -193,7 +193,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-            child: Text('$_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+            child: Text('$_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
           ),
         ],
       ),
@@ -218,7 +218,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ]),
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('KES ${c['totalSpent'] ?? 0}', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+              Text('KES ${c['totalSpent'] ?? 0}', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
               PaceBadge(label: status.toUpperCase(), variant: isOnline ? BadgeVariant.success : BadgeVariant.error),
             ]),
             const SizedBox(width: 16),
