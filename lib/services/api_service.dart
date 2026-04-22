@@ -122,6 +122,7 @@ class ApiService {
         ),
       ).timeout(const Duration(seconds: 15));
 
+      debugPrint('API: Status ${response.statusCode} for $url');
       if (response.statusCode == 200) {
         // Only set detected path if it's a "standard" data response or we don't have one
         if (_detectedPath == null) _detectedPath = cleanPath;
