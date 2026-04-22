@@ -86,15 +86,21 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
       return;
     }
 
-    if (_isLocked || _isAuthenticating) return;
+    // Logic: If already authenticating or if we've just successfully unlocked 
+    // within the last 10 seconds (grace period), skip.
+    if (_isAuthenticating) return;
 
     if (_lastUnlockTime != null) {
-      if (DateTime.now().difference(_lastUnlockTime!).inSeconds < 5) {
-        return;
-      }
+      final diff = DateTime.now().difference(_lastUnlockTime!).inSeconds;
+      if (diff < 10) return;
     }
 
-    final success = await _authenticate();
+    // If the app is NOT already locked, we only force a lock if it's been away for long.
+    // However, for immediate security, if the app resumes and lock is enabled, we prompt.
+    // If successful, _isLocked remains false and _lastUnlockTime is updated.
+    // If failed/cancelled, we show the LockScreen (isLocked = true).
+
+    final bool success = await _authenticate();
     if (!success && mounted) {
       setState(() => _isLocked = true);
     }
@@ -104,19 +110,24 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     if (_isAuthenticating) return false;
     setState(() => _isAuthenticating = true);
     
-    final lockService = LockService();
-    final bool success = await lockService.authenticate();
+    try {
+      final lockService = LockService();
+      final bool success = await lockService.authenticate();
 
-    if (mounted) {
-      setState(() {
-        _isAuthenticating = false;
-        if (success) {
-          _isLocked = false;
-          _lastUnlockTime = DateTime.now();
-        }
-      });
+      if (mounted) {
+        setState(() {
+          _isAuthenticating = false;
+          if (success) {
+            _isLocked = false;
+            _lastUnlockTime = DateTime.now();
+          }
+        });
+      }
+      return success;
+    } catch (e) {
+      if (mounted) setState(() => _isAuthenticating = false);
+      return false;
     }
-    return success;
   }
 
   void _checkAuth() {
