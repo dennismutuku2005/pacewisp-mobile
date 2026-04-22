@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
@@ -7,6 +9,7 @@ import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
+import '../components/overlay_loader.dart';
 import 'customer_history_screen.dart';
 
 class ActiveCustomersScreen extends StatefulWidget {
@@ -21,45 +24,31 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<dynamic> _active = [];
+  int _page = 1;
+  int _total = 0;
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-  bool _fetchLock = false;
-  int _page = 1;
-  int _total = 0;
   String _search = '';
 
   @override
   void initState() {
     super.initState();
+    _fetchData(pageNum: 1);
     _scrollController.addListener(_onScroll);
-    _fetchData(1);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMore && !_fetchLock) {
-        _fetchData(_page + 1, isAppend: true);
+      if (!_isLoadingMore && _hasMore) {
+        _fetchMore();
       }
     }
   }
 
-  Future<void> _fetchData(int pageNum, {bool isAppend = false}) async {
-    if (_fetchLock) return;
-    _fetchLock = true;
-
-    if (!isAppend) {
-      setState(() => _isLoading = true);
-    } else {
-      setState(() => _isLoadingMore = true);
-    }
-
+  Future<void> _fetchData({required int pageNum}) async {
+    if (pageNum == 1) setState(() => _isLoading = true);
+    
     try {
       final res = await _apiService.getActiveConnections(
         page: pageNum,
@@ -69,28 +58,30 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
       );
 
       if (mounted && res != null) {
-        final newItems = res['data'] ?? res['users'] ?? res['customers'] ?? [];
-        final pagination = res['pagination'];
-        final serverTotal = pagination?['total'] ?? 0;
-        final serverHasMore = pagination?['has_more'] ?? false;
-
         setState(() {
-          if (isAppend) {
-            _active.addAll(newItems);
+          final newItems = res['data'] ?? res['users'] ?? res['customers'] ?? [];
+          if (pageNum == 1) {
+            _active = newItems;
           } else {
-            _active = List.from(newItems);
+            _active.addAll(newItems);
           }
-          _total = serverTotal is int ? serverTotal : int.tryParse(serverTotal.toString()) ?? 0;
-          _hasMore = serverHasMore == true;
+          _total = res['pagination']?['total'] ?? 0;
+          _hasMore = res['pagination']?['has_more'] ?? false;
           _page = pageNum;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchMore() async {
+    setState(() => _isLoadingMore = true);
+    try {
+      await _fetchData(pageNum: _page + 1);
     } finally {
       if (mounted) setState(() => _isLoadingMore = false);
-      _fetchLock = false;
     }
   }
 
@@ -99,56 +90,48 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    if (!settings.hasPolicy('view_active_users')) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.lock, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.2)),
-            const SizedBox(height: 16),
-            Text('ACCESS RESTRICTED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        _buildHeader(isDark),
-        _buildSearchBox(isDark),
-        _buildTableHeader(isDark),
-        Expanded(
-          child: _isLoading && _active.isEmpty
-            ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
-            : RefreshIndicator(
-                onRefresh: () => _fetchData(1),
-                color: PaceColors.purple,
-                child: _active.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.only(bottom: 120),
-                      itemCount: _active.length + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == _active.length) {
-                          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                        }
-                        return _buildUserRow(_active[index], isDark);
-                      },
+    return Container(
+      color: PaceColors.getBackground(isDark),
+      child: Column(
+        children: [
+          _buildHeader(isDark),
+          _buildControls(isDark),
+          Expanded(
+            child: _isLoading 
+              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
+              : Column(
+                  children: [
+                    _buildTableHeader(isDark),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () => _fetchData(pageNum: 1),
+                        color: PaceColors.purple,
+                        child: _active.isEmpty 
+                          ? _buildEmptyState(isDark)
+                          : ListView.separated(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                              itemCount: _active.length + (_isLoadingMore ? 1 : 0),
+                              separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
+                              itemBuilder: (context, index) {
+                                if (index == _active.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
+                                return _buildActiveRow(_active[index], isDark);
+                              },
+                            ),
+                      ),
                     ),
-              ),
-        ),
-      ],
+                  ],
+                ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -156,64 +139,54 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
             children: [
               const Icon(LucideIcons.zap, color: PaceColors.purple, size: 20),
               const SizedBox(width: 8),
-              Text(
-                'LIVE CONNECTIONS', 
-                style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)
-              ),
+              Text('LIVE CONNECTIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'CURRENTLY ONLINE HOTSPOT SESSIONS', 
-            style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)
-          ),
+          Text('REAL-TIME HOTSPOT SESSIONS & ACTIVITY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ],
       ),
     );
   }
 
-  Widget _buildSearchBox(bool isDark) {
+  Widget _buildControls(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       child: PaceSearchBar(
-        hint: 'Filter by phone or receipt...', 
-        isDark: isDark,
+        hint: 'Search by phone or code...', 
+        isDark: isDark, 
         onChanged: (val) {
-          setState(() => _search = val);
-          _fetchData(1);
-        },
+          _search = val;
+          _fetchData(pageNum: 1);
+        }
       ),
     );
   }
 
   Widget _buildTableHeader(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark),
-        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+        color: PaceColors.getSurface(isDark).withOpacity(0.3),
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5))),
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('PHONE / RECEIPT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-          Expanded(flex: 2, child: Text('PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-          Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 3, child: Text('PHONE / RECEIPT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
       ),
     );
   }
 
-  Widget _buildUserRow(dynamic u, bool isDark) {
+  Widget _buildActiveRow(dynamic u, bool isDark) {
     return InkWell(
       onTap: () => Navigator.push(
         context, 
         MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: u['phone'].toString()))
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 0.5)),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             Expanded(
@@ -221,42 +194,24 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    u['phone']?.toString() ?? 'N/A', 
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), fontFamily: 'monospace')
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    u['mpesa_code']?.toString().toUpperCase() ?? 'VOUCHER', 
-                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), fontFamily: 'monospace')
-                  ),
+                  Text(u['phone']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
+                  Text(u['mpesa_code']?.toString().toUpperCase() ?? 'VOUCHER', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                 ],
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text(
-                u['plan']?.toString() ?? 'N/A', 
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))
-              ),
+              child: Text(u['plan']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)),
             ),
             Expanded(
               flex: 2,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: PaceColors.emerald.withOpacity(0.1), 
-                      borderRadius: BorderRadius.circular(6)
-                    ),
-                    child: const Text(
-                      'ONLINE', 
-                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.emerald, letterSpacing: 0.5)
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(LucideIcons.chevronRight, size: 16, color: PaceColors.getDimText(isDark).withOpacity(0.5)),
+                  PaceBadge(label: 'ONLINE', variant: BadgeVariant.success),
+                  const SizedBox(width: 8),
+                  Icon(LucideIcons.chevronRight, size: 14, color: PaceColors.getDimText(isDark).withOpacity(0.5)),
                 ],
               ),
             ),
@@ -273,10 +228,7 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
         children: [
           Icon(LucideIcons.zapOff, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
           const SizedBox(height: 16),
-          Text(
-            'NO ACTIVE SESSIONS', 
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)
-          ),
+          Text('NO ACTIVE SESSIONS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         ],
       ),
     );
