@@ -98,7 +98,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                 children: [
                   FadeTransition(
                     opacity: _fadeAnimation,
-                    child: Center(child: Image.asset('assets/images/logoc.png', height: 80, errorBuilder: (_, __, ___) => const SizedBox())),
+                    child: Center(child: Image.asset('assets/images/logoc.png', height: 50, errorBuilder: (_, __, ___) => const SizedBox())),
                   ),
                   const Spacer(),
                   FadeTransition(
@@ -138,7 +138,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                       children: [
                         SizedBox(
                           width: double.infinity,
-                          height: 64,
+                          height: 54,
                           child: ElevatedButton(
                             onPressed: () {
                               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
@@ -146,11 +146,10 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                             style: ElevatedButton.styleFrom(
                               backgroundColor: PaceColors.purple,
                               foregroundColor: Colors.white,
-                              elevation: 20,
-                              shadowColor: PaceColors.purple.withOpacity(0.5),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: const Text('LOGIN', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.5)),
+                            child: const Text('GET STARTED', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1.1)),
                           ),
                         ),
                         const SizedBox(height: 24),
