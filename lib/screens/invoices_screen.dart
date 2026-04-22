@@ -105,7 +105,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('OUTSTANDING BALANCE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1.5)),
+            Text('OUTSTANDING BALANCE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
             const SizedBox(height: 4),
             Text('KES ${_currencyFormat.format(totalDue)}', style: GoogleFonts.figtree(fontSize: 22, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
           ]),
@@ -168,7 +168,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 TextButton.icon(
                   onPressed: () => _handlePayment(inv),
                   icon: const Icon(LucideIcons.creditCard, size: 14),
-                  label: Text('PAY VIA M-PESA', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, letterSpacing: 1)),
+                  label: Text('PAY VIA M-PESA', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
                   style: TextButton.styleFrom(foregroundColor: PaceColors.purple),
                 ),
                 TextButton.icon(
@@ -179,7 +179,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                     ));
                   },
                   icon: const Icon(LucideIcons.download, size: 14),
-                  label: Text('DOWNLOAD', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, letterSpacing: 1)),
+                  label: Text('DOWNLOAD', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
                   style: TextButton.styleFrom(foregroundColor: Colors.grey),
                 ),
               ],
