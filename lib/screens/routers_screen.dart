@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/otp_modal.dart';
 
 class RoutersScreen extends StatefulWidget {
   const RoutersScreen({super.key});
@@ -124,6 +125,10 @@ class _RoutersScreenState extends State<RoutersScreen> {
     if (confirm == true) {
       final res = await _apiService.restartRouter(router['ip_address'], router['winbox_port'] ?? 8728);
       if (mounted) {
+        if (res?['status'] == 'otp_required') {
+          _showOtpModal((code) => _handleRestart({...router, 'otp_code': code})); 
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(res?['status'] == 'success' ? 'Restart command transmitted successfully.' : 'Failed to transmit restart command.', 
@@ -133,6 +138,21 @@ class _RoutersScreenState extends State<RoutersScreen> {
         );
       }
     }
+  }
+
+  void _showOtpModal(Function(String) onVerify) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => OtpModal(
+        phoneNumber: Provider.of<SettingsProvider>(context, listen: false).activeAccount?.phone ?? '0700000000',
+        onVerify: (code) {
+           Navigator.pop(context);
+           onVerify(code);
+        },
+      ),
+    );
   }
 
   void _showControlModal(dynamic router, bool isDark) {
@@ -333,9 +353,33 @@ class _RoutersScreenState extends State<RoutersScreen> {
                             'accountType': selectedBank,
                             'accountNumber': accountController.text,
                           });
+                          
+                          if (res?['status'] == 'otp_required') {
+                            setModalState(() => isSaving = false);
+                            _showOtpModal((code) async {
+                              final res2 = await _apiService.updateRouter(router['id'].toString(), {
+                                'accountType': selectedBank,
+                                'accountNumber': accountController.text,
+                                'otp_code': code,
+                              });
+                              if (mounted && res2?['status'] == 'success') {
+                                Navigator.pop(context);
+                                _fetchRouters();
+                              } else if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res2?['message'] ?? 'Error')));
+                              }
+                            });
+                            return;
+                          }
+
                           if (mounted) {
-                            Navigator.pop(context);
-                            _fetchRouters();
+                            if (res?['status'] == 'success') {
+                              Navigator.pop(context);
+                              _fetchRouters();
+                            } else {
+                               setModalState(() => isSaving = false);
+                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Error')));
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
