@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSectionHeader('RECENT ACTIVITY', 'LIVE CONNECTIONS', isDark),
               _buildActivityTable(isDark),
               const SizedBox(height: 48),
-              _buildSectionHeader('YOUR MIKROTIKS', 'HARDWARE HEALTH  ONLINE/OFFLINE', isDark),
+              _buildSectionHeader('YOUR MIKROTIKS', 'ONLINE/OFFLINE', isDark),
               _buildStationTable(isDark),
             ],
             const SizedBox(height: 100),
@@ -332,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 2.5, children: [
         _buildActionItem(Icons.tag_rounded, 'ACTIVE PLANS', 'Bandwidth tiers', Colors.blue, isDark, () {}),
         _buildActionItem(Icons.people_alt_rounded, 'CUSTOMERS', 'Manage accounts', PaceColors.emerald, isDark, () {}),
-        _buildActionItem(Icons.lan_rounded, 'YOUR MIKROTIKS', 'Hardware health', Colors.orange, isDark, () {}),
+        _buildActionItem(Icons.lan_rounded, 'YOUR MIKROTIKS', 'Mikrotik health', Colors.orange, isDark, () {}),
         _buildActionItem(Icons.analytics_rounded, 'SMART LOGGER', 'Internal events', PaceColors.getDimText(isDark), isDark, () {}),
     ]);
   }
