@@ -50,7 +50,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       'router': _activeRouterId,
       'dateRange': _selectedTimeline
     });
-    if (mounted && res?['status'] == 'success') {
+    final success = res?['status'] == 'success' || res?['status'] == 200 || res?['status'] == '200' || res?['success'] == true;
+    if (mounted && success) {
       setState(() {
         _incomeData = res;
         _isLoading = false;
