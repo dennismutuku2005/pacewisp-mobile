@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/search_bar.dart';
 import 'customer_history_screen.dart';
 
 class MonthlyCustomersScreen extends StatefulWidget {
@@ -84,8 +85,8 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('MONTHLY RECURRING', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-          Text('DISTINCT USERS SINCE ${_cycleStart.toUpperCase()}', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('MONTHLY RECURRING', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+          Text('DISTINCT USERS SINCE ${_cycleStart.toUpperCase()}', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ],
       ),
     );
@@ -106,28 +107,19 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
 
   Widget _buildStatBox(String label, String value, bool isDark) {
     return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
         const SizedBox(height: 4),
-        Text(value, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
     ]));
   }
 
   Widget _buildSearchBox(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-        child: TextField(
-          onChanged: (val) => setState(() => _search = val),
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-          decoration: InputDecoration(
-            hintText: 'Filter by phone number...', 
-            hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 11), 
-            icon: Icon(LucideIcons.search, color: PaceColors.getDimText(isDark), size: 14), 
-            border: InputBorder.none, 
-          ),
-        ),
+      child: PaceSearchBar(
+        hint: 'Filter by phone number...',
+        isDark: isDark,
+        onChanged: (val) => setState(() => _search = val),
       ),
     );
   }
@@ -143,7 +135,7 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(u['phone']?.toString() ?? 'PRIVATE', style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
-                Text('LATEST CONTRIBUTION: KES ${u['total_amount']}', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.purple, fontWeight: FontWeight.bold)),
+                Text('LATEST CONTRIBUTION: KES ${u['total_amount']}', style: TextStyle(fontSize: 9, color: PaceColors.purple, fontWeight: FontWeight.bold)),
               ]),
             ),
             PaceBadge(label: isActive ? 'ACTIVE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.error),
