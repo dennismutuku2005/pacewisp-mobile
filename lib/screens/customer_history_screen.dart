@@ -489,7 +489,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    PaceBadge(label: isUsed ? 'USED' : 'UNUSED', type: isUsed ? BadgeType.success : BadgeType.neutral),
+                    PaceBadge(label: isUsed ? 'USED' : 'UNUSED', variant: isUsed ? BadgeVariant.success : BadgeVariant.standard),
                   ],
                 ),
               ],
