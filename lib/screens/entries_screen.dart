@@ -332,9 +332,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
                   Row(
                     children: [
                       Text(entry['code']?.toString().toUpperCase() ?? 'NO_CODE', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                      const SizedBox(width: 6),
-                      Container(width: 3, height: 3, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), shape: BoxShape.circle)),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 12),
                       Expanded(child: Text((entry['router'] ?? entry['router_name'] ?? 'NODE').toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis)),
                     ],
                   ),
@@ -408,15 +406,13 @@ class _EntriesScreenState extends State<EntriesScreen> {
                    Text('TIMELINE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                    const SizedBox(height: 8),
                    Row(children: [
-                     Icon(Icons.circle, size: 6, color: PaceColors.getDimText(isDark)),
-                     const SizedBox(width: 8),
+                     const SizedBox(width: 14),
                      Text('CREATED: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark))),
                      Text(entry['created'] ?? 'N/A', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
                    ]),
                    const SizedBox(height: 4),
                    Row(children: [
-                     Icon(Icons.circle, size: 6, color: PaceColors.purple),
-                     const SizedBox(width: 8),
+                     const SizedBox(width: 14),
                      Text('EXPIRES: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple)),
                      Text(entry['expires'] ?? 'N/A', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple)),
                    ]),
