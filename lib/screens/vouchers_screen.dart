@@ -488,8 +488,6 @@ class _VouchersScreenState extends State<VouchersScreen> {
                     children: [
                       Text(v['plan']?.toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
                       const SizedBox(width: 8),
-                      Container(width: 3, height: 3, decoration: const BoxDecoration(color: Colors.grey, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
                       Text(v['router_name']?.toString().toUpperCase() ?? 'NODE', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
                     ],
                   ),
