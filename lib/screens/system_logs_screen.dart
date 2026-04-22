@@ -119,7 +119,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
       child: Row(children: [
         Expanded(child: TextField(onChanged: (v) { _search = v; _fetchLogs(); }, decoration: InputDecoration(hintText: 'Search audit trail...', prefixIcon: const Icon(LucideIcons.search, size: 14), filled: true, fillColor: PaceColors.getSurface(isDark), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)))),
         const SizedBox(width: 12),
-        Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: _statusFilter, items: const [DropdownMenuItem(value: 'all', child: Text('ALL')), DropdownMenuItem(value: 'success', child: Text('OK')), DropdownMenuItem(value: 'failed', child: Text('FAIL'))], style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple), onChanged: (v) => setState(() => _statusFilter = v!)))),
+        Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: _statusFilter, dropdownColor: PaceColors.getCard(isDark), items: const [DropdownMenuItem(value: 'all', child: Text('ALL')), DropdownMenuItem(value: 'success', child: Text('OK')), DropdownMenuItem(value: 'failed', child: Text('FAIL'))], style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple), onChanged: (v) => setState(() => _statusFilter = v!)))),
       ]),
     );
   }
