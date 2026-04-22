@@ -94,7 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Text('NOTIFICATIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
             Text('SYSTEM ALERTS & CONNECTION ERRORS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
           ]),
-          TextButton(onPressed: _markAllRead, child: Text('MARK ALL READ', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1))),
+          TextButton(onPressed: _markAllRead, child: Text('MARK ALL READ', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1))),
         ],
       ),
     );
@@ -147,7 +147,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(LucideIcons.bellOff, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
       const SizedBox(height: 16),
-      Text('ALL CAUGHT UP', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+      Text('ALL CAUGHT UP', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
       Text('No pending system notifications', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
     ]));
   }
