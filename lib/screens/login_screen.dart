@@ -80,7 +80,18 @@ class _LoginScreenState extends State<LoginScreen> {
       if (res != null && (res['status'] == 'success' || res['status'] == 200)) {
         final token = res['data']?['token'] ?? res['token'];
         if (token != null) {
-          await settings.login(_subdomainController.text.trim(), _selectedDomain, username, token);
+          final userData = res['data']?['user'] ?? {};
+          final type = userData['type']?.toString() ?? 'admin';
+          final policies = List<String>.from(userData['policies'] ?? []);
+          
+          await settings.login(
+            _subdomainController.text.trim(), 
+            _selectedDomain, 
+            username, 
+            token,
+            type: type,
+            policies: policies,
+          );
           if (mounted) {
             Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainScaffold()));
           }
