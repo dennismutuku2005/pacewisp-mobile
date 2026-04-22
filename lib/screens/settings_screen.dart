@@ -31,10 +31,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isLoading = true);
     final profile = await _apiService.fetchData(slug: 'profile');
     if (profile?['success'] == true) {
-      _user = profile['data'] ?? {};
+      _user = profile?['data'] ?? {};
       if (['admin', 'superadmin'].contains(_user['type'])) {
         final sys = await _apiService.fetchData(slug: 'system_settings');
-        if (sys?['status'] == 'success') _systemSettings = sys['data'] ?? {};
+        if (sys?['status'] == 'success') _systemSettings = sys?['data'] ?? {};
       }
     }
     if (mounted) setState(() => _isLoading = false);
