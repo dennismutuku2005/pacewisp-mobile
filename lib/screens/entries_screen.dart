@@ -352,7 +352,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
                 children: [
                   PaceBadge(label: isActive ? 'ACTIVE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
                   const SizedBox(height: 6),
-                  Text(entry['used'] == 1 ? 'USED' : 'UNUSED', style: GoogleFonts.figtree(fontSize: 7, color: entry['used'] == 1 ? PaceColors.emerald : Colors.redAccent, fontWeight: FontWeight.black, letterSpacing: 0.5)),
+                  Text(entry['used'] == 1 ? 'USED' : 'UNUSED', style: GoogleFonts.figtree(fontSize: 7, color: entry['used'] == 1 ? PaceColors.emerald : Colors.redAccent, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                 ],
               ),
             ),
