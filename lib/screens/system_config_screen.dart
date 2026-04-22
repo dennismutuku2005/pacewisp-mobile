@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
+import '../components/badge.dart';
 import '../components/skeleton.dart';
 
 class SystemConfigScreen extends StatefulWidget {
@@ -18,16 +20,18 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
   
   List<dynamic> _routers = [];
   String? _activeRouterId;
-  Map<String, dynamic>? _metadata;
-  Map<String, dynamic>? _links;
+  Map<String, dynamic> _metadata = {};
+  Map<String, dynamic> _links = {};
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isLocked = true;
 
-  final TextEditingController _wifiNameController = TextEditingController();
-  final TextEditingController _supportPhoneController = TextEditingController();
-  final TextEditingController _lnmoController = TextEditingController();
-  final TextEditingController _routerIdentityController = TextEditingController();
+  final _wifiNameCtrl = TextEditingController();
+  final _supportCtrl = TextEditingController();
+  final _routerIdCtrl = TextEditingController();
+  final _lnmo1Ctrl = TextEditingController();
+  final _lnmo2Ctrl = TextEditingController();
+  final _lnmo3Ctrl = TextEditingController();
 
   @override
   void initState() {
@@ -37,16 +41,12 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
 
   Future<void> _loadInitialData() async {
     final res = await _apiService.getRouters();
-    if (mounted && res != null && res['status'] == 'success') {
-      setState(() {
-        _routers = res['data'] ?? [];
-        if (_routers.isNotEmpty) {
-          _activeRouterId = _routers[0]['id'].toString();
-          _loadConfig();
-        } else {
-          _isLoading = false;
-        }
-      });
+    if (mounted && res?['status'] == 'success') {
+      _routers = res?['data'] ?? [];
+      if (_routers.isNotEmpty) {
+        _activeRouterId = _routers[0]['id'].toString();
+        _loadConfig();
+      }
     }
   }
 
@@ -54,40 +54,39 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
     if (_activeRouterId == null) return;
     setState(() => _isLoading = true);
     final res = await _apiService.getSystemConfig(_activeRouterId!);
-    if (mounted && res != null && res['status'] == 'success') {
+    if (mounted && res?['status'] == 'success') {
       setState(() {
-        _metadata = res['metadata'];
-        _links = res['links'];
-        _wifiNameController.text = _metadata?['wifiname'] ?? '';
-        _supportPhoneController.text = _metadata?['customercare'] ?? '';
-        _lnmoController.text = _links?['lnmoapi'] ?? '';
-        _routerIdentityController.text = _links?['router'] ?? '';
+        _metadata = res?['metadata'] ?? {};
+        _links = res?['links'] ?? {};
+        _wifiNameCtrl.text = _metadata['wifiname'] ?? '';
+        _supportCtrl.text = _metadata['customercare'] ?? '';
+        _routerIdCtrl.text = _links['router'] ?? '';
+        _lnmo1Ctrl.text = _links['lnmoapi'] ?? '';
+        _lnmo2Ctrl.text = _links['lnmoapi2'] ?? '';
+        _lnmo3Ctrl.text = _links['lnmoapi3'] ?? '';
         _isLoading = false;
       });
     }
   }
 
-  Future<void> _saveConfig() async {
-    if (_activeRouterId == null) return;
+  Future<void> _handleSave() async {
     setState(() => _isSaving = true);
-    final res = await _apiService.saveSystemConfig(_activeRouterId!, {
-      'metadata': {
-        'wifiname': _wifiNameController.text,
-        'customercare': _supportPhoneController.text,
-      },
+    final data = {
+      'metadata': {'wifiname': _wifiNameCtrl.text, 'customercare': _supportCtrl.text},
       'links': {
-        'lnmoapi': _lnmoController.text,
-        'router': _routerIdentityController.text,
+        'router': _routerIdCtrl.text,
+        'lnmoapi': _lnmo1Ctrl.text,
+        'lnmoapi2': _lnmo2Ctrl.text,
+        'lnmoapi3': _lnmo3Ctrl.text,
       }
-    });
+    };
+    final res = await _apiService.saveSystemConfig(_activeRouterId!, data);
     if (mounted) {
-      setState(() {
-        _isSaving = false;
-        _isLocked = true;
-      });
-      if (res != null && res['status'] == 'success') {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Configuration saved successfully'), backgroundColor: PaceColors.emerald));
+      if (res?['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Config Propagated Successfully'), backgroundColor: PaceColors.emerald));
+        setState(() => _isLocked = true);
       }
+      setState(() => _isSaving = false);
     }
   }
 
@@ -96,145 +95,169 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
-      appBar: AppBar(
-        title: Text('SYSTEM CONFIG', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          if (!_isLoading)
-            IconButton(
-              icon: Icon(_isSaving ? Icons.sync : Icons.save_rounded, color: PaceColors.purple),
-              onPressed: _isSaving ? null : _saveConfig,
-            ),
-          const SizedBox(width: 8),
+    return Column(
+      children: [
+        _buildHeader(isDark),
+        Expanded(
+          child: _isLoading 
+            ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList())
+            : RefreshIndicator(
+                onRefresh: _loadConfig,
+                color: PaceColors.purple,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  children: [
+                    _buildRouterPicker(isDark),
+                    const SizedBox(height: 24),
+                    _buildIdentityCard(isDark),
+                    const SizedBox(height: 24),
+                    _buildApiLinksCard(isDark),
+                  ],
+                ),
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('CORE CONFIGURATION', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+            Text('MANAGE INFRASTRUCTURE IDENTITY & LINKS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          ]),
+          IconButton(
+            onPressed: _isSaving ? null : _handleSave,
+            icon: _isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple)) : const Icon(LucideIcons.save, color: PaceColors.purple),
+          ),
         ],
       ),
-      body: _isLoading 
-        ? const Padding(padding: EdgeInsets.all(24), child: SkeletonList())
-        : ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            children: [
-              _buildRouterSelector(isDark),
-              const SizedBox(height: 24),
-              _buildIdentitySection(isDark),
-              const SizedBox(height: 24),
-              _buildCriticalLinksSection(isDark),
-              const SizedBox(height: 100),
-            ],
-          ),
     );
   }
 
-  Widget _buildRouterSelector(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _activeRouterId,
-          isExpanded: true,
-          icon: const Icon(Icons.expand_more_rounded, color: PaceColors.purple),
-          style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
-          dropdownColor: PaceColors.getCard(isDark),
-          items: _routers.map((r) => DropdownMenuItem(value: r['id'].toString(), child: Text(r['router_name']?.toUpperCase() ?? 'STATION'))).toList(),
-          onChanged: (val) {
-            if (val != null) {
-              setState(() {
-                _activeRouterId = val;
-                _isLocked = true;
-              });
-              _loadConfig();
-            }
-          },
-        ),
+  Widget _buildRouterPicker(bool isDark) {
+    final activeOne = _routers.firstWhere((r) => r['id'].toString() == _activeRouterId, orElse: () => _routers[0]);
+    return InkWell(
+      onTap: () => _showRouterModal(isDark),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
+        child: Row(children: [
+          const Icon(LucideIcons.settings2, size: 18, color: PaceColors.purple),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('TARGET NODE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1)),
+            Text(activeOne['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
+          ])),
+          const Icon(LucideIcons.chevronDown, size: 16, color: Colors.grey),
+        ]),
       ),
     );
   }
 
-  Widget _buildIdentitySection(bool isDark) {
+  Widget _buildIdentityCard(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Icon(Icons.wifi_tethering_rounded, color: PaceColors.purple, size: 18),
-          const SizedBox(width: 12),
-          Text('HOTSPOT IDENTITY', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          const Icon(LucideIcons.wifi, size: 14, color: PaceColors.purple),
+          const SizedBox(width: 8),
+          Text('IDENTITY METADATA', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         ]),
         const SizedBox(height: 24),
-        _buildTextField('WIFI SSID (NETWORK NAME)', _wifiNameController, 'e.g. PACE_HOTSPOT', isDark),
+        _buildField('WIFI SSID (NETWORK NAME)', _wifiNameCtrl, LucideIcons.smartphone, isDark),
         const SizedBox(height: 20),
-        _buildTextField('SUPPORT / CARE NUMBER', _supportPhoneController, 'e.g. 07XXXXXXXX', isDark),
+        _buildField('SUPPORT NUMBER', _supportCtrl, LucideIcons.phone, isDark),
       ]),
     );
   }
 
-  Widget _buildCriticalLinksSection(bool isDark) {
+  Widget _buildApiLinksCard(bool isDark) {
     return Stack(
       children: [
         Opacity(
           opacity: _isLocked ? 0.3 : 1.0,
           child: Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+            decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark))),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Row(children: [
-                  const Icon(Icons.link_rounded, color: Colors.blue, size: 18),
-                  const SizedBox(width: 12),
-                  Text('CRITICAL API LINKS', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                ]),
-                if (!_isLocked) IconButton(onPressed: () => setState(() => _isLocked = true), icon: const Icon(Icons.lock_open_rounded, color: PaceColors.purple, size: 16)),
+                 Row(children: [
+                   const Icon(LucideIcons.link, size: 14, color: Colors.blue),
+                   const SizedBox(width: 8),
+                   Text('SYSTEM API LINKS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                 ]),
+                 if (!_isLocked) IconButton(onPressed: () => setState(() => _isLocked = true), icon: const Icon(LucideIcons.unlock, size: 14, color: PaceColors.purple)),
               ]),
               const SizedBox(height: 24),
-              _buildTextField('LNMO API (PRIMARY)', _lnmoController, 'https://api.gateway.com', isDark, isMono: true, enabled: !_isLocked),
-              const SizedBox(height: 20),
-              _buildTextField('ROUTER IDENTITY', _routerIdentityController, 'e.g. pace', isDark, isMono: true, enabled: !_isLocked),
-              const SizedBox(height: 12),
-              Text('MODIFICATION OF THESE LINKS MAY BREAK PAYMENT PROCESSING.', style: GoogleFonts.figtree(fontSize: 8, color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              _buildField('PRIMARY LNMO API', _lnmo1Ctrl, LucideIcons.globe, isDark, isMono: true, enabled: !_isLocked),
+              const SizedBox(height: 16),
+              _buildField('ROUTER IDENTITY', _routerIdCtrl, LucideIcons.network, isDark, isMono: true, enabled: !_isLocked),
+              const SizedBox(height: 16),
+              _buildField('SECONDARY LNMO 2', _lnmo2Ctrl, LucideIcons.link2, isDark, isMono: true, enabled: !_isLocked),
+              const SizedBox(height: 16),
+              _buildField('SECONDARY LNMO 3', _lnmo3Ctrl, LucideIcons.link2, isDark, isMono: true, enabled: !_isLocked),
             ]),
           ),
         ),
         if (_isLocked)
-          Positioned.fill(
-            child: Center(
-              child: GestureDetector(
-                onTap: () => setState(() => _isLocked = false),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(color: PaceColors.purple, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: PaceColors.purple.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))]),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.lock_rounded, color: Colors.white, size: 16),
-                    const SizedBox(width: 12),
-                    Text('UNLOCK CORE CONFIG', style: GoogleFonts.figtree(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1)),
-                  ]),
-                ),
-              ),
+          Positioned.fill(child: Center(child: InkWell(
+            onTap: () => setState(() => _isLocked = false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(color: PaceColors.purple, borderRadius: BorderRadius.circular(16)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(LucideIcons.lock, color: Colors.white, size: 14),
+                const SizedBox(width: 8),
+                Text('UNLOCK CORE LINKS', style: GoogleFonts.figtree(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
+              ]),
             ),
-          ),
+          ))),
       ],
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String hint, bool isDark, {bool isMono = false, bool enabled = true}) {
+  Widget _buildField(String label, TextEditingController ctrl, IconData icon, bool isDark, {bool isMono = false, bool enabled = true}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+      Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1)),
       const SizedBox(height: 8),
       TextField(
-        controller: controller,
+        controller: ctrl,
         enabled: enabled,
-        style: isMono ? GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)) : GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+        style: isMono ? GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold) : GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 12),
-          filled: true,
-          fillColor: PaceColors.getBackground(isDark).withOpacity(0.5),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          prefixIcon: Icon(icon, size: 14, color: PaceColors.purple),
+          filled: true, fillColor: PaceColors.getSurface(isDark),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         ),
       ),
     ]);
+  }
+
+  void _showRouterModal(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
+        child: Column(mainAxisSize: MainAxisSize.min, children: _routers.map((r) => ListTile(
+          leading: Icon(LucideIcons.router, color: r['id'].toString() == _activeRouterId ? PaceColors.purple : Colors.grey),
+          title: Text(r['router_name']?.toUpperCase() ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
+          trailing: r['id'].toString() == _activeRouterId ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
+          onTap: () {
+            setState(() => _activeRouterId = r['id'].toString());
+            Navigator.pop(ctx);
+            _loadConfig();
+          },
+        )).toList()),
+      ),
+    );
   }
 }
