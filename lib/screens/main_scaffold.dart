@@ -29,6 +29,7 @@ import 'invoices_screen.dart';
 import 'notifications_screen.dart';
 import '../services/lock_service.dart';
 import 'block_stk_screen.dart';
+import 'themes_screen.dart';
 import 'login_screen.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -165,6 +166,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     const SystemLogsScreen(),
     const SettingsScreen(),
     const BlockStkScreen(),
+    const ThemesScreen(),
   ];
 
   @override
@@ -253,13 +255,15 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                     if (settings.hasPolicy('view_routers'))
                       _buildDrawerItem(9, 'Your Mikrotiks', LucideIcons.router, isDark),
                     if (settings.hasPolicy('wa_alerts'))
-                      _buildDrawerItem(12, 'WhatsApp Alerts', LucideIcons.messageCircle, isDark),
+                      _buildDrawerItem(12, 'Automated Alerts', LucideIcons.messageSquare, isDark),
 
                     _buildDrawerSection('CONFIGURATION', isDark),
                     if (settings.hasPolicy('manage_users'))
                       _buildDrawerItem(11, 'Staff Accounts', LucideIcons.badgeCheck, isDark),
                     if (settings.hasPolicy('system_config'))
                       _buildDrawerItem(17, 'System Setup', LucideIcons.sliders, isDark),
+                    if (settings.hasPolicy('manage_themes'))
+                      _buildDrawerItem(21, 'Design Library', LucideIcons.palette, isDark),
                     if (settings.hasPolicy('view_logs'))
                       _buildDrawerItem(18, 'System Debug Logs', LucideIcons.terminal, isDark),
 
