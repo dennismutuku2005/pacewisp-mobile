@@ -73,8 +73,9 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
   Future<void> _fetchMore() async {
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
+    final currentSearch = _search;
     final res = await _apiService.getMpesaTransactions(page: nextPage, search: _search, forceRefresh: true);
-    if (mounted && res != null) {
+    if (mounted && res != null && _search == currentSearch) {
       setState(() {
         _transactions.addAll(res['data'] ?? []);
         _hasMore = res['pagination']?['has_more'] ?? false;
@@ -157,7 +158,6 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
         children: [
           _buildHeader(isDark),
           _buildSearchBox(isDark),
-          _buildStatsBar(isDark),
           // Table header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -188,10 +188,13 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
                         itemCount: _transactions.length + (_isLoadingMore ? 1 : 0),
                         separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
                         itemBuilder: (context, index) {
-                          if (index == _transactions.length) {
+                          if (index < _transactions.length) {
+                            return _buildTransactionRow(_transactions[index], isDark);
+                          }
+                          if (index == _transactions.length && _isLoadingMore) {
                              return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
                           }
-                          return _buildTransactionRow(_transactions[index], isDark);
+                          return const SizedBox.shrink();
                         },
                       ),
                 ),
@@ -232,24 +235,11 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
           setState(() {
             _search = val;
             _isLoading = true;
+            _transactions = []; // Clear current list to show skeleton
+            _page = 1;
           });
           _fetchCachedThenLive(); 
         },
-      ),
-    );
-  }
-
-  Widget _buildStatsBar(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(6), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
-            child: Text('$_total RECORDS', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
-          ),
-        ],
       ),
     );
   }
