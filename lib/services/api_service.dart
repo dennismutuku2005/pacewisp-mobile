@@ -18,8 +18,8 @@ class ApiService {
   // Singleton memory cache to ensure instant UI transitions
   static final Map<String, dynamic> _memoryCache = {};
   
-  Map<String, dynamic>? getMemoryCached(String slug, {Map<String, dynamic>? params}) {
-    final key = "${slug}_${params.toString()}";
+  Map<String, dynamic>? getMemoryCached(String slug, String? subdomain, {Map<String, dynamic>? params}) {
+    final key = "${subdomain ?? 'default'}_${slug}_${params.toString()}";
     return _memoryCache[key];
   }
   
@@ -161,7 +161,7 @@ class ApiService {
     else if (slug == 'system_settings') phpFile = '/system_data.php';
     else if (slug == 'profile') phpFile = '/account.php';
 
-    final cacheKey = "${slug}_${params.toString()}";
+    final cacheKey = "${subdomainKey}_${slug}_${params.toString()}";
     if (!forceRefresh) {
       final cached = await _cache.get(cacheKey, subdomain: subdomainKey, expiry: const Duration(minutes: 5));
       if (cached != null) return cached;
