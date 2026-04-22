@@ -354,7 +354,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
   Widget _buildDrawerSection(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-      child: Text(title, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.black, letterSpacing: 1.5)),
+      child: Text(title, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
     );
   }
 
