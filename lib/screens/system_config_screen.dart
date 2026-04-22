@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
-import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/overlay_loader.dart';
 
 class SystemConfigScreen extends StatefulWidget {
   const SystemConfigScreen({super.key});
@@ -95,28 +94,32 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Column(
-      children: [
-        _buildHeader(isDark),
-        Expanded(
-          child: _isLoading 
-            ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList())
-            : RefreshIndicator(
-                onRefresh: _loadConfig,
-                color: PaceColors.purple,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  children: [
-                    _buildRouterPicker(isDark),
-                    const SizedBox(height: 24),
-                    _buildIdentityCard(isDark),
-                    const SizedBox(height: 24),
-                    _buildApiLinksCard(isDark),
-                  ],
+    return PaceOverlayLoader(
+      isLoading: _isSaving,
+      message: 'Propagating Config...',
+      child: Column(
+        children: [
+          _buildHeader(isDark),
+          Expanded(
+            child: _isLoading 
+              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList())
+              : RefreshIndicator(
+                  onRefresh: _loadConfig,
+                  color: PaceColors.purple,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                    children: [
+                      _buildRouterPicker(isDark),
+                      const SizedBox(height: 24),
+                      _buildIdentityCard(isDark),
+                      const SizedBox(height: 24),
+                      _buildApiLinksCard(isDark),
+                    ],
+                  ),
                 ),
-              ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -128,12 +131,12 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('CORE CONFIGURATION', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-            Text('MANAGE INFRASTRUCTURE IDENTITY & LINKS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            Text('CORE CONFIGURATION', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+            Text('MANAGE INFRASTRUCTURE IDENTITY & LINKS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
           ]),
           IconButton(
             onPressed: _isSaving ? null : _handleSave,
-            icon: _isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple)) : const Icon(LucideIcons.save, color: PaceColors.purple),
+            icon: const Icon(LucideIcons.save, color: PaceColors.purple),
           ),
         ],
       ),
@@ -141,6 +144,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
   }
 
   Widget _buildRouterPicker(bool isDark) {
+    if (_routers.isEmpty) return const SizedBox();
     final activeOne = _routers.firstWhere((r) => r['id'].toString() == _activeRouterId, orElse: () => _routers[0]);
     return InkWell(
       onTap: () => _showRouterModal(isDark),
@@ -151,8 +155,8 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
           const Icon(LucideIcons.settings2, size: 18, color: PaceColors.purple),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('TARGET NODE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
-            Text(activeOne['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
+            Text('TARGET NODE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            Text(activeOne['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ])),
           const Icon(LucideIcons.chevronDown, size: 16, color: Colors.grey),
         ]),
@@ -168,7 +172,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
         Row(children: [
           const Icon(LucideIcons.wifi, size: 14, color: PaceColors.purple),
           const SizedBox(width: 8),
-          Text('IDENTITY METADATA', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text('IDENTITY METADATA', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         ]),
         const SizedBox(height: 24),
         _buildField('WIFI SSID (NETWORK NAME)', _wifiNameCtrl, LucideIcons.smartphone, isDark),
@@ -191,7 +195,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
                  Row(children: [
                    const Icon(LucideIcons.link, size: 14, color: Colors.blue),
                    const SizedBox(width: 8),
-                   Text('SYSTEM API LINKS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                   Text('SYSTEM API LINKS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                  ]),
                  if (!_isLocked) IconButton(onPressed: () => setState(() => _isLocked = true), icon: const Icon(LucideIcons.unlock, size: 14, color: PaceColors.purple)),
               ]),
@@ -215,7 +219,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(LucideIcons.lock, color: Colors.white, size: 14),
                 const SizedBox(width: 8),
-                Text('UNLOCK CORE LINKS', style: GoogleFonts.figtree(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
+                Text('UNLOCK CORE LINKS', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
               ]),
             ),
           ))),
@@ -225,12 +229,12 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
 
   Widget _buildField(String label, TextEditingController ctrl, IconData icon, bool isDark, {bool isMono = false, bool enabled = true}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+      Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
       const SizedBox(height: 8),
       TextField(
         controller: ctrl,
         enabled: enabled,
-        style: isMono ? GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold) : GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: isMono ? 'monospace' : null),
         decoration: InputDecoration(
           prefixIcon: Icon(icon, size: 14, color: PaceColors.purple),
           filled: true, fillColor: PaceColors.getSurface(isDark),
@@ -249,7 +253,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
         decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
         child: Column(mainAxisSize: MainAxisSize.min, children: _routers.map((r) => ListTile(
           leading: Icon(LucideIcons.router, color: r['id'].toString() == _activeRouterId ? PaceColors.purple : Colors.grey),
-          title: Text(r['router_name']?.toUpperCase() ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
+          title: Text(r['router_name']?.toUpperCase() ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           trailing: r['id'].toString() == _activeRouterId ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
           onTap: () {
             setState(() => _activeRouterId = r['id'].toString());
