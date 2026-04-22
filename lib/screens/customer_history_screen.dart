@@ -228,7 +228,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
             Text(h['plan_name'] ?? 'UNKNOWN PLAN', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
             Text(h['date_created'] ?? h['created_at'] ?? '', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
           ])),
-          Text('KES ${h['amount']}', style: GoogleFonts.jetbrainsMono(fontSize: 12, fontWeight: FontWeight.w900, color: PaceColors.purple)),
+          Text('KES ${h['amount']}', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.w900, color: PaceColors.purple)),
         ],
       ),
     );
