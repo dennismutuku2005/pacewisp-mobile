@@ -221,18 +221,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLogo(bool isDark) {
     return Center(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark ? PaceColors.purple.withOpacity(0.1) : PaceColors.purple.withOpacity(0.05),
           shape: BoxShape.circle,
         ),
         child: Image.asset(
           'assets/images/logo.png', // Switched to logo.png for better compatibility
-          height: 64,
+          height: 40,
           errorBuilder: (_, __, ___) => Image.asset(
             'assets/images/logoc.png', // Fallback to logoc.png
-            height: 64,
-            errorBuilder: (ctx, _, __) => const Icon(Icons.wifi, color: PaceColors.purple, size: 48),
+            height: 40,
+            errorBuilder: (ctx, _, __) => const Icon(Icons.wifi, color: PaceColors.purple, size: 32),
           ),
         ),
       ),
@@ -255,9 +255,9 @@ class _LoginScreenState extends State<LoginScreen> {
             suffixIcon: suffix,
             filled: true,
             fillColor: PaceColors.getCard(isDark),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: PaceColors.getBorder(isDark), width: 1)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: PaceColors.purple, width: 2)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: PaceColors.getBorder(isDark), width: 1)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: PaceColors.purple, width: 2)),
             contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
           ),
         ),
@@ -301,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: PaceColors.purple,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         child: isLoading
