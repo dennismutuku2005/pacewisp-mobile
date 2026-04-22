@@ -97,7 +97,10 @@ class _IncomeScreenState extends State<IncomeScreen> {
             Text('REVENUE ANALYTICS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
             Text('FINANCIAL PERFORMANCE & INSIGHTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ]),
-        IconButton(onPressed: () {}, icon: const Icon(LucideIcons.download, color: PaceColors.purple, size: 20)),
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(LucideIcons.download, color: PaceColors.purple, size: 20),
+        ),
       ],
     );
   }
