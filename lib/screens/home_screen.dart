@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSectionHeader('RECENT ACTIVITY', 'LIVE CONNECTIONS', isDark),
               _buildActivityTable(isDark),
               const SizedBox(height: 48),
-              _buildSectionHeader('NETWORK ROUTERS', 'CORE NODES STATUS', isDark),
+              _buildSectionHeader('YOUR MIKROTIKS', 'HARDWARE HEALTH • ONLINE/OFFLINE', isDark),
               _buildStationTable(isDark),
             ],
             const SizedBox(height: 100),
@@ -238,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
              ]),
              const SizedBox(width: 12),
              Row(children: [_buildLegend(PaceColors.purple, 'REVENUE'), const SizedBox(width: 12), _buildLegend(const Color(0xFF22C55E), 'ACTIVITY')]),
-          ] else if (title == 'NETWORK ROUTERS') ...[
+          ] else if (title == 'YOUR MIKROTIKS') ...[
              const Spacer(),
              CustomPaint(
                painter: DashedBorderPainter(color: PaceColors.purple.withOpacity(0.5), strokeWidth: 1.0, radius: 10),
@@ -247,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                  borderRadius: BorderRadius.circular(10),
                  child: Container(
                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                   child: Text('SEE IN ROUTERS PAGE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1)),
+                   child: Text('SEE IN MIKROTIKS PAGE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1)),
                  ),
                ),
              ),
@@ -336,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 2.5, children: [
         _buildActionItem(Icons.tag_rounded, 'ACTIVE PLANS', 'Bandwidth tiers', Colors.blue, isDark, () {}),
         _buildActionItem(Icons.people_alt_rounded, 'CUSTOMERS', 'Manage accounts', PaceColors.emerald, isDark, () {}),
-        _buildActionItem(Icons.lan_rounded, 'STATION NODE', 'Hardware portal', Colors.orange, isDark, () {}),
+        _buildActionItem(Icons.lan_rounded, 'YOUR MIKROTIKS', 'Hardware health', Colors.orange, isDark, () {}),
         _buildActionItem(Icons.analytics_rounded, 'SMART LOGGER', 'Internal events', PaceColors.getDimText(isDark), isDark, () {}),
     ]);
   }
