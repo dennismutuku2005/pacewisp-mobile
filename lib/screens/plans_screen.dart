@@ -49,7 +49,7 @@ class _PlansScreenState extends State<PlansScreen> {
 
   Future<void> _loadPlans() async {
     if (_activeRouterId == null) return;
-    final res = await _apiService.fetchData('prepaid_plans', params: {'router_id': _activeRouterId});
+    final res = await _apiService.fetchData(slug: 'prepaid_plans', params: {'router_id': _activeRouterId});
     if (mounted && res?['status'] == 'success') {
       setState(() {
         _plans = _sortPlans(res?['plans'] ?? []);
@@ -147,7 +147,7 @@ class _PlansScreenState extends State<PlansScreen> {
            updatedPlans.add(planData);
         }
 
-        final res = await _apiService.fetchData('save_plans', method: 'POST', body: {
+        final res = await _apiService.fetchData(slug: 'save_plans', method: 'POST', body: {
           'router_id': _activeRouterId,
           'plans': updatedPlans,
           'changed_plan': planData,
@@ -185,7 +185,7 @@ class _PlansScreenState extends State<PlansScreen> {
        try {
          final planToDelete = _plans[index];
          final updatedPlans = List.from(_plans)..removeAt(index);
-         final res = await _apiService.fetchData('save_plans', method: 'POST', body: {
+         final res = await _apiService.fetchData(slug: 'save_plans', method: 'POST', body: {
             'router_id': _activeRouterId,
             'plans': updatedPlans,
             'action': 'delete',
@@ -205,7 +205,7 @@ class _PlansScreenState extends State<PlansScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -288,7 +288,7 @@ class _PlansScreenState extends State<PlansScreen> {
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                  Text('TARGET ROUTER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-                 Text(activeRouter['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+                 Text(activeRouter['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
               ])),
               const Icon(LucideIcons.chevronDown, size: 16, color: Colors.grey),
             ],
@@ -342,7 +342,7 @@ class _PlansScreenState extends State<PlansScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(plan['name']?.toUpperCase() ?? 'NEW PLAN', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+                Text(plan['name']?.toUpperCase() ?? 'NEW PLAN', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
                 const SizedBox(height: 4),
                 Row(
                   children: [
