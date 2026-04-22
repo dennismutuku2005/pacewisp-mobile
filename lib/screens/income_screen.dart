@@ -264,9 +264,62 @@ class _IncomeScreenState extends State<IncomeScreen> {
         SizedBox(
           height: 200,
           child: LineChart(LineChartData(
-             gridData: const FlGridData(show: false),
-             titlesData: const FlTitlesData(show: false),
+             gridData: FlGridData(
+               show: true,
+               drawVerticalLine: false,
+               horizontalInterval: history.isNotEmpty ? (history.map((e) => double.parse(e['amount'].toString())).reduce((a, b) => a > b ? a : b) / 4).clamp(1.0, double.infinity) : 1000,
+               getDrawingHorizontalLine: (value) => FlLine(color: PaceColors.getBorder(isDark).withOpacity(0.5), strokeWidth: 1, dashArray: [4, 4]),
+             ),
+             titlesData: FlTitlesData(
+               show: true,
+               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+               topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+               bottomTitles: AxisTitles(
+                 sideTitles: SideTitles(
+                   showTitles: true,
+                   reservedSize: 24,
+                   interval: 1,
+                   getTitlesWidget: (value, meta) {
+                     if (value.toInt() >= 0 && value.toInt() < history.length) {
+                       final String dayStr = history[value.toInt()]['day']?.toString() ?? '';
+                       // Try to show only a few labels if there are many days
+                       if (history.length > 7 && value.toInt() % (history.length ~/ 5) != 0 && value.toInt() != history.length - 1) return const SizedBox();
+                       return Padding(
+                         padding: const EdgeInsets.only(top: 8.0),
+                         child: Text(dayStr, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
+                       );
+                     }
+                     return const SizedBox();
+                   },
+                 ),
+               ),
+               leftTitles: AxisTitles(
+                 sideTitles: SideTitles(
+                   showTitles: true,
+                   reservedSize: 40,
+                   getTitlesWidget: (value, meta) {
+                     if (value == 0) return const SizedBox();
+                     final str = value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(0);
+                     return Text(str, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold));
+                   },
+                 ),
+               ),
+             ),
              borderData: FlBorderData(show: false),
+             lineTouchData: LineTouchData(
+               touchTooltipData: LineTouchTooltipData(
+                 getTooltipColor: (touchedSpot) => PaceColors.getCard(isDark),
+                 tooltipRoundedRadius: 8,
+                 getTooltipItems: (touchedSpots) {
+                   return touchedSpots.map((spot) {
+                     return LineTooltipItem(
+                       'KES ${_currencyFormat.format(spot.y)}',
+                       TextStyle(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.bold, fontSize: 12),
+                     );
+                   }).toList();
+                 },
+               ),
+             ),
              lineBarsData: [LineChartBarData(
                spots: history.map((e) => FlSpot(double.parse(history.indexOf(e).toString()), double.parse(e['amount'].toString()))).toList(),
                isCurved: true,
@@ -293,18 +346,58 @@ class _IncomeScreenState extends State<IncomeScreen> {
         Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
         Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 32),
-        ...distro.map((item) {
-          final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
-          final color = Color(int.parse(colorCode));
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(children: [
-              const SizedBox(width: 8),
-              Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)))),
-              Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
-            ]),
-          );
-        }).toList(),
+        SizedBox(
+          height: 200,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 4,
+                    centerSpaceRadius: 40,
+                    sections: distro.map((item) {
+                      final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
+                      final color = Color(int.parse(colorCode));
+                      final value = double.tryParse(item['value']?.toString() ?? '0') ?? 0;
+                      return PieChartSectionData(
+                        color: color,
+                        value: value,
+                        title: '${value.toStringAsFixed(0)}%',
+                        radius: 24,
+                        titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                        showTitle: value > 5,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                flex: 4,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: distro.map((item) {
+                    final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
+                    final color = Color(int.parse(colorCode));
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
+                          Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
       ]),
     );
   }
