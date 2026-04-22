@@ -7,7 +7,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
-import '../components/overlay_loader.dart';
+import '../components/badge.dart';
 import 'customer_history_screen.dart';
 
 class CustomersScreen extends StatefulWidget {
@@ -29,8 +29,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
   bool _fetchLock = false;
   String _search = '';
   int _total = 0;
+  
+  // Stats from WispPortal
   int _onlineCount = 0;
   int _monthlyCount = 0;
+  
   Timer? _searchDebounce;
 
   @override
@@ -38,8 +41,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchStats();
-      _loadCustomers(1);
+      _refreshAll();
     });
   }
 
@@ -58,6 +60,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
     }
   }
 
+  Future<void> _refreshAll() async {
+    _fetchStats();
+    await _loadCustomers(1);
+  }
+
   Future<void> _fetchStats() async {
     try {
       final res = await _api.getSummaryWidgets(forceRefresh: true);
@@ -69,12 +76,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
         });
       }
     } catch (e) {
-      // Silent fail for stats
+      debugPrint('Stats Fetch Error: $e');
     }
   }
 
-  /// Mirrors WispPortal: customerService.getCustomers({ page, limit: 12, search })
-  /// Response: { status, data: [...], pagination: { total, has_more } }
   Future<void> _loadCustomers(int pageNum, {bool isAppend = false}) async {
     if (_fetchLock) return;
     _fetchLock = true;
@@ -86,12 +91,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
     }
 
     try {
-      final res = await _api.getCustomers(search: _search, page: pageNum, forceRefresh: true);
+      final res = await _api.getCustomers(
+        search: _search, 
+        page: pageNum, 
+        limit: 12,
+        forceRefresh: true
+      );
 
       if (mounted && res != null && res['status'] == 'success') {
         final newItems = res['data'] ?? [];
-        final serverTotal = res['pagination']?['total'] ?? 0;
-        final serverHasMore = res['pagination']?['has_more'] ?? false;
+        final pagination = res['pagination'];
+        final serverTotal = pagination?['total'] ?? 0;
+        final serverHasMore = pagination?['has_more'] ?? false;
 
         setState(() {
           if (isAppend) {
@@ -123,221 +134,399 @@ class _CustomersScreenState extends State<CustomersScreen> {
     if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       if (mounted) {
-        _search = val;
-        _customers = [];
-        _page = 1;
-        _hasMore = true;
+        setState(() {
+          _search = val;
+          _customers = [];
+          _page = 1;
+          _hasMore = true;
+        });
         _loadCustomers(1);
       }
     });
   }
 
-  void _showCustomerDrawer(dynamic c, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('CUSTOMER INFO', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
-            IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(ctx)),
-          ]),
-          const SizedBox(height: 20),
-          _drawerRow('PHONE', c['phone']?.toString() ?? 'N/A', isDark),
-          _drawerRow('MAC ADDRESS', c['mac']?.toString().toUpperCase() ?? 'N/A', isDark),
-          _drawerRow('TOTAL SPENT', 'KES ${c['totalSpent'] ?? '0'}', isDark),
-          _drawerRow('SESSIONS', c['sessions']?.toString() ?? '0', isDark),
-          _drawerRow('LAST SEEN', c['lastSeen']?.toString() ?? 'N/A', isDark),
-          _drawerRow('STATUS', (c['status']?.toString() ?? 'INACTIVE').toUpperCase(), isDark),
-          const SizedBox(height: 24),
-          Row(children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: c['phone'].toString())));
-                },
-                icon: const Icon(LucideIcons.history, size: 16),
-                label: const Text('HISTORY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  side: BorderSide(color: PaceColors.getBorder(isDark)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(LucideIcons.checkCircle, size: 16),
-                label: const Text('DONE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PaceColors.purple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ]),
-        ]),
-      ),
-    );
-  }
-
-  Widget _drawerRow(String label, String value, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-      ]),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
-    final isDark = settings.isDarkMode;
+    final isDark = Provider.of<SettingsProvider>(context).isDarkMode;
 
     return Scaffold(
       backgroundColor: PaceColors.getBackground(isDark),
-      body: Column(children: [
-        // Header
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('CUSTOMER LIST', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-              Text('MANAGE YOUR CUSTOMERS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
-            ]),
-            Row(children: [
-              _statBadge(_monthlyCount.toString(), 'MONTHLY', Colors.indigo),
-              const SizedBox(width: 8),
-              _statBadge(_onlineCount.toString(), 'ONLINE', PaceColors.emerald),
-            ]),
-          ]),
-        ),
-
-        // Search + Record count
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(children: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(isDark),
+            _buildControlBar(isDark),
             Expanded(
-              child: PaceSearchBar(hint: 'Search MAC or mobile number...', isDark: isDark, onChanged: _onSearchChanged),
+              child: _isLoading && _customers.isEmpty
+                ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 10))
+                : RefreshIndicator(
+                    onRefresh: _refreshAll,
+                    color: PaceColors.purple,
+                    child: _customers.isEmpty
+                      ? _buildEmptyState(isDark)
+                      : _buildListView(isDark),
+                  ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(10), border: Border.all(color: PaceColors.getBorder(isDark))),
-              child: Text('${_customers.length} of $_total', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)),
-            ),
-          ]),
+          ],
         ),
-
-        // Table header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
-          child: Row(children: [
-            Expanded(flex: 3, child: Text('PHONE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-            Expanded(flex: 2, child: Text('SPENT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-            Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-          ]),
-        ),
-
-        // List
-        Expanded(
-          child: _isLoading && _customers.isEmpty
-            ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 10))
-            : RefreshIndicator(
-                onRefresh: () async {
-                  _customers = [];
-                  _page = 1;
-                  _hasMore = true;
-                  await _fetchStats();
-                  await _loadCustomers(1);
-                },
-                color: PaceColors.purple,
-                child: _customers.isEmpty
-                  ? ListView(children: [
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.15),
-                      Center(child: Column(children: [
-                        Icon(LucideIcons.users, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-                        const SizedBox(height: 16),
-                        Text('NO CUSTOMERS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                      ])),
-                    ])
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.only(bottom: 120),
-                      itemCount: _customers.length + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == _customers.length) {
-                          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                        }
-                        return _buildCustomerRow(_customers[index], isDark);
-                      },
-                    ),
-              ),
-        ),
-      ]),
-    );
-  }
-
-  Widget _statBadge(String val, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withOpacity(0.1))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Text(val, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: color, letterSpacing: 0.5)),
-      ]),
-    );
-  }
-
-  Widget _buildCustomerRow(dynamic c, bool isDark) {
-    final status = c['status']?.toString().toLowerCase() ?? 'inactive';
-    final isOnline = status == 'active';
-    final statusColor = isOnline ? PaceColors.emerald : Colors.redAccent;
-
-    return InkWell(
-      onTap: () => _showCustomerDrawer(c, isDark),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
-        child: Row(children: [
-          Expanded(
-            flex: 3,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(c['phone']?.toString() ?? 'N/A', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-              const SizedBox(height: 2),
-              Text(c['mac']?.toString().toUpperCase() ?? '00:00:00:00:00:00', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
-            ]),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text('KES ${c['totalSpent'] ?? '0'}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-          ),
-          Expanded(
-            flex: 2,
-            child: Row(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                child: Text(status.toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: statusColor)),
-              ),
-              const Spacer(),
-              Icon(Icons.chevron_right, size: 16, color: PaceColors.getDimText(isDark)),
-            ]),
-          ),
-        ]),
       ),
+    );
+  }
+
+  Widget _buildHeader(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 1)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.users, color: PaceColors.purple, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'CUSTOMERS',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: PaceColors.purple,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.only(left: 8),
+                  decoration: const BoxDecoration(
+                    border: Border(left: BorderSide(color: PaceColors.purple, width: 2)),
+                  ),
+                  child: Text(
+                    'MANAGE HOTSPOT USERS, DISTINCT BY PHONE NUMBER.',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: PaceColors.getDimText(isDark),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            children: [
+              _statBadge(
+                _monthlyCount.toString(), 
+                'MONTHLY', 
+                Colors.indigo, 
+                LucideIcons.calendar
+              ),
+              const SizedBox(height: 8),
+              _statBadge(
+                _onlineCount.toString(), 
+                'ONLINE', 
+                PaceColors.emerald, 
+                LucideIcons.zap,
+                pulse: true
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statBadge(String val, String label, Color color, IconData icon, {bool pulse = false}) {
+    return Container(
+      width: 110,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (pulse) 
+                Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.only(right: 6),
+                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                ),
+              Text(
+                val,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 7,
+              fontWeight: FontWeight.w900,
+              color: color.withOpacity(0.8),
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlBar(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          PaceSearchBar(
+            hint: 'Search MAC or mobile number...', 
+            isDark: isDark, 
+            onChanged: _onSearchChanged
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: PaceColors.getSurface(isDark),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: PaceColors.getBorder(isDark)),
+                ),
+                child: Text(
+                  '${_customers.length} OF $_total RECORDS',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: PaceColors.getDimText(isDark),
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListView(bool isDark) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.only(bottom: 100),
+      itemCount: _customers.length + (_isLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == _customers.length) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20), 
+              child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)
+            ),
+          );
+        }
+        return _buildCustomerItem(_customers[index], isDark);
+      },
+    );
+  }
+
+  Widget _buildCustomerItem(dynamic c, bool isDark) {
+    final status = c['status']?.toString() ?? 'Inactive';
+    final used = c['used'] == true;
+    
+    return InkWell(
+      onTap: () => Navigator.push(
+        context, 
+        MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: c['phone'].toString()))
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+          boxShadow: [
+            if (!isDark)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      c['phone']?.toString() ?? 'N/A',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: PaceColors.purple,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      c['mac']?.toString().toUpperCase() ?? 'NO MAC RECORDED',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: PaceColors.getDimText(isDark),
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'KES ${c['totalSpent'] ?? '0'}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: PaceColors.purple,
+                      ),
+                    ),
+                    Text(
+                      'AGGREGATE SPEND',
+                      style: TextStyle(
+                        fontSize: 7,
+                        fontWeight: FontWeight.w900,
+                        color: PaceColors.getDimText(isDark),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1, thickness: 0.5),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    _infoBadge('SESSIONS', c['sessions']?.toString() ?? '0', isDark),
+                    const SizedBox(width: 8),
+                    PaceBadge(
+                      label: status.toUpperCase(),
+                      type: status == 'Active' ? BadgeType.success : BadgeType.neutral,
+                    ),
+                    const SizedBox(width: 8),
+                    PaceBadge(
+                      label: used ? 'USED' : 'UNUSED',
+                      type: used ? BadgeType.success : BadgeType.danger,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Icon(LucideIcons.clock, size: 10, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      c['lastSeen']?.toString().toUpperCase() ?? 'N/A',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: PaceColors.getDimText(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoBadge(String label, String value, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: PaceColors.getSurface(isDark),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark)),
+          ),
+          Text(
+            value,
+            style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    return ListView(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+        Center(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: PaceColors.getSurface(isDark),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.users, 
+                  size: 48, 
+                  color: PaceColors.getDimText(isDark).withOpacity(0.2)
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'NO MATCHING RECORDS FOUND',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: PaceColors.getDimText(isDark),
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
