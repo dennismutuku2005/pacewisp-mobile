@@ -348,8 +348,6 @@ class _PlansScreenState extends State<PlansScreen> {
                   children: [
                     Text('KES ${plan['price']}', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
                     const SizedBox(width: 8),
-                    Container(width: 3, height: 3, decoration: const BoxDecoration(color: Colors.grey, shape: BoxShape.circle)),
-                    const SizedBox(width: 8),
                     Text(plan['rate_limit'] ?? '6M/6M', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
                   ],
                 ),
