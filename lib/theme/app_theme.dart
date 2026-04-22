@@ -45,7 +45,7 @@ class AppTheme {
         elevation: 0,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: PaceColors.cardBg,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -114,7 +114,7 @@ class AppTheme {
         elevation: 0,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: PaceColors.cardBgDark,
       elevation: 0,
       shape: RoundedRectangleBorder(
