@@ -153,6 +153,9 @@ class ApiService {
     else if (slug == 'wa_alerts') phpFile = '/wa-alerts.php';
     else if (slug == 'mpesa') phpFile = '/mpesa_transactions.php';
     else if (slug == 'invoices') phpFile = '/invoices.php';
+    else if (slug == 'notifications') phpFile = '/notifications.php';
+    else if (slug == 'monthly_customers') phpFile = '/customers.php';
+    else if (slug == 'active_customers') phpFile = '/customers.php';
 
     final cacheKey = "${slug}_${params.toString()}";
     if (!forceRefresh) {
@@ -202,6 +205,8 @@ class ApiService {
 
   // Customers
   Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customers', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getMonthlyCustomers({bool forceRefresh = false}) async => fetchData(slug: 'monthly_customers', params: {'action': 'get_monthly'}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getActiveCustomers({bool forceRefresh = false}) async => fetchData(slug: 'active_customers', params: {'action': 'get_active'}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> getCustomerHistory({required String phone, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customer_history', params: {'phone': phone, 'page': page}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> deleteCustomer(String phone) async => _requestWithFallback('/customers.php?action=delete', method: 'POST', data: {'phone': phone});
 
@@ -248,6 +253,22 @@ class ApiService {
   // Staff
   Future<Map<String, dynamic>?> getStaff({bool forceRefresh = false}) async => 
     fetchData(slug: 'staff', forceRefresh: forceRefresh);
+  
+  Future<Map<String, dynamic>?> createStaff(Map<String, dynamic> data) async => 
+    _requestWithFallback('/staff.php', method: 'POST', data: data);
+
+  Future<Map<String, dynamic>?> updateStaff(String id, Map<String, dynamic> data) async => 
+    _requestWithFallback('/staff.php?id=$id', method: 'POST', data: data);
+
+  Future<Map<String, dynamic>?> deleteStaff(String id) async => 
+    _requestWithFallback('/staff.php?id=$id', method: 'DELETE');
+
+  // Notifications
+  Future<Map<String, dynamic>?> getNotifications({int page = 1, bool forceRefresh = false}) async => 
+    fetchData(slug: 'notifications', params: {'page': page}, forceRefresh: forceRefresh);
+
+  Future<Map<String, dynamic>?> markNotificationRead(String? id) async => 
+    _requestWithFallback('/notifications.php?action=mark_read', method: 'POST', data: {'id': id});
 
   // WhatsApp Alerts
   Future<Map<String, dynamic>?> getWhatsAppAlertsConfig() async => 
