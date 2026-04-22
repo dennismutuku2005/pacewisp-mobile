@@ -13,16 +13,21 @@ class PaceColors {
   // Surface Colors (Light)
   static const Color background = Color(0xFFFFFFFF);
   static const Color foreground = Color(0xFF111827);
-  static const Color border = Color(0xFFE5E7EB);
-  static const Color bgSubtle = Color(0xFFF9FAFB);
+  static const Color border = Color(0xFFF1F1F1);
+  static const Color bgSubtle = Color(0xFFFAFAFA);
+  static const Color cardBg = Color(0xFFFFFFFF);
+  static const Color success = Color(0xFF10B981);
+  static const Color error = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
 
   // Surface Colors (Dark)
   static const Color purpleDark = Color(0xFF5B2DA0);
   static const Color greenDark = Color(0xFF4ADE80);
   static const Color backgroundDark = Color(0xFF0D0D12);
   static const Color foregroundDark = Color(0xFFF3F4F6);
-  static const Color borderDark = Color(0xFF2D2D3A);
-  static const Color bgSubtleDark = Color(0xFF161B22);
+  static const Color borderDark = Color(0xFF1F1F23);
+  static const Color bgSubtleDark = Color(0xFF0A0A0E);
+  static const Color cardBgDark = Color(0xFF13131A);
 
   // Admin Palette (Light)
   static const Color adminLabel = Color(0xFF4B5563);
