@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
+import '../components/badge.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
-import '../components/badge.dart';
+import '../components/overlay_loader.dart';
 import 'customer_history_screen.dart';
 
 class CustomersScreen extends StatefulWidget {
@@ -18,309 +20,227 @@ class CustomersScreen extends StatefulWidget {
 }
 
 class _CustomersScreenState extends State<CustomersScreen> {
-  final ApiService _api = ApiService();
+  final ApiService _apiService = ApiService();
   final ScrollController _scrollController = ScrollController();
 
   List<dynamic> _customers = [];
+  List<dynamic> _routers = [];
   int _page = 1;
+  int _total = 0;
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-  bool _fetchLock = false;
   String _search = '';
-  int _total = 0;
+  String _selectedRouter = 'all';
   
-  // Stats from WispPortal
+  // Stats
   int _onlineCount = 0;
   int _monthlyCount = 0;
-  
-  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
+    _loadInitialData();
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshAll();
-    });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _searchDebounce?.cancel();
-    super.dispose();
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMore && !_fetchLock) {
-        _loadCustomers(_page + 1, isAppend: true);
+      if (!_isLoadingMore && _hasMore) {
+        _fetchMore();
       }
     }
   }
 
-  Future<void> _refreshAll() async {
-    _fetchStats();
-    await _loadCustomers(1);
-  }
-
-  Future<void> _fetchStats() async {
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoading = true);
     try {
-      final res = await _api.getSummaryWidgets(forceRefresh: true);
-      if (mounted && res != null && res['status'] == 'success') {
-        setState(() {
-          final widgets = res['data']?['widgets'];
-          _onlineCount = int.tryParse(widgets?['online_customers']?['value']?.toString() ?? '0') ?? 0;
-          _monthlyCount = int.tryParse(widgets?['customers_month']?['value']?.toString() ?? '0') ?? 0;
-        });
-      }
-    } catch (e) {
-      debugPrint('Stats Fetch Error: $e');
-    }
-  }
+      // Parallel fetch for speed
+      final results = await Future.wait([
+        _apiService.getRouters(forceRefresh: true),
+        _apiService.getSummaryWidgets(forceRefresh: true),
+      ]);
 
-  Future<void> _loadCustomers(int pageNum, {bool isAppend = false}) async {
-    if (_fetchLock) return;
-    _fetchLock = true;
+      final routersRes = results[0] as Map<String, dynamic>?;
+      final widgetsRes = results[1] as Map<String, dynamic>?;
 
-    if (!isAppend) {
-      setState(() => _isLoading = true);
-    } else {
-      setState(() => _isLoadingMore = true);
-    }
+      await _fetchCustomers(pageNum: 1, isInitial: true);
 
-    try {
-      final res = await _api.getCustomers(
-        search: _search, 
-        page: pageNum, 
-        limit: 12,
-        forceRefresh: true
-      );
-
-      if (mounted && res != null && res['status'] == 'success') {
-        final newItems = res['data'] ?? [];
-        final pagination = res['pagination'];
-        final serverTotal = pagination?['total'] ?? 0;
-        final serverHasMore = pagination?['has_more'] ?? false;
-
-        setState(() {
-          if (isAppend) {
-            _customers.addAll(newItems);
-          } else {
-            _customers = List.from(newItems);
-          }
-          _total = serverTotal is int ? serverTotal : int.tryParse(serverTotal.toString()) ?? 0;
-          _hasMore = serverHasMore == true;
-          _page = pageNum;
-        });
-      } else if (mounted) {
-        setState(() => _hasMore = false);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _hasMore = false);
-    } finally {
       if (mounted) {
         setState(() {
+          _routers = routersRes?['data'] ?? [];
+          if (widgetsRes != null && widgetsRes['status'] == 'success') {
+            final w = widgetsRes['data']?['widgets'];
+            _onlineCount = int.tryParse(w?['online_customers']?['value']?.toString() ?? '0') ?? 0;
+            _monthlyCount = int.tryParse(w?['customers_month']?['value']?.toString() ?? '0') ?? 0;
+          }
           _isLoading = false;
-          _isLoadingMore = false;
         });
       }
-      _fetchLock = false;
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchCustomers({required int pageNum, bool isInitial = false}) async {
+    final res = await _apiService.fetchData(slug: 'customers', params: {
+      'page': pageNum,
+      'limit': 15,
+      'search': _search,
+      'router_name': _selectedRouter == 'all' ? null : _selectedRouter,
+    });
+
+    if (mounted && res?['status'] == 'success') {
+      setState(() {
+        if (pageNum == 1) {
+          _customers = res?['data'] ?? [];
+        } else {
+          _customers.addAll(res?['data'] ?? []);
+        }
+        _hasMore = res?['pagination']?['has_more'] ?? false;
+        _total = res?['pagination']?['total'] ?? 0;
+        _page = pageNum;
+      });
+    }
+  }
+
+  Future<void> _fetchMore() async {
+    setState(() => _isLoadingMore = true);
+    try {
+      await _fetchCustomers(pageNum: _page + 1);
+    } finally {
+      if (mounted) setState(() => _isLoadingMore = false);
     }
   }
 
   void _onSearchChanged(String val) {
-    if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        setState(() {
-          _search = val;
-          _customers = [];
-          _page = 1;
-          _hasMore = true;
-        });
-        _loadCustomers(1);
-      }
-    });
+    _search = val;
+    _fetchCustomers(pageNum: 1);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Provider.of<SettingsProvider>(context).isDarkMode;
+    final settings = Provider.of<SettingsProvider>(context);
+    final isDark = settings.isDarkMode;
 
-    return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(isDark),
-            _buildControlBar(isDark),
-            Expanded(
-              child: _isLoading && _customers.isEmpty
-                ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 10))
-                : RefreshIndicator(
-                    onRefresh: _refreshAll,
-                    color: PaceColors.purple,
-                    child: _customers.isEmpty
-                      ? _buildEmptyState(isDark)
-                      : _buildListView(isDark),
-                  ),
-            ),
-          ],
-        ),
+    return Container(
+      color: PaceColors.getBackground(isDark),
+      child: Column(
+        children: [
+          _buildHeader(isDark),
+          _buildStatsStrip(isDark),
+          _buildControls(isDark),
+          Expanded(
+            child: _isLoading 
+              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
+              : Column(
+                  children: [
+                    _buildTableHeader(isDark),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _loadInitialData,
+                        color: PaceColors.purple,
+                        child: _customers.isEmpty 
+                          ? _buildEmptyState(isDark)
+                          : ListView.separated(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                              itemCount: _customers.length + (_isLoadingMore ? 1 : 0),
+                              separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
+                              itemBuilder: (context, index) {
+                                if (index == _customers.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
+                                return _buildCustomerRow(_customers[index], isDark);
+                              },
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(bool isDark) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 1)),
-      ),
-      child: Row(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Text('CUSTOMER REGISTRY', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+          Text('CENTRALIZED HOTSPOT USER MANAGEMENT', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsStrip(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          _statCard('ONLINE NOW', _onlineCount.toString(), PaceColors.emerald, isDark, LucideIcons.zap),
+          const SizedBox(width: 12),
+          _statCard('MONTHLY USERS', _monthlyCount.toString(), Colors.blueAccent, isDark, LucideIcons.calendar),
+        ],
+      ),
+    );
+  }
+
+  Widget _statCard(String label, String value, Color color, bool isDark, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(LucideIcons.users, color: PaceColors.purple, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'CUSTOMERS',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: PaceColors.purple,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.only(left: 8),
-                  decoration: const BoxDecoration(
-                    border: Border(left: BorderSide(color: PaceColors.purple, width: 2)),
-                  ),
-                  child: Text(
-                    'MANAGE HOTSPOT USERS, DISTINCT BY PHONE NUMBER.',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: PaceColors.getDimText(isDark),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
+                Icon(icon, size: 12, color: color),
+                const SizedBox(width: 6),
+                Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: color, letterSpacing: 1)),
               ],
             ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            children: [
-              _statBadge(
-                _monthlyCount.toString(), 
-                'MONTHLY', 
-                Colors.indigo, 
-                LucideIcons.calendar
-              ),
-              const SizedBox(height: 8),
-              _statBadge(
-                _onlineCount.toString(), 
-                'ONLINE', 
-                PaceColors.emerald, 
-                LucideIcons.zap,
-                pulse: true
-              ),
-            ],
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(value, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _statBadge(String val, String label, Color color, IconData icon, {bool pulse = false}) {
-    return Container(
-      width: 110,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.15)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (pulse) 
-                Container(
-                  width: 6,
-                  height: 6,
-                  margin: const EdgeInsets.only(right: 6),
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                ),
-              Text(
-                val,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ],
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 7,
-              fontWeight: FontWeight.w900,
-              color: color.withOpacity(0.8),
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildControlBar(bool isDark) {
+  Widget _buildControls(bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          PaceSearchBar(
-            hint: 'Search MAC or mobile number...', 
-            isDark: isDark, 
-            onChanged: _onSearchChanged
+          Row(
+            children: [
+              Expanded(
+                child: PaceSearchBar(
+                  hint: 'Search MAC or phone...', 
+                  isDark: isDark, 
+                  onChanged: _onSearchChanged
+                ),
+              ),
+              const SizedBox(width: 12),
+              _buildFilterButton(isDark),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: PaceColors.getSurface(isDark),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: PaceColors.getBorder(isDark)),
-                ),
-                child: Text(
-                  '${_customers.length} OF $_total RECORDS',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    color: PaceColors.getDimText(isDark),
-                    letterSpacing: 0.8,
-                  ),
-                ),
+              Text(
+                '$_total TOTAL RECORDS FOUND', 
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)
               ),
             ],
           ),
@@ -329,204 +249,206 @@ class _CustomersScreenState extends State<CustomersScreen> {
     );
   }
 
-  Widget _buildListView(bool isDark) {
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.only(bottom: 100),
-      itemCount: _customers.length + (_isLoadingMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == _customers.length) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20), 
-              child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)
-            ),
-          );
-        }
-        return _buildCustomerItem(_customers[index], isDark);
-      },
+  Widget _buildFilterButton(bool isDark) {
+    return InkWell(
+      onTap: () => _showRouterPicker(isDark),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: PaceColors.getSurface(isDark),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Icon(LucideIcons.sliders, size: 18, color: PaceColors.getPrimaryText(isDark)),
+      ),
     );
   }
 
-  Widget _buildCustomerItem(dynamic c, bool isDark) {
-    final status = c['status']?.toString() ?? 'Inactive';
-    final used = c['used'] == true;
-    
-    return InkWell(
-      onTap: () => Navigator.push(
-        context, 
-        MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: c['phone'].toString()))
-      ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: PaceColors.getCard(isDark),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: PaceColors.getBorder(isDark)),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
+  void _showRouterPicker(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaceColors.getBackground(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Text('FILTER BY NODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
+            ),
+            ListTile(
+              onTap: () { setState(() => _selectedRouter = 'all'); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
+              leading: Icon(LucideIcons.globe, size: 18, color: _selectedRouter == 'all' ? PaceColors.purple : PaceColors.getDimText(isDark)),
+              title: Text('All Nodes', style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == 'all' ? FontWeight.bold : FontWeight.normal)),
+              selected: _selectedRouter == 'all',
+              selectedTileColor: PaceColors.purple.withOpacity(0.05),
+            ),
+            ..._routers.map((r) {
+              final name = r['router_name']?.toString() ?? 'Unknown';
+              return ListTile(
+                onTap: () { setState(() => _selectedRouter = name); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
+                leading: Icon(LucideIcons.router, size: 18, color: _selectedRouter == name ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                title: Text(name.toUpperCase(), style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == name ? FontWeight.bold : FontWeight.normal)),
+                selected: _selectedRouter == name,
+                selectedTileColor: PaceColors.purple.withOpacity(0.05),
+              );
+            }).toList(),
+            const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: PaceColors.getSurface(isDark).withOpacity(0.3),
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5))),
+      ),
+      child: Row(
+        children: [
+          Expanded(flex: 3, child: Text('PHONE & IDENTIFIER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('SPENT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerRow(dynamic c, bool isDark) {
+    final status = c['status']?.toString() ?? 'Inactive';
+    final bool isActive = status == 'Active';
+
+    return InkWell(
+      onTap: () => _showCustomerDrawer(c, isDark),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(c['phone']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
+                  Text(c['mac']?.toString().toUpperCase() ?? 'NO MAC RECORDED', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text('KES ${c['totalSpent'] ?? '0'}', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+            ),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  PaceBadge(label: status.toUpperCase(), variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
+                  const SizedBox(height: 4),
+                  Text('SESSIONS: ${c['sessions'] ?? 0}', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCustomerDrawer(dynamic c, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaceColors.getBackground(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      c['phone']?.toString() ?? 'N/A',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: PaceColors.purple,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      c['mac']?.toString().toUpperCase() ?? 'NO MAC RECORDED',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: PaceColors.getDimText(isDark),
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'KES ${c['totalSpent'] ?? '0'}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: PaceColors.purple,
-                      ),
-                    ),
-                    Text(
-                      'AGGREGATE SPEND',
-                      style: TextStyle(
-                        fontSize: 7,
-                        fontWeight: FontWeight.w900,
-                        color: PaceColors.getDimText(isDark),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
+                Text('CUSTOMER PROFILE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
               ],
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Divider(height: 1, thickness: 0.5),
-            ),
+            const SizedBox(height: 24),
+            _buildDrawerInfo('PRIMARY PHONE', c['phone']?.toString() ?? 'N/A', isDark, isBig: true),
+            const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    _infoBadge('SESSIONS', c['sessions']?.toString() ?? '0', isDark),
-                    const SizedBox(width: 8),
-                    PaceBadge(
-                      label: status.toUpperCase(),
-                      variant: status == 'Active' ? BadgeVariant.success : BadgeVariant.standard,
+                Expanded(child: _buildDrawerInfo('MAC ADDRESS', c['mac']?.toString().toUpperCase() ?? 'N/A', isDark)),
+                Expanded(child: _buildDrawerInfo('LATEST STATUS', c['status']?.toString().toUpperCase() ?? 'N/A', isDark)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildDrawerInfo('TOTAL SPENT', 'KES ${c['totalSpent'] ?? 0}', isDark)),
+                Expanded(child: _buildDrawerInfo('SESSIONS', '${c['sessions'] ?? 0}', isDark)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildDrawerInfo('LAST VISIBILITY', c['lastSeen']?.toString().toUpperCase() ?? 'N/A', isDark),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: c['phone'].toString())));
+                    },
+                    icon: const Icon(LucideIcons.history, size: 16),
+                    label: const Text('VIEW HISTORY & LOGS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PaceColors.purple,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
                     ),
-                    const SizedBox(width: 8),
-                    PaceBadge(
-                      label: used ? 'USED' : 'UNUSED',
-                      variant: used ? BadgeVariant.success : BadgeVariant.error,
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Icon(LucideIcons.clock, size: 10, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      c['lastSeen']?.toString().toUpperCase() ?? 'N/A',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        color: PaceColors.getDimText(isDark),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _infoBadge(String label, String value, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: PaceColors.getBorder(isDark)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '$label: ',
-            style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark)),
-          ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)),
-          ),
-        ],
-      ),
+  Widget _buildDrawerInfo(String label, String value, bool isDark, {bool isBig = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: isBig ? 18 : 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+      ],
     );
   }
 
   Widget _buildEmptyState(bool isDark) {
-    return ListView(
-      children: [
-        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-        Center(
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: PaceColors.getSurface(isDark),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  LucideIcons.users, 
-                  size: 48, 
-                  color: PaceColors.getDimText(isDark).withOpacity(0.2)
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'NO MATCHING RECORDS FOUND',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: PaceColors.getDimText(isDark),
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(LucideIcons.users, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
+          const SizedBox(height: 16),
+          Text('NO CUSTOMERS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        ],
+      ),
     );
   }
 }
