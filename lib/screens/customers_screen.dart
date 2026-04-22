@@ -110,6 +110,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
         _customers.addAll(items);
       }
 
+      debugPrint('PROCESS_CUSTOMERS: Received ${items.length} items. Total: ${_customers.length}');
+      debugPrint('PROCESS_CUSTOMERS: RAW DATA KEY EXISTS: ${res.containsKey('data')}');
+
       // Robust pagination extraction
       final dynamic p = res['pagination'] ?? (rawData is Map ? rawData['pagination'] : null);
       if (p is Map) {
