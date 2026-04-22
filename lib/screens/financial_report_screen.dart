@@ -92,7 +92,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
       children: [
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('FINANCIAL REPORT', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-            Text('ANALYSIS OF INCOME AND OPERATIONAL COSTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            Text('INCOME AND OPERATIONAL COSTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ]),
         IconButton(onPressed: () {}, icon: const Icon(LucideIcons.printer, color: PaceColors.purple, size: 20)),
       ],
