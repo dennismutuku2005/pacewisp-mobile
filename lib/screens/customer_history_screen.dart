@@ -91,7 +91,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
             child: const Icon(LucideIcons.user, color: PaceColors.purple, size: 40),
           ),
           const SizedBox(height: 20),
-          Text(widget.phone, style: GoogleFonts.jetBrainsMono(fontSize: 22, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+          Text(widget.phone, style: GoogleFonts.jetBrainsMono(fontSize: 22, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
           Text(_profile?['mac']?.toString().toUpperCase() ?? 'NONE DETECTED', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
           const SizedBox(height: 24),
           const Divider(),
@@ -112,9 +112,9 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
   Widget _buildMetric(String label, String value, {Color? color}) {
     return Column(
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
         const SizedBox(height: 4),
-        Text(value, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.black, color: color)),
+        Text(value, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
       ],
     );
   }
@@ -157,7 +157,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
         child: Column(children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(height: 8),
-          Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: color, letterSpacing: 1)),
+          Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 1)),
         ]),
       ),
     );
@@ -191,7 +191,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(title, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.black, color: PaceColors.purple)),
+        title: Text(title, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple)),
         content: Text(msg, style: GoogleFonts.figtree(fontSize: 12)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
@@ -205,10 +205,10 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('CONNECTION HISTORY', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
+        Text('CONNECTION HISTORY', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
         const SizedBox(height: 16),
         if (_history.isEmpty)
-           Container(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('NO RECORDED ACTIVITY', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1))))
+           Container(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('NO RECORDED ACTIVITY', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1))))
         else
           ..._history.map((h) => _buildHistoryItem(h, isDark)).toList(),
       ],
@@ -228,7 +228,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
             Text(h['plan_name'] ?? 'UNKNOWN PLAN', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
             Text(h['date_created'] ?? h['created_at'] ?? '', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
           ])),
-          Text('KES ${h['amount']}', style: GoogleFonts.jetbrainsMono(fontSize: 12, fontWeight: FontWeight.black, color: PaceColors.purple)),
+          Text('KES ${h['amount']}', style: GoogleFonts.jetbrainsMono(fontSize: 12, fontWeight: FontWeight.w900, color: PaceColors.purple)),
         ],
       ),
     );
