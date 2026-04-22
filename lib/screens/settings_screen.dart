@@ -29,11 +29,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
-    final profile = await _apiService.fetchData('profile');
+    final profile = await _apiService.fetchData(slug: 'profile');
     if (profile?['success'] == true) {
       _user = profile['data'] ?? {};
       if (['admin', 'superadmin'].contains(_user['type'])) {
-        final sys = await _apiService.fetchData('system_settings');
+        final sys = await _apiService.fetchData(slug: 'system_settings');
         if (sys?['status'] == 'success') _systemSettings = sys['data'] ?? {};
       }
     }
@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _updateSystem(String field, bool value) async {
     setState(() => _isSaving = true);
     final val = value ? 1 : 0;
-    final res = await _apiService.fetchData('system_settings', method: 'POST', body: {field: val});
+    final res = await _apiService.fetchData(slug: 'system_settings', method: 'POST', body: {field: val});
     if (mounted) {
       if (res?['status'] == 'success') {
         setState(() => _systemSettings[field] = val);
@@ -143,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('INFRASTRUCTURE LOGIC', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1.5)),
+          Text('INFRASTRUCTURE LOGIC', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
           const SizedBox(height: 4),
           Text('Manage global hotspot and billing behavior', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
         ],
@@ -157,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ACCOUNT SWITCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1.5)),
+          Text('ACCOUNT SWITCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
           const SizedBox(height: 4),
           Text('Seamlessly transition between managed ISP instances', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
         ],
