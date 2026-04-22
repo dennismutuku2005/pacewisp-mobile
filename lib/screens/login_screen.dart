@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 40),
                 Center(
                   child: Text(
-                    'PaceWISP v1.0 • SECURE',
+                    'PACEWISP v1.0  SECURE',
                     style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1),
                   ),
                 ),
