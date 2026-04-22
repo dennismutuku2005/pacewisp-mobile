@@ -133,7 +133,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Row(children: [
-            Text(l['user']?.toString().toUpperCase() ?? 'SYSTEM', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+            Text(l['user']?.toString().toUpperCase() ?? 'SYSTEM', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
           ]),
           PaceBadge(label: l['action']?.toString().toUpperCase() ?? 'LOG', variant: isFailed ? BadgeVariant.error : BadgeVariant.standard),
         ]),
