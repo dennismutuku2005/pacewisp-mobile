@@ -9,7 +9,8 @@ import '../components/badge.dart';
 import '../components/skeleton.dart';
 
 class VouchersScreen extends StatefulWidget {
-  const VouchersScreen({super.key});
+  final bool openModal;
+  const VouchersScreen({super.key, this.openModal = false});
 
   @override
   State<VouchersScreen> createState() => _VouchersScreenState();
@@ -39,6 +40,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
     super.initState();
     _loadInitialData();
     _scrollController.addListener(_onScroll);
+    if (widget.openModal) {
+      Future.delayed(const Duration(milliseconds: 600), _handleCreateVouchers);
+    }
   }
 
   void _onScroll() {
