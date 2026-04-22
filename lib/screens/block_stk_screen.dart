@@ -29,7 +29,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
 
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
-    final res = await _apiService.fetchData('customers', params: {'action': 'get_blocked'});
+    final res = await _apiService.fetchData(slug: 'customers', params: {'action': 'get_blocked'});
     if (mounted && res != null) {
       setState(() {
         _blocked = res['data'] ?? [];
