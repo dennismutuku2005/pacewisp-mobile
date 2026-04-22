@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
-import '../components/badge.dart';
 import '../components/skeleton.dart';
 
 class PlansScreen extends StatefulWidget {
@@ -96,36 +95,60 @@ class _PlansScreenState extends State<PlansScreen> {
     final durationController = TextEditingController(text: editingPlan?['duration']?.toString() ?? '');
     final speedController = TextEditingController(text: editingPlan?['speed'] ?? 'UNLIMITED');
     final rateLimitController = TextEditingController(text: editingPlan?['rate_limit'] ?? '6M/6M');
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
 
-    final result = await showDialog<bool>(
+    final result = await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(editingPlan == null ? 'NEW ACCESS PLAN' : 'EDIT PLAN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-          content: SingleChildScrollView(
+      isScrollControlled: true,
+      backgroundColor: PaceColors.getBackground(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildField('PRICE (KES)', priceController, LucideIcons.banknote, TextInputType.number),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(editingPlan == null ? 'NEW ACCESS PLAN' : 'EDIT PLAN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                    IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(ctx, false)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildField('PRICE (KES)', priceController, TextInputType.number, isDark),
                 const SizedBox(height: 16),
-                _buildField('DURATION', durationController, LucideIcons.clock, TextInputType.text, hint: 'e.g. 1 hour, 30 minutes'),
+                _buildField('DURATION', durationController, TextInputType.text, isDark, hint: 'e.g. 1 hour, 30 minutes'),
                 const SizedBox(height: 16),
-                _buildField('SPEED IDENTITY', speedController, LucideIcons.zap, TextInputType.text),
+                _buildField('SPEED IDENTITY', speedController, TextInputType.text, isDark),
                 const SizedBox(height: 16),
-                _buildField('RATE LIMIT', rateLimitController, LucideIcons.gauge, TextInputType.text),
+                _buildField('RATE LIMIT', rateLimitController, TextInputType.text, isDark),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('CANCEL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        child: Text(editingPlan == null ? 'COMMIT' : 'UPDATE', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('CANCEL', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: Text(editingPlan == null ? 'COMMIT' : 'UPDATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
-            ),
-          ],
         ),
       ),
     );
@@ -167,15 +190,16 @@ class _PlansScreenState extends State<PlansScreen> {
   }
 
   Future<void> _handleDeletePlan(int index) async {
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
-        title: Text('REMOVE PLAN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red)),
-        content: Text('Are you sure you want to delete this plan?', style: GoogleFonts.figtree(fontSize: 12)),
+        backgroundColor: PaceColors.getBackground(isDark),
+        title: const Text('REMOVE PLAN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red)),
+        content: const Text('Are you sure you want to delete this plan?', style: TextStyle(fontSize: 12)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('KEEP')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -200,12 +224,76 @@ class _PlansScreenState extends State<PlansScreen> {
     }
   }
 
-  Widget _buildField(String label, TextEditingController controller, IconData icon, TextInputType type, {String? hint}) {
-    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+  void _showPlanDrawer(dynamic plan, int index, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaceColors.getBackground(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('PLAN DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _drawerRow('NAME', plan['name']?.toString().toUpperCase() ?? 'PLAN', isDark),
+            _drawerRow('PRICE', 'KES ${plan['price'] ?? '0'}', isDark),
+            _drawerRow('DURATION', plan['duration']?.toString() ?? plan['time']?.toString() ?? '-', isDark),
+            _drawerRow('SPEED', plan['speed']?.toString() ?? 'UNLIMITED', isDark),
+            _drawerRow('RATE LIMIT', plan['rate_limit']?.toString() ?? '6M/6M', isDark),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () { Navigator.pop(ctx); _handleSavePlan(editingPlan: plan, index: index); },
+                    icon: const Icon(LucideIcons.edit3, size: 14),
+                    label: const Text('EDIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(foregroundColor: PaceColors.purple, side: const BorderSide(color: PaceColors.purple), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () { Navigator.pop(ctx); _handleDeletePlan(index); },
+                    icon: const Icon(LucideIcons.trash2, size: 14),
+                    label: const Text('DELETE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerRow(String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildField(String label, TextEditingController controller, TextInputType type, bool isDark, {String? hint}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -213,8 +301,8 @@ class _PlansScreenState extends State<PlansScreen> {
           child: TextField(
             controller: controller,
             keyboardType: type,
-            style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold),
-            decoration: InputDecoration(hintText: hint, icon: Icon(icon, size: 14, color: PaceColors.purple), border: InputBorder.none),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+            decoration: InputDecoration(hintText: hint, hintStyle: TextStyle(color: PaceColors.getDimText(isDark)), border: InputBorder.none),
           ),
         ),
       ],
@@ -230,18 +318,36 @@ class _PlansScreenState extends State<PlansScreen> {
       children: [
         _buildHeader(isDark),
         _buildRouterSelector(isDark),
+        // Table header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
+          child: Row(
+            children: [
+              Expanded(flex: 3, child: Text('PLAN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+              Expanded(flex: 2, child: Text('PRICE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+              Expanded(flex: 2, child: Text('SPEED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+            ],
+          ),
+        ),
         Expanded(
           child: _isLoading 
             ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 8))
             : RefreshIndicator(
                 onRefresh: _loadPlans,
                 color: PaceColors.purple,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  itemCount: _plans.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) => _buildPlanCard(_plans[index], index, isDark),
-                ),
+                child: _plans.isEmpty
+                  ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(LucideIcons.tag, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
+                      const SizedBox(height: 16),
+                      Text('NO PLANS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                    ]))
+                  : ListView.separated(
+                    padding: const EdgeInsets.only(bottom: 120),
+                    itemCount: _plans.length,
+                    separatorBuilder: (_, __) => Divider(height: 1, color: PaceColors.getBorder(isDark)),
+                    itemBuilder: (context, index) => _buildPlanRow(_plans[index], index, isDark),
+                  ),
               ),
         ),
       ],
@@ -251,20 +357,21 @@ class _PlansScreenState extends State<PlansScreen> {
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ACCESS PLANS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-              Text('MANAGE HOTSPOT DATA PACKAGES', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              Text('ACCESS PLANS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+              Text('MANAGE HOTSPOT PACKAGES', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
             ],
           ),
           IconButton(
             onPressed: () => _handleSavePlan(),
-            icon: const Icon(LucideIcons.plusCircle, color: PaceColors.purple, size: 28),
+            icon: const Icon(LucideIcons.plusCircle, color: PaceColors.purple, size: 24),
           ),
         ],
       ),
@@ -287,8 +394,8 @@ class _PlansScreenState extends State<PlansScreen> {
               const Icon(LucideIcons.wifi, size: 16, color: PaceColors.purple),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                 Text('TARGET ROUTER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-                 Text(activeRouter['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+                 Text('TARGET ROUTER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                 Text(activeRouter['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
               ])),
               const Icon(LucideIcons.chevronDown, size: 16, color: Colors.grey),
             ],
@@ -302,65 +409,65 @@ class _PlansScreenState extends State<PlansScreen> {
      showModalBottomSheet(
       context: context,
       backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: _routers.map((r) => ListTile(
-            leading: Icon(LucideIcons.router, color: r['id'].toString() == _activeRouterId ? PaceColors.purple : Colors.grey),
-            title: Text(r['router_name']?.toUpperCase() ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
-            trailing: r['id'].toString() == _activeRouterId ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
-            onTap: () {
-               setState(() => _activeRouterId = r['id'].toString());
-               Navigator.pop(context);
-               _loadPlans();
-            },
-          )).toList(),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('SELECT ROUTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ..._routers.map((r) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(r['router_name']?.toUpperCase() ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              trailing: r['id'].toString() == _activeRouterId ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
+              onTap: () {
+                 setState(() => _activeRouterId = r['id'].toString());
+                 Navigator.pop(context);
+                 _loadPlans();
+              },
+            )).toList(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildPlanCard(dynamic plan, int index, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PaceColors.getBorder(isDark)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(LucideIcons.tag, color: PaceColors.purple, size: 18),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(plan['name']?.toUpperCase() ?? 'NEW PLAN', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text('KES ${plan['price']}', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
-                    const SizedBox(width: 8),
-                    Text(plan['rate_limit'] ?? '6M/6M', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ],
+  Widget _buildPlanRow(dynamic plan, int index, bool isDark) {
+    return InkWell(
+      onTap: () => _showPlanDrawer(plan, index, isDark),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(plan['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                  const SizedBox(height: 2),
+                  Text(plan['duration']?.toString() ?? plan['time']?.toString() ?? '-', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
+                ],
+              ),
             ),
-          ),
-          Row(
-            children: [
-              IconButton(onPressed: () => _handleSavePlan(editingPlan: plan, index: index), icon: const Icon(LucideIcons.edit3, size: 16, color: Colors.grey)),
-              IconButton(onPressed: () => _handleDeletePlan(index), icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent)),
-            ],
-          ),
-        ],
+            Expanded(
+              flex: 2,
+              child: Text('KES ${plan['price'] ?? '0'}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(plan['rate_limit']?.toString() ?? '6M/6M', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+            ),
+          ],
+        ),
       ),
     );
   }
