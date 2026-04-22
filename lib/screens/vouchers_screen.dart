@@ -125,9 +125,10 @@ class _VouchersScreenState extends State<VouchersScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text('GENERATE VOUCHERS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+          title: const Text('GENERATE VOUCHERS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -157,7 +158,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
             ElevatedButton(
               onPressed: (selectedRouterId != null && selectedPlan != null) ? () => Navigator.pop(ctx, true) : null,
               style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: Text('GENERATE', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('GENERATE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ],
         ),
