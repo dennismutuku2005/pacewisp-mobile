@@ -132,7 +132,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
       child: Row(children: [
         Icon(icon, size: 14, color: PaceColors.purple),
         const SizedBox(width: 10),
-        Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark), overflow: TextOverflow.ellipsis))),
+        Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), overflow: TextOverflow.ellipsis))),
         const Icon(LucideIcons.chevronDown, size: 12, color: Colors.grey),
       ]),
     );
@@ -207,12 +207,12 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 child: Row(children: [
                   Icon(up ? LucideIcons.trendingUp : LucideIcons.trendingDown, size: 8, color: up ? PaceColors.emerald : Colors.red),
                   const SizedBox(width: 4),
-                  Text('${up ? '+' : ''}$trend%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.black, color: up ? PaceColors.emerald : Colors.red)),
+                  Text('${up ? '+' : ''}$trend%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: up ? PaceColors.emerald : Colors.red)),
                 ]),
               ),
             ]),
             const Spacer(),
-            Text(c['l'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text(c['l'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
             Text('KES ${_currencyFormat.format(c['v'])}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
           ]),
         );
@@ -270,7 +270,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(children: [
               const SizedBox(width: 8),
-              Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark)))),
+              Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)))),
               Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
             ]),
           );
