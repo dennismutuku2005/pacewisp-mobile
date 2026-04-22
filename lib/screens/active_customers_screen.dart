@@ -122,6 +122,7 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: ActiveCustomersScreen.build() called');
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
