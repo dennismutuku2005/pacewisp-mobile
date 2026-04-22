@@ -8,6 +8,7 @@ import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
 import '../components/otp_modal.dart';
+import '../components/overlay_loader.dart';
 
 class RoutersScreen extends StatefulWidget {
   const RoutersScreen({super.key});
@@ -21,6 +22,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
   static List<dynamic> _cache = [];
   List<dynamic> _routers = [];
   bool _isLoading = true;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -68,24 +70,28 @@ class _RoutersScreenState extends State<RoutersScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Column(
-      children: [
-        _buildHeader(isDark, settings),
-        Expanded(
-          child: _isLoading && _routers.isEmpty
-            ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 3))
-            : RefreshIndicator(
-                onRefresh: _fetchRouters,
-                color: PaceColors.purple,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  itemCount: _routers.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) => _buildRouterCard(_routers[index], isDark, settings),
+    return PaceOverlayLoader(
+      isLoading: _isProcessing,
+      message: 'Processing...',
+      child: Column(
+        children: [
+          _buildHeader(isDark, settings),
+          Expanded(
+            child: _isLoading && _routers.isEmpty
+              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 3))
+              : RefreshIndicator(
+                  onRefresh: _fetchRouters,
+                  color: PaceColors.purple,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                    itemCount: _routers.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) => _buildRouterCard(_routers[index], isDark, settings),
+                  ),
                 ),
-              ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -234,8 +240,13 @@ class _RoutersScreenState extends State<RoutersScreen> {
       ),
     );
     if (confirm == true) {
-      final res = await _apiService.fetchData(slug: 'routers', method: 'DELETE', params: {'id': r['id']});
-      if (res?['status'] == 'success') _fetchRouters();
+      setState(() => _isProcessing = true);
+      try {
+        final res = await _apiService.fetchData(slug: 'routers', method: 'DELETE', params: {'id': r['id']});
+        if (res?['status'] == 'success') _fetchRouters();
+      } finally {
+        if (mounted) setState(() => _isProcessing = false);
+      }
     }
   }
 
@@ -373,16 +384,26 @@ class _RoutersScreenState extends State<RoutersScreen> {
               const SizedBox(height: 32),
               SizedBox(width: double.infinity, height: 56, child: ElevatedButton(
                 onPressed: () async {
-                   final res = await _apiService.updateRouter(r['id'].toString(), {'accountType': selectedBank, 'accountNumber': accController.text});
-                   if (res?['status'] == 'otp_required') {
-                      Navigator.pop(ctx);
-                      _showOtpModal((code) async {
-                        await _apiService.updateRouter(r['id'].toString(), {'accountType': selectedBank, 'accountNumber': accController.text, 'otp_code': code});
-                        _fetchRouters();
-                      });
-                   } else {
-                     Navigator.pop(ctx);
-                     _fetchRouters();
+                   setState(() => _isProcessing = true);
+                   try {
+                     final res = await _apiService.updateRouter(r['id'].toString(), {'accountType': selectedBank, 'accountNumber': accController.text});
+                     if (res?['status'] == 'otp_required') {
+                        Navigator.pop(ctx);
+                        _showOtpModal((code) async {
+                          setState(() => _isProcessing = true);
+                          try {
+                            await _apiService.updateRouter(r['id'].toString(), {'accountType': selectedBank, 'accountNumber': accController.text, 'otp_code': code});
+                            _fetchRouters();
+                          } finally {
+                            if (mounted) setState(() => _isProcessing = false);
+                          }
+                        });
+                     } else {
+                       Navigator.pop(ctx);
+                       _fetchRouters();
+                     }
+                   } finally {
+                     if (mounted) setState(() => _isProcessing = false);
                    }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
