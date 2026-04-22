@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSectionHeader('RECENT ACTIVITY', 'LIVE CONNECTIONS', isDark),
               _buildActivityTable(isDark),
               const SizedBox(height: 48),
-              _buildSectionHeader('YOUR MIKROTIKS', 'HARDWARE HEALTH • ONLINE/OFFLINE', isDark),
+              _buildSectionHeader('YOUR MIKROTIKS', 'HARDWARE HEALTH  ONLINE/OFFLINE', isDark),
               _buildStationTable(isDark),
             ],
             const SizedBox(height: 100),
@@ -232,10 +232,6 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(sub, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
           ]),
           if (title == 'ACTIVITY & GROWTH') ...[
-             const Spacer(),
-             Row(children: [
-               _buildDot(0), const SizedBox(width: 4), _buildDot(1)
-             ]),
              const SizedBox(width: 12),
              Row(children: [_buildLegend(PaceColors.purple, 'REVENUE'), const SizedBox(width: 12), _buildLegend(const Color(0xFF22C55E), 'ACTIVITY')]),
           ] else if (title == 'YOUR MIKROTIKS') ...[
@@ -390,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildLegend(Color color, String label) => Row(children: [Container(width: 5, height: 5, decoration: BoxDecoration(color: color, shape: BoxShape.circle)), const SizedBox(width: 4), Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.getDimText(true), letterSpacing: 1))]);
+  Widget _buildLegend(Color color, String label) => Row(children: [Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.getDimText(true), letterSpacing: 1))]);
 
   Widget _buildActivityTable(bool isDark) {
     if (_transactions.isEmpty && _isLoading) return const SkeletonList(count: 5);
