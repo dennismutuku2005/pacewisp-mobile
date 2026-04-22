@@ -254,7 +254,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
 
                     _buildDrawerSection('CUSTOMER BASE', isDark),
                     if (settings.hasPolicy('view_customers'))
-                      _buildDrawerItem(5, 'Master List', LucideIcons.users, isDark),
+                      _buildDrawerItem(5, 'Customer List', LucideIcons.users, isDark),
                     if (settings.hasPolicy('view_customers'))
                       _buildDrawerItem(6, 'Monthly Distinct', LucideIcons.calendarDays, isDark),
                     if (settings.hasPolicy('view_active_users'))
