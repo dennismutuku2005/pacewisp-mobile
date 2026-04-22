@@ -152,10 +152,11 @@ class _StaffScreenState extends State<StaffScreen> {
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Future<void> _handleAction(bool isEdit, String? id, Map<String, dynamic> data, {String? otp}) async {
     final payload = {...data};
