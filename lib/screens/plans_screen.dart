@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/skeleton.dart';
+import '../components/overlay_loader.dart';
 
 class PlansScreen extends StatefulWidget {
   const PlansScreen({super.key});
@@ -314,10 +315,13 @@ class _PlansScreenState extends State<PlansScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Column(
-      children: [
-        _buildHeader(isDark),
-        _buildRouterSelector(isDark),
+    return PaceOverlayLoader(
+      isLoading: _isSaving,
+      message: 'Processing...',
+      child: Column(
+        children: [
+          _buildHeader(isDark),
+          _buildRouterSelector(isDark),
         // Table header
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -327,6 +331,7 @@ class _PlansScreenState extends State<PlansScreen> {
               Expanded(flex: 3, child: Text('PLAN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
               Expanded(flex: 2, child: Text('PRICE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
               Expanded(flex: 2, child: Text('SPEED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+              const SizedBox(width: 24),
             ],
           ),
         ),
@@ -466,6 +471,7 @@ class _PlansScreenState extends State<PlansScreen> {
               flex: 2,
               child: Text(plan['rate_limit']?.toString() ?? '6M/6M', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
             ),
+            Icon(Icons.more_vert, size: 18, color: PaceColors.getDimText(isDark)),
           ],
         ),
       ),
