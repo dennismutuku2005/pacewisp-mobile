@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/search_bar.dart';
 
 class EntriesScreen extends StatefulWidget {
   const EntriesScreen({super.key});
@@ -236,8 +238,8 @@ class _EntriesScreenState extends State<EntriesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('CONNECTION ENTRIES', textAlign: TextAlign.left, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-          Text('REAL-TIME ACCESS LOGS & SESSIONS', textAlign: TextAlign.left, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('CONNECTION ENTRIES', textAlign: TextAlign.left, style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+          Text('REAL-TIME ACCESS LOGS & SESSIONS', textAlign: TextAlign.left, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ],
       ),
     );
@@ -261,40 +263,34 @@ class _EntriesScreenState extends State<EntriesScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-        child: Row(children: [Icon(icon, size: 14, color: PaceColors.getDimText(isDark)), const SizedBox(width: 8), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: PaceColors.getDimText(isDark))]),
+        child: Row(children: [Icon(icon, size: 14, color: PaceColors.getDimText(isDark)), const SizedBox(width: 8), Expanded(child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: PaceColors.getDimText(isDark))]),
       ),
     );
   }
 
   void _showRouterPicker(bool isDark) {
-    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('STATION NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), ..._routerNames.map((r) => _buildListTile(label: r, icon: Icons.router_outlined, isSelected: _selectedRouter == r, isDark: isDark, onTap: () { setState(() => _selectedRouter = r); Navigator.pop(context); _fetchCachedThenLive(); })).toList()])));
+    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('STATION NODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), ..._routerNames.map((r) => _buildListTile(label: r, icon: Icons.router_outlined, isSelected: _selectedRouter == r, isDark: isDark, onTap: () { setState(() => _selectedRouter = r); Navigator.pop(context); _fetchCachedThenLive(); })).toList()])));
   }
 
   void _showDatePicker(bool isDark) {
     final ranges = ['All Time', 'Today', 'Yesterday', 'This Week', 'This Month'];
-    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('TIME RANGE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), ...ranges.map((range) => _buildListTile(label: range, icon: Icons.access_time_rounded, isSelected: _selectedDateRange == range, isDark: isDark, onTap: () { setState(() => _selectedDateRange = range); Navigator.pop(context); _fetchCachedThenLive(); })).toList()])));
+    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('TIME RANGE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2))), ...ranges.map((range) => _buildListTile(label: range, icon: Icons.access_time_rounded, isSelected: _selectedDateRange == range, isDark: isDark, onTap: () { setState(() => _selectedDateRange = range); Navigator.pop(context); _fetchCachedThenLive(); })).toList()])));
   }
 
   Widget _buildListTile({required String label, required IconData icon, required bool isSelected, required bool isDark, required VoidCallback onTap}) {
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1), child: ListTile(onTap: onTap, dense: true, selected: isSelected, selectedTileColor: PaceColors.purple.withOpacity(0.08), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: Icon(icon, size: 16, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)), title: Text(label, style: GoogleFonts.figtree(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark)))));
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1), child: ListTile(onTap: onTap, dense: true, selected: isSelected, selectedTileColor: PaceColors.purple.withOpacity(0.08), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: Icon(icon, size: 16, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)), title: Text(label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark)))));
   }
 
   Widget _buildSearchBox(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-        child: TextField(
-          onChanged: (val) { setState(() => _search = val); _fetchCachedThenLive(); },
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
-          decoration: InputDecoration(
-            hintText: 'Search identifiers, MACs, codes...', 
-            hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 12), 
-            icon: Icon(Icons.search_rounded, color: PaceColors.getDimText(isDark), size: 20), 
-            border: InputBorder.none, 
-          ),
-        ),
+      child: PaceSearchBar(
+        hint: 'Search identifiers, MACs, codes...',
+        isDark: isDark,
+        onChanged: (val) { 
+          setState(() => _search = val); 
+          _fetchCachedThenLive(); 
+        },
       ),
     );
   }
@@ -305,9 +301,9 @@ class _EntriesScreenState extends State<EntriesScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('IDENTIFICATION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-          Expanded(flex: 2, child: Center(child: Text('PAID', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 3, child: Text('IDENTIFICATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 2, child: Center(child: Text('PAID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
         ],
       ),
     );
@@ -327,13 +323,13 @@ class _EntriesScreenState extends State<EntriesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry['phone'] ?? 'SYSTEM', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: -0.5)),
+                  Text(entry['phone'] ?? 'SYSTEM', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: -0.5)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(entry['code']?.toString().toUpperCase() ?? 'NO_CODE', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                      Text(entry['code']?.toString().toUpperCase() ?? 'NO_CODE', style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                       const SizedBox(width: 12),
-                      Expanded(child: Text((entry['router'] ?? entry['router_name'] ?? 'NODE').toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis)),
+                      Expanded(child: Text((entry['router'] ?? entry['router_name'] ?? 'NODE').toString().toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
                     ],
                   ),
                 ],
@@ -352,7 +348,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
                 children: [
                   PaceBadge(label: isActive ? 'ACTIVE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
                   const SizedBox(height: 6),
-                  Text(entry['used'] == 1 ? 'USED' : 'UNUSED', style: GoogleFonts.figtree(fontSize: 7, color: entry['used'] == 1 ? PaceColors.emerald : Colors.redAccent, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  Text(entry['used'] == 1 ? 'USED' : 'UNUSED', style: TextStyle(fontSize: 7, color: entry['used'] == 1 ? PaceColors.emerald : Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                 ],
               ),
             ),
@@ -377,7 +373,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
             const SizedBox(height: 24),
             Icon(Icons.smartphone_rounded, color: PaceColors.purple, size: 32),
             const SizedBox(height: 12),
-            Text('ENTRY LOG DETAILS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+            Text('ENTRY LOG DETAILS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
             const SizedBox(height: 32),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -403,17 +399,17 @@ class _EntriesScreenState extends State<EntriesScreen> {
                child: Column(
                  crossAxisAlignment: CrossAxisAlignment.start,
                  children: [
-                   Text('TIMELINE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                   Text('TIMELINE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                    const SizedBox(height: 8),
                    Row(children: [
                      const SizedBox(width: 14),
-                     Text('CREATED: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark))),
+                     Text('CREATED: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
                      Text(entry['created'] ?? 'N/A', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
                    ]),
                    const SizedBox(height: 4),
                    Row(children: [
                      const SizedBox(width: 14),
-                     Text('EXPIRES: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple)),
+                     Text('EXPIRES: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple)),
                      Text(entry['expires'] ?? 'N/A', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple)),
                    ]),
                  ],
@@ -430,9 +426,9 @@ class _EntriesScreenState extends State<EntriesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
         const SizedBox(height: 4),
-        Text(value, style: isMono ? GoogleFonts.jetBrainsMono(fontSize: smallValue ? 10 : 12, fontWeight: FontWeight.w700, color: valueColor ?? PaceColors.purple) : GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark))),
+        Text(value, style: isMono ? GoogleFonts.jetBrainsMono(fontSize: smallValue ? 10 : 12, fontWeight: FontWeight.w700, color: valueColor ?? PaceColors.purple) : TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: valueColor ?? PaceColors.getPrimaryText(isDark))),
       ],
     );
   }
