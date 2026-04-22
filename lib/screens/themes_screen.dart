@@ -59,11 +59,11 @@ class _ThemesScreenState extends State<ThemesScreen> {
     if (mounted && res?['success'] == true) {
       setState(() {
         if (page == 1) {
-          _themes = res['data'] ?? [];
+          _themes = res?['data'] ?? [];
         } else {
-          _themes.addAll(res['data'] ?? []);
+          _themes.addAll(res?['data'] ?? []);
         }
-        _hasMore = res['pagination']?['has_more'] ?? false;
+        _hasMore = res?['pagination']?['has_more'] ?? false;
         _page = page;
       });
     }
@@ -83,7 +83,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
   Future<void> _fetchActiveThemes() async {
     final res = await _apiService.fetchData(slug: 'active_themes');
     if (mounted && res?['success'] == true) {
-      setState(() => _activeThemes = res['data'] ?? []);
+      setState(() => _activeThemes = res?['data'] ?? []);
     }
   }
 
