@@ -15,6 +15,12 @@ import 'settings_screen.dart';
 import 'landing_screen.dart';
 import 'loading_screen.dart';
 import 'lock_screen.dart';
+import 'expenses_screen.dart';
+import 'staff_screen.dart';
+import 'whatsapp_alerts_screen.dart';
+import 'financial_report_screen.dart';
+import 'my_bill_screen.dart';
+import 'system_config_screen.dart';
 import '../services/lock_service.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -142,6 +148,12 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     const CustomersScreen(),
     const PlansScreen(),
     const RoutersScreen(),
+    const ExpensesScreen(),
+    const StaffScreen(),
+    const WhatsAppAlertsScreen(),
+    const FinancialReportScreen(),
+    const MyBillScreen(),
+    const SystemConfigScreen(),
     const SystemLogsScreen(),
     const SettingsScreen(),
   ];
@@ -198,21 +210,33 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                 padding: EdgeInsets.zero,
                 children: [
                   _buildDrawerItem(0, 'Dashboard', Icons.grid_view_rounded, isDark),
-                  if (settings.hasPolicy('vouchers'))
+                  if (settings.hasPolicy('view_vouchers'))
                     _buildDrawerItem(1, 'Vouchers', Icons.confirmation_number_outlined, isDark),
-                  if (settings.hasPolicy('income'))
+                  if (settings.hasPolicy('view_income'))
                     _buildDrawerItem(2, 'Income', Icons.account_balance_wallet_outlined, isDark),
-                  if (settings.hasPolicy('entries'))
+                  if (settings.hasPolicy('view_entries'))
                     _buildDrawerItem(3, 'Entries', Icons.history_rounded, isDark),
-                  if (settings.hasPolicy('customers'))
+                  if (settings.hasPolicy('view_customers'))
                     _buildDrawerItem(4, 'Prepaid Users', Icons.people_outline, isDark),
-                  if (settings.hasPolicy('plans'))
+                  if (settings.hasPolicy('manage_plans'))
                     _buildDrawerItem(5, 'Plans', Icons.layers_outlined, isDark),
-                  if (settings.hasPolicy('routers'))
+                  if (settings.hasPolicy('view_routers'))
                     _buildDrawerItem(6, 'Your Mikrotiks', Icons.router_outlined, isDark),
-                  if (settings.hasPolicy('logs'))
-                    _buildDrawerItem(7, 'System Logs', Icons.list_alt_rounded, isDark),
-                  _buildDrawerItem(8, 'Settings', Icons.settings_outlined, isDark),
+                  if (settings.hasPolicy('manage_expenses'))
+                    _buildDrawerItem(7, 'Expenses', Icons.receipt_rounded, isDark),
+                  if (settings.hasPolicy('manage_users'))
+                    _buildDrawerItem(8, 'Staff Management', Icons.badge_outlined, isDark),
+                  if (settings.hasPolicy('wa_alerts'))
+                    _buildDrawerItem(9, 'WhatsApp Alerts', Icons.whatsapp_rounded, isDark),
+                  if (settings.hasPolicy('view_reports'))
+                    _buildDrawerItem(10, 'Income Reports', Icons.insert_chart_outlined_rounded, isDark),
+                  if (settings.hasPolicy('view_bills'))
+                    _buildDrawerItem(11, 'My Service Bill', Icons.receipt_long_rounded, isDark),
+                  if (settings.hasPolicy('system_config'))
+                    _buildDrawerItem(12, 'System Config', Icons.settings_input_component_rounded, isDark),
+                  if (settings.hasPolicy('view_logs'))
+                    _buildDrawerItem(13, 'System Logs', Icons.list_alt_rounded, isDark),
+                  _buildDrawerItem(14, 'Settings', Icons.settings_outlined, isDark),
                   
                   if (settings.accounts.length > 1) ...[
                     const Divider(height: 32, indent: 20, endIndent: 20),
