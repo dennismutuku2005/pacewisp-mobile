@@ -309,7 +309,6 @@ class _IncomeScreenState extends State<IncomeScreen> {
              lineTouchData: LineTouchData(
                touchTooltipData: LineTouchTooltipData(
                  getTooltipColor: (touchedSpot) => PaceColors.getCard(isDark),
-                 tooltipRoundedRadius: 8,
                  getTooltipItems: (touchedSpots) {
                    return touchedSpots.map((spot) {
                      return LineTooltipItem(
