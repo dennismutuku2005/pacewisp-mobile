@@ -175,7 +175,7 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
                 onChanged: (v) => setState(() => _otp = v),
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: const TextStyle(letterSpacing: 8, fontWeight: FontWeight.bold),
+                style: TextStyle(letterSpacing: 8, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
                 decoration: InputDecoration(hintText: '000000', filled: true, fillColor: PaceColors.getBackground(isDark), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none)),
               ),
               const SizedBox(height: 12),
