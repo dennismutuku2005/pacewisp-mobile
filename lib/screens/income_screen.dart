@@ -45,17 +45,45 @@ class _IncomeScreenState extends State<IncomeScreen> {
     }
   }
 
+  Map<String, String> _getDateRange() {
+    final now = DateTime.now();
+    final formatter = DateFormat('yyyy-MM-dd');
+    switch (_selectedTimeline) {
+      case 'Today':
+        return {'startDate': formatter.format(now), 'endDate': formatter.format(now)};
+      case 'Yesterday':
+        final yest = now.subtract(const Duration(days: 1));
+        return {'startDate': formatter.format(yest), 'endDate': formatter.format(yest)};
+      case 'This Week':
+        final startW = now.subtract(Duration(days: now.weekday - 1));
+        return {'startDate': formatter.format(startW), 'endDate': formatter.format(now)};
+      case 'This Month':
+        final startM = DateTime(now.year, now.month, 1);
+        return {'startDate': formatter.format(startM), 'endDate': formatter.format(now)};
+      case 'All Time':
+      default:
+        return {'startDate': '', 'endDate': ''};
+    }
+  }
+
   Future<void> _fetchIncome() async {
-    final res = await _apiService.fetchData(slug: 'income', params: {
-      'router': _activeRouterId,
-      'dateRange': _selectedTimeline
-    });
+    final dates = _getDateRange();
+    final routerParam = _activeRouterId == 'all' ? '' : _activeRouterId;
+
+    final res = await _apiService.getIncome(
+      router: routerParam,
+      startDate: dates['startDate'],
+      endDate: dates['endDate'],
+      forceRefresh: true,
+    );
     final success = res?['status'] == 'success' || res?['status'] == 200 || res?['status'] == '200' || res?['success'] == true;
     if (mounted && success) {
       setState(() {
         _incomeData = res;
         _isLoading = false;
       });
+    } else if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
