@@ -18,8 +18,8 @@ class ApiService {
   // Singleton memory cache to ensure instant UI transitions
   static final Map<String, dynamic> _memoryCache = {};
   
-  Map<String, dynamic>? getMemoryCached(String slug, String? subdomain, {Map<String, dynamic>? params}) {
-    final key = "${subdomain ?? 'default'}_${slug}_${params.toString()}";
+  Map<String, dynamic>? getMemoryCached(String slug, {Map<String, dynamic>? params}) {
+    final key = "${_subdomain ?? 'default'}_${slug}_${params.toString()}";
     return _memoryCache[key];
   }
   
