@@ -21,6 +21,8 @@ import 'whatsapp_alerts_screen.dart';
 import 'financial_report_screen.dart';
 import 'my_bill_screen.dart';
 import 'system_config_screen.dart';
+import 'mpesa_transactions_screen.dart';
+import 'invoices_screen.dart';
 import '../services/lock_service.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -154,6 +156,8 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     const FinancialReportScreen(),
     const MyBillScreen(),
     const SystemConfigScreen(),
+    const MpesaTransactionsScreen(),
+    const InvoicesScreen(),
     const SystemLogsScreen(),
     const SettingsScreen(),
   ];
@@ -229,14 +233,18 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                   if (settings.hasPolicy('wa_alerts'))
                     _buildDrawerItem(9, 'WhatsApp Alerts', Icons.whatsapp_rounded, isDark),
                   if (settings.hasPolicy('view_reports'))
-                    _buildDrawerItem(10, 'Income Reports', Icons.insert_chart_outlined_rounded, isDark),
+                    _buildDrawerItem(10, 'Financial Reports', Icons.insert_chart_outlined_rounded, isDark),
+                  if (settings.hasPolicy('view_mpesa'))
+                    _buildDrawerItem(13, 'M-Pesa History', Icons.smartphone_rounded, isDark),
                   if (settings.hasPolicy('view_bills'))
-                    _buildDrawerItem(11, 'My Service Bill', Icons.receipt_long_rounded, isDark),
+                    _buildDrawerItem(14, 'Your Invoices', Icons.receipt_long_rounded, isDark),
+                  if (settings.hasPolicy('view_bills'))
+                    _buildDrawerItem(11, 'My Service Bill', Icons.receipt_rounded, isDark),
                   if (settings.hasPolicy('system_config'))
                     _buildDrawerItem(12, 'System Config', Icons.settings_input_component_rounded, isDark),
                   if (settings.hasPolicy('view_logs'))
-                    _buildDrawerItem(13, 'System Logs', Icons.list_alt_rounded, isDark),
-                  _buildDrawerItem(14, 'Settings', Icons.settings_outlined, isDark),
+                    _buildDrawerItem(15, 'System Logs', Icons.list_alt_rounded, isDark),
+                  _buildDrawerItem(16, 'Settings', Icons.settings_outlined, isDark),
                   
                   if (settings.accounts.length > 1) ...[
                     const Divider(height: 32, indent: 20, endIndent: 20),
