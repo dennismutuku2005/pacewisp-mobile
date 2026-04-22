@@ -9,6 +9,7 @@ import '../components/badge.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 import '../components/otp_modal.dart';
+import '../components/overlay_loader.dart';
 
 class StaffScreen extends StatefulWidget {
   const StaffScreen({super.key});
@@ -188,25 +189,29 @@ class _StaffScreenState extends State<StaffScreen> {
     final isDark = settings.isDarkMode;
     final list = _staff.where((s) => (s['name'] ?? '').toLowerCase().contains(_search.toLowerCase()) || (s['username'] ?? '').toLowerCase().contains(_search.toLowerCase())).toList();
 
-    return Column(
-      children: [
-        _buildHeader(isDark),
-        _buildSearch(isDark),
-        Expanded(
-          child: _isLoading 
-            ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList())
-            : RefreshIndicator(
-                onRefresh: _fetchStaff,
-                color: PaceColors.purple,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (ctx, i) => _buildStaffCard(list[i], isDark),
+    return PaceOverlayLoader(
+      isLoading: _isSubmitting,
+      message: 'Processing...',
+      child: Column(
+        children: [
+          _buildHeader(isDark),
+          _buildSearch(isDark),
+          Expanded(
+            child: _isLoading 
+              ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList())
+              : RefreshIndicator(
+                  onRefresh: _fetchStaff,
+                  color: PaceColors.purple,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (ctx, i) => _buildStaffCard(list[i], isDark),
+                  ),
                 ),
-              ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
