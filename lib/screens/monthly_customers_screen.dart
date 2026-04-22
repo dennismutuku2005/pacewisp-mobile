@@ -106,9 +106,9 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
 
   Widget _buildStatBox(String label, String value, bool isDark) {
     return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
         const SizedBox(height: 4),
-        Text(value, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark))),
+        Text(value, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
     ]));
   }
 
