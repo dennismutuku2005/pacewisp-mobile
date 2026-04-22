@@ -296,7 +296,7 @@ class ApiService {
     fetchData(slug: 'notifications', params: {'page': page}, forceRefresh: forceRefresh);
 
   Future<Map<String, dynamic>?> markNotificationRead(String? id) async => 
-    _requestWithFallback('/notifications.php?action=mark_read', method: 'POST', data: {'id': id});
+    _requestWithFallback('/notifications.php', method: 'POST', data: {'action': 'mark_read', 'id': id});
 
   // WhatsApp Alerts
   Future<Map<String, dynamic>?> getWhatsAppAlertsConfig() async => 
