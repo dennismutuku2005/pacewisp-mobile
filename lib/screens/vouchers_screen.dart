@@ -60,7 +60,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
       final sys = await _apiService.fetchData(slug: 'system_settings'); // Get forced sale settings
       
       if (sys?['status'] == 'success') {
-         _isVouchersAsSaleForced = (sys['data']?['vouchers_as_sale']?.toString() == '1');
+         _isVouchersAsSaleForced = (sys?['data']?['vouchers_as_sale']?.toString() == '1');
       }
 
       if (res != null) {
@@ -106,7 +106,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     final res = await _apiService.fetchData(slug: 'prepaid_plans', params: {'router_id': routerId});
     if (mounted && res?['status'] == 'success') {
        setState(() {
-         _plans = res['plans'] ?? [];
+         _plans = res?['plans'] ?? [];
        });
     }
   }
