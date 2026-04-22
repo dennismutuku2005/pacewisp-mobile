@@ -44,15 +44,6 @@ class ApiService {
     return _domain ?? 'pacewisp.co.ke';
   }
 
-  final List<String> _possibleApiPaths = [
-    '/pace.com/pace-apis/dashboard/v1',
-    '/pace-apis/dashboard/v1',
-    '/dashboard/v1',
-    '/dashboard',
-    '/portal',
-    '/',
-  ];
-
   String? _detectedPath;
 
   Future<Map<String, dynamic>?> _requestWithFallback(String endpoint, {String method = 'GET', Map<String, dynamic>? data, Map<String, dynamic>? queryParameters}) async {
@@ -79,10 +70,9 @@ class ApiService {
       _detectedPath = null;
     }
 
-    // Full discovery: try each path
+    // Full discovery: prioritized paths
     final pathsToTry = [
       '/dashboard/v1',
-      '/pace-apis/dashboard/v1',
       '/dashboard',
       '/',
     ];
@@ -273,6 +263,10 @@ class ApiService {
     if (year != null && year.isNotEmpty) params['year'] = year;
     return fetchData(slug: 'customer_history', params: params, forceRefresh: forceRefresh);
   }
+
+  // Alias for premium dashboard
+  Future<Map<String, dynamic>?> getHistory(String phone, {bool forceRefresh = false}) async => 
+    getCustomerHistory(phone: phone, forceRefresh: forceRefresh);
 
   Future<Map<String, dynamic>?> getMonthlyUsers({String? month, String? year, String? router, bool forceRefresh = false}) async {
     final Map<String, dynamic> params = <String, dynamic>{};
