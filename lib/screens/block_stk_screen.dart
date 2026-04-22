@@ -43,6 +43,10 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
+    if (!settings.hasPolicy('manage_customers')) {
+       return const Center(child: Text('ACCESS RESTRICTED'));
+    }
+
     final filtered = _blocked.where((u) => (u['phone'] ?? '').toString().contains(_search)).toList();
 
     return Column(
