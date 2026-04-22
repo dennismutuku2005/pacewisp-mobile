@@ -198,14 +198,64 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                 padding: EdgeInsets.zero,
                 children: [
                   _buildDrawerItem(0, 'Dashboard', Icons.grid_view_rounded, isDark),
-                  _buildDrawerItem(1, 'Vouchers', Icons.confirmation_number_outlined, isDark),
-                  _buildDrawerItem(2, 'Income', Icons.account_balance_wallet_outlined, isDark),
-                  _buildDrawerItem(3, 'Entries', Icons.history_rounded, isDark),
-                  _buildDrawerItem(4, 'Customers', Icons.people_outline, isDark),
-                  _buildDrawerItem(5, 'Plans', Icons.layers_outlined, isDark),
-                  _buildDrawerItem(6, 'Routers', Icons.router_outlined, isDark),
-                  _buildDrawerItem(7, 'System Logs', Icons.list_alt_rounded, isDark),
+                  if (settings.hasPolicy('vouchers'))
+                    _buildDrawerItem(1, 'Vouchers', Icons.confirmation_number_outlined, isDark),
+                  if (settings.hasPolicy('income'))
+                    _buildDrawerItem(2, 'Income', Icons.account_balance_wallet_outlined, isDark),
+                  if (settings.hasPolicy('entries'))
+                    _buildDrawerItem(3, 'Entries', Icons.history_rounded, isDark),
+                  if (settings.hasPolicy('customers'))
+                    _buildDrawerItem(4, 'Prepaid Users', Icons.people_outline, isDark),
+                  if (settings.hasPolicy('plans'))
+                    _buildDrawerItem(5, 'Plans', Icons.layers_outlined, isDark),
+                  if (settings.hasPolicy('routers'))
+                    _buildDrawerItem(6, 'Your Mikrotiks', Icons.router_outlined, isDark),
+                  if (settings.hasPolicy('logs'))
+                    _buildDrawerItem(7, 'System Logs', Icons.list_alt_rounded, isDark),
                   _buildDrawerItem(8, 'Settings', Icons.settings_outlined, isDark),
+                  
+                  if (settings.accounts.length > 1) ...[
+                    const Divider(height: 32, indent: 20, endIndent: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      child: Text('SWITCH ACCOUNT', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    ),
+                    ...settings.accounts.asMap().entries.where((e) => e.key != settings.accounts.indexOf(settings.activeAccount!)).map((e) {
+                      final acc = e.value;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        child: ListTile(
+                          dense: true,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          leading: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: PaceColors.purple.withOpacity(0.1),
+                            child: const Icon(Icons.business, size: 12, color: PaceColors.purple),
+                          ),
+                          title: Text(acc.subdomain, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                          subtitle: Text(acc.domain, style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark))),
+                          onTap: () {
+                            settings.switchAccount(e.key);
+                            Navigator.pop(context);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                    
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: ListTile(
+                        dense: true,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                        },
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: PaceColors.purple.withOpacity(0.2))),
+                        leading: const Icon(Icons.add_circle_outline, color: PaceColors.purple, size: 20),
+                        title: const Text('ADD ANOTHER ACCOUNT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 0.5)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
