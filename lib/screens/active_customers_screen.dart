@@ -121,7 +121,7 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
             child: Row(children: [
                Container(width: 6, height: 6, decoration: const BoxDecoration(color: PaceColors.emerald, shape: BoxShape.circle)),
                const SizedBox(width: 8),
-               Text('$count ONLINE NOW', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.emerald, letterSpacing: 1)),
+               Text('$count ONLINE NOW', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.emerald, letterSpacing: 1)),
             ]),
           ),
         ],
