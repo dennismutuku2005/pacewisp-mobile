@@ -124,44 +124,71 @@ class _VouchersScreenState extends State<VouchersScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('GENERATE VOUCHERS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDropdownField('ROUTER NODE', _routers, selectedRouterId, (val) async {
-                   setModalState(() { selectedRouterId = val; _plans = []; selectedPlan = null; });
-                   if (val != null) {
-                     final res = await _apiService.fetchData(slug: 'prepaid_plans', params: {'router_id': val});
-                     setModalState(() { _plans = res?['plans'] ?? []; });
-                   }
-                }, isDark: Provider.of<SettingsProvider>(context).isDarkMode),
-                const SizedBox(height: 16),
-                _buildPlanPicker('ACCESS PLAN', _plans, selectedPlan, (val) {
-                   setModalState(() { selectedPlan = val; });
-                }, isDark: Provider.of<SettingsProvider>(context).isDarkMode),
-                const SizedBox(height: 16),
-                _buildCountField('QUANTITY (MAX 50)', (val) => count = int.tryParse(val) ?? 1, isDark: Provider.of<SettingsProvider>(context).isDarkMode),
-                const SizedBox(height: 24),
-                _buildSaleToggle(isSale, (val) {
-                   if (!_isVouchersAsSaleForced) setModalState(() => isSale = val);
-                }, isDark: Provider.of<SettingsProvider>(context).isDarkMode),
-              ],
+        builder: (context, setModalState) {
+          final isDark = Provider.of<SettingsProvider>(context).isDarkMode;
+          return Dialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+            backgroundColor: PaceColors.getBackground(isDark),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: Container(
+              width: double.maxFinite,
+              padding: const EdgeInsets.all(24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('GENERATE VOUCHERS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                        IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx, false)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildDropdownField('ROUTER NODE', _routers, selectedRouterId, (val) async {
+                       setModalState(() { selectedRouterId = val; _plans = []; selectedPlan = null; });
+                       if (val != null) {
+                         final res = await _apiService.fetchData(slug: 'prepaid_plans', params: {'router_id': val});
+                         setModalState(() { _plans = res?['plans'] ?? []; });
+                       }
+                    }, isDark: isDark),
+                    const SizedBox(height: 16),
+                    _buildPlanPicker('ACCESS PLAN', _plans, selectedPlan, (val) {
+                       setModalState(() { selectedPlan = val; });
+                    }, isDark: isDark),
+                    const SizedBox(height: 16),
+                    _buildCountField('QUANTITY (MAX 50)', (val) => count = int.tryParse(val) ?? 1, isDark: isDark),
+                    const SizedBox(height: 24),
+                    _buildSaleToggle(isSale, (val) {
+                       if (!_isVouchersAsSaleForced) setModalState(() => isSale = val);
+                    }, isDark: isDark),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('CANCEL', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: (selectedRouterId != null && selectedPlan != null) ? () => Navigator.pop(ctx, true) : null,
+                            style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                            child: const Text('GENERATE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-            ElevatedButton(
-              onPressed: (selectedRouterId != null && selectedPlan != null) ? () => Navigator.pop(ctx, true) : null,
-              style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: const Text('GENERATE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
 
