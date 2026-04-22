@@ -135,10 +135,10 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 16)),
-          if (subLabel != null) Text(subLabel, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: color, letterSpacing: 0.5)),
+          if (subLabel != null) Text(subLabel, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
         ]),
         const SizedBox(height: 24),
-        Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         Text('KSH ${_currencyFormat.format(value)}', style: GoogleFonts.figtree(fontSize: 20, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
       ]),
     );
@@ -207,7 +207,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
     return Row(children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 8),
-      Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: color, letterSpacing: 1)),
+      Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 1)),
     ]);
   }
 
@@ -227,7 +227,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
           child: Row(children: [
             Container(width: 10, height: 10, decoration: const BoxDecoration(color: PaceColors.purple, shape: BoxShape.circle)),
             const SizedBox(width: 12),
-            Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5))),
+            Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5))),
             Text('KSH ${_currencyFormat.format(item['value'])}', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple)),
           ]),
         )).toList(),
