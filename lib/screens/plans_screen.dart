@@ -355,7 +355,8 @@ class _PlansScreenState extends State<PlansScreen> {
                   ),
               ),
         ),
-      ],
+        ],
+      ),
     );
   }
 
