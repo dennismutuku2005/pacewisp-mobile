@@ -114,7 +114,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
         children: [
           Icon(LucideIcons.shieldCheck, size: 48, color: PaceColors.getBorder(isDark)),
           const SizedBox(height: 16),
-          Text('CLEAN BLACKLIST', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text('CLEAN BLACKLIST', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
           Text('NO NUMBERS ARE CURRENTLY BLOCKED', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
         ],
       ),
@@ -135,7 +135,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
           ElevatedButton(
             onPressed: () => _handleUnblock(item['phone']),
             style: ElevatedButton.styleFrom(backgroundColor: PaceColors.emerald.withOpacity(0.1), foregroundColor: PaceColors.emerald, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            child: Text('UNBLOCK', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black)),
+            child: Text('UNBLOCK', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
