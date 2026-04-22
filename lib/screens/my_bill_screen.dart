@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
@@ -86,7 +87,10 @@ class _MyBillScreenState extends State<MyBillScreen> {
         Text('YOUR BILL', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
         Text('LIVE USAGE CYCLE SUMMARY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
       ]),
-      Text('ACC ID: $customerId', style: GoogleFonts.jetBrainsMono(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+      IconButton(
+        onPressed: () {},
+        icon: const Icon(LucideIcons.printer, color: PaceColors.purple, size: 20),
+      ),
     ]);
   }
 
@@ -96,65 +100,73 @@ class _MyBillScreenState extends State<MyBillScreen> {
     final String cyclesubs = daysLeft < 0 ? 'CYCLE ENDED ${daysLeft.abs()} DAYS AGO' : 'CYCLE ENDS IN $daysLeft DAYS';
 
     return Container(
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5), borderAtTop: true, topBorderColor: PaceColors.purple),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark), 
+        borderRadius: BorderRadius.circular(24), 
+        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
+      ),
       clipBehavior: Clip.antiAlias,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-               Text('AMOUNT DUE TO DATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-               const Icon(Icons.receipt_long_rounded, color: PaceColors.purple, size: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, 
+        children: [
+          Container(height: 4, width: double.infinity, color: PaceColors.purple),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text('AMOUNT DUE TO DATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                const Icon(LucideIcons.receipt, color: PaceColors.purple, size: 18),
+              ]),
+              const SizedBox(height: 16),
+              Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
+                Text('KSH', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                const SizedBox(width: 8),
+                Text(_currencyFormat.format(billing?['current_estimated_bill'] ?? 0), style: GoogleFonts.figtree(fontSize: 34, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -1)),
+              ]),
+              const SizedBox(height: 12),
+              Row(children: [
+                Icon(LucideIcons.calendar, size: 12, color: PaceColors.getDimText(isDark)),
+                const SizedBox(width: 8),
+                Text(cyclesubs, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+              ]),
             ]),
-            const SizedBox(height: 16),
-            Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-              Text('KSH', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-              const SizedBox(width: 8),
-              Text(_currencyFormat.format(billing?['current_estimated_bill'] ?? 0), style: GoogleFonts.figtree(fontSize: 34, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -1)),
-            ]),
-            const SizedBox(height: 12),
-            Row(children: [
-               Icon(Icons.calendar_month_rounded, size: 12, color: PaceColors.getDimText(isDark)),
-               const SizedBox(width: 6),
-               Text(cyclesubs, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-            ]),
-          ]),
-        ),
-        Container(
-          height: 6,
-          width: double.infinity,
-          decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
-          child: FractionallySizedBox(alignment: Alignment.centerLeft, widthFactor: progress.clamp(0.0, 1.0), child: Container(color: PaceColors.purple)),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Text('${(progress * 100).toInt()}% CYCLE PROGRESS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
-        ),
-      ]),
+          ),
+          Container(
+            height: 8,
+            width: double.infinity,
+            decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+            child: FractionallySizedBox(alignment: Alignment.centerLeft, widthFactor: progress.clamp(0.0, 1.0), child: Container(color: PaceColors.purple)),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            child: Text('${(progress * 100).toInt()}% CYCLE PROGRESS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildCalculationDetail(bool isDark, dynamic billing) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('CALCULATION DETAIL', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1)),
-        const SizedBox(height: 20),
-        _buildCalcRow('BASE', 'STARTER PLAN (PRO-RATED)', 'KSH 1,499 x ${billing?['cycle_progress']}% ELAPSED', 'KSH ${_currencyFormat.format(billing?['base_fee'] * billing?['cycle_progress'] / 100)}', isDark),
-        const Divider(height: 24),
-        _buildCalcRow('ADD', 'EXTRA CLIENTS SURCHARGE', '${billing?['additional_users']} CLIENTS ABOVE LIMIT', 'KSH ${_currencyFormat.format(billing?['extra_fee'])}', isDark, iconColor: Colors.orange),
-        const SizedBox(height: 16),
+        Text('ALGORITHMIC BREAKDOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1.5)),
+        const SizedBox(height: 24),
+        _buildCalcRow('BASE', 'STARTER PLAN (PRO-RATED)', 'KSH 1,499 x ${billing?['cycle_progress']}% ELAPSED', 'KSH ${_currencyFormat.format(billing?['base_fee'] * (billing?['cycle_progress'] ?? 0) / 100)}', isDark),
+        const Divider(height: 32),
+        _buildCalcRow('ADD', 'CLIENT SURCHARGE', '${billing?['additional_users']} CLIENTS ABOVE TIER 1', 'KSH ${_currencyFormat.format(billing?['extra_fee'])}', isDark, iconColor: Colors.orangeAccent),
+        const SizedBox(height: 24),
         Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Row(children: [
-               Icon(Icons.info_outline_rounded, size: 14, color: PaceColors.getDimText(isDark)),
-               const SizedBox(width: 8),
-               Text('MONTHLY PROJECTION', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark))),
+                Icon(LucideIcons.info, size: 14, color: PaceColors.purple),
+                const SizedBox(width: 10),
+                Text('MONTHLY PROJECTION', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
             ]),
-            Text('KSH ${_currencyFormat.format(billing?['total_monthly_projection'] ?? 0)}', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+            Text('KSH ${_currencyFormat.format(billing?['total_monthly_projection'] ?? 0)}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple)),
           ]),
         ),
       ]),
@@ -163,46 +175,48 @@ class _MyBillScreenState extends State<MyBillScreen> {
 
   Widget _buildCalcRow(String tag, String title, String sub, String amount, bool isDark, {Color? iconColor}) {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(width: 32, height: 32, decoration: BoxDecoration(color: (iconColor ?? PaceColors.purple).withOpacity(0.05), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(tag, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: iconColor ?? PaceColors.purple)))),
-      const SizedBox(width: 12),
+      Container(width: 36, height: 36, decoration: BoxDecoration(color: (iconColor ?? PaceColors.purple).withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Center(child: Text(tag, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: iconColor ?? PaceColors.purple)))),
+      const SizedBox(width: 16),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-        Text(sub, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.normal)),
+        Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        Text(sub, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
       ])),
-      Text(amount, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+      Text(amount, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
     ]);
   }
 
   Widget _buildSidebarStats(bool isDark, dynamic billing, dynamic sub) {
     return Column(children: [
-       _buildSmallStatCard('CURRENT CLIENTS', '${billing?['user_count']} TOTAL', Icons.people_outline_rounded, isDark),
-       const SizedBox(height: 12),
-       _buildSmallStatCard('BILLING POLICY', 'KSH 1,499 (110 CLIENTS)\nKSH 8 PER EXTRA CLIENT', Icons.shield_outlined, isDark),
-       const SizedBox(height: 12),
-       _buildSmallStatCard('NEXT INVOICE', sub?['next_payment'] ?? '', Icons.calendar_today_rounded, isDark),
+        _buildSmallStatCard('CLIENT DENSITY', '${billing?['user_count']} ACTIVE NODES', LucideIcons.users, isDark, PaceColors.purple),
+        const SizedBox(height: 12),
+        _buildSmallStatCard('BILLING POLICY', 'KSH 1,499 BASE TIER', LucideIcons.shieldCheck, isDark, Colors.blueAccent),
+        const SizedBox(height: 12),
+        _buildSmallStatCard('NEXT INVOICE', _formatDate(sub?['next_payment']), LucideIcons.calendar, isDark, Colors.orangeAccent),
     ]);
   }
 
-  Widget _buildSmallStatCard(String label, String value, IconData icon, bool isDark) {
+  String _formatDate(String? date) {
+    if (date == null) return 'PENDING';
+    try {
+      final d = DateTime.parse(date);
+      return DateFormat('dd MMM yyyy').format(d).toUpperCase();
+    } catch (_) {
+      return date.toUpperCase();
+    }
+  }
+
+  Widget _buildSmallStatCard(String label, String value, IconData icon, bool isDark, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.getBorder(isDark), width: 1)),
       child: Row(children: [
-        Icon(icon, size: 16, color: PaceColors.getDimText(isDark)),
-        const SizedBox(width: 16),
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 20),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
           Text(value, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
         ])),
       ]),
-    );
-  }
-}
-
-extension on BoxDecoration {
-  static BoxDecoration? borderAtTop({required Color topBorderColor}) {
-    return BoxDecoration(
-      border: Border(top: BorderSide(color: topBorderColor, width: 4)),
     );
   }
 }
