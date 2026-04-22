@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/search_bar.dart';
 import 'customer_history_screen.dart';
 
 class CustomersScreen extends StatefulWidget {
@@ -143,8 +144,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('CUSTOMERS MASTER LIST', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-              Text('MANAGE HOTSPOT USERS, DISTINCT BY PHONE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              Text('CUSTOMERS MASTER LIST', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              Text('MANAGE HOTSPOT USERS, DISTINCT BY PHONE', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
             ],
           ),
           Row(children: [
@@ -162,8 +163,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withOpacity(0.1))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Text(val, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
-        Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
+        Text(val, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+        Text(label, style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: color, letterSpacing: 0.5)),
       ]),
     );
   }
@@ -174,26 +175,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-              child: TextField(
-                onChanged: _onSearchChanged,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
-                  hintText: 'Search MAC or mobile number...', 
-                  hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 11), 
-                  icon: Icon(LucideIcons.search, color: PaceColors.getDimText(isDark), size: 14), 
-                  border: InputBorder.none, 
-                ),
-              ),
+            child: PaceSearchBar(
+              hint: 'Search MAC or mobile number...',
+              isDark: isDark,
+              onChanged: _onSearchChanged,
             ),
           ),
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-            child: Text('$_total RECORDS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+            child: Text('$_total RECORDS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
           ),
         ],
       ),
@@ -218,7 +210,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ]),
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('KES ${c['totalSpent'] ?? 0}', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+              Text('KES ${c['totalSpent'] ?? 0}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
               PaceBadge(label: status.toUpperCase(), variant: isOnline ? BadgeVariant.success : BadgeVariant.error),
             ]),
             const SizedBox(width: 16),
