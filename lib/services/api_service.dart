@@ -151,6 +151,8 @@ class ApiService {
     else if (slug == 'report') phpFile = '/income_report.php';
     else if (slug == 'staff') phpFile = '/staff.php';
     else if (slug == 'wa_alerts') phpFile = '/wa-alerts.php';
+    else if (slug == 'mpesa') phpFile = '/mpesa_transactions.php';
+    else if (slug == 'invoices') phpFile = '/invoices.php';
 
     final cacheKey = "${slug}_${params.toString()}";
     if (!forceRefresh) {
@@ -267,4 +269,22 @@ class ApiService {
 
   Future<Map<String, dynamic>?> saveSystemConfig(String routerId, Map<String, dynamic> data) async => 
     _requestWithFallback('/hotspot_plans.php?action=save_system_config&router_id=$routerId', method: 'POST', data: data);
+
+  // M-Pesa Transactions
+  Future<Map<String, dynamic>?> getMpesaTransactions({int page = 1, String search = '', bool forceRefresh = false}) async => 
+    fetchData(slug: 'mpesa', params: {'page': page, 'search': search}, forceRefresh: forceRefresh);
+
+  // Invoices & Billing
+  Future<Map<String, dynamic>?> getInvoices({bool forceRefresh = false}) async => 
+    fetchData(slug: 'invoices', forceRefresh: forceRefresh);
+
+  Future<Map<String, dynamic>?> payInvoice(String invoiceId, String phone) async => 
+    _requestWithFallback('/pay_invoice.php', method: 'POST', data: {'invoice_id': invoiceId, 'phone_number': phone});
+
+  Future<Map<String, dynamic>?> verifyPayment({String? checkoutId, String? mpesaCode, String? invoiceId}) async => 
+    _requestWithFallback('/verify_payment.php', method: 'POST', data: {
+      'checkout_id': checkoutId ?? '',
+      'mpesa_code': mpesaCode ?? '',
+      'invoice_id': invoiceId ?? '',
+    });
 }
