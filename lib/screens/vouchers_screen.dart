@@ -53,7 +53,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     setState(() => _isLoading = true);
     try {
       final res = await _apiService.getRouters(forceRefresh: true);
-      final sys = await _apiService.fetchData('system_settings'); // Get forced sale settings
+      final sys = await _apiService.fetchData(slug: 'system_settings'); // Get forced sale settings
       
       if (sys?['status'] == 'success') {
          _isVouchersAsSaleForced = (sys['data']?['vouchers_as_sale']?.toString() == '1');
@@ -69,7 +69,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
   }
 
   Future<void> _fetchVouchers({required int pageNum}) async {
-    final res = await _apiService.fetchData('prepaid_vouchers', params: {
+    final res = await _apiService.fetchData(slug: 'prepaid_vouchers', params: {
       'page': pageNum,
       'limit': 15,
       'search': _search,
@@ -99,7 +99,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
   }
 
   Future<void> _loadRouterPlans(String routerId) async {
-    final res = await _apiService.fetchData('prepaid_plans', params: {'router_id': routerId});
+    final res = await _apiService.fetchData(slug: 'prepaid_plans', params: {'router_id': routerId});
     if (mounted && res?['status'] == 'success') {
        setState(() {
          _plans = res['plans'] ?? [];
@@ -129,7 +129,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                 _buildDropdownField('ROUTER NODE', _routers, selectedRouterId, (val) async {
                    setModalState(() { selectedRouterId = val; _plans = []; selectedPlan = null; });
                    if (val != null) {
-                     final res = await _apiService.fetchData('prepaid_plans', params: {'router_id': val});
+                     final res = await _apiService.fetchData(slug: 'prepaid_plans', params: {'router_id': val});
                      setModalState(() { _plans = res?['plans'] ?? []; });
                    }
                 }, isDark: Provider.of<SettingsProvider>(context).isDarkMode),
@@ -162,7 +162,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
       setState(() => _isSaving = true);
       try {
         final r = _routers.firstWhere((x) => x['id'].toString() == selectedRouterId);
-        final res = await _apiService.fetchData('create_vouchers', method: 'POST', body: {
+        final res = await _apiService.fetchData(slug: 'create_vouchers', method: 'POST', body: {
           'router_name': r['router_name'],
           'plan': selectedPlan,
           'count': count,
@@ -199,7 +199,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     if (confirmed == true) {
       setState(() => _isSaving = true);
       try {
-        final res = await _apiService.fetchData('delete_vouchers', method: 'POST', body: {
+        final res = await _apiService.fetchData(slug: 'delete_vouchers', method: 'POST', body: {
           'voucher_ids': idsToDelete, // Map to portal's delete expectations
           'ids': idsToDelete
         });
@@ -292,7 +292,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
       child: Row(
         children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(value ? 'SALES RECORDING ACTIVE' : 'RECORD AS SALE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: value ? PaceColors.emerald : PaceColors.getPrimaryText(isDark))),
+            Text(value ? 'SALES RECORDING ACTIVE' : 'RECORD AS SALE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: value ? PaceColors.emerald : PaceColors.getPrimaryText(isDark))),
             Text(value ? 'FORCED BY SYSTEM POLICY' : 'Creates an income entry on use', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark))),
           ])),
           Switch(
@@ -389,7 +389,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), border: Border.all(color: Colors.red.withOpacity(0.1)), borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
-                  Text('${_selectedVoucherIds.length} SELECTED', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: Colors.red)),
+                  Text('${_selectedVoucherIds.length} SELECTED', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.red)),
                   const Spacer(),
                   TextButton.icon(
                     onPressed: () => _handleDeleteVouchers(),
@@ -413,7 +413,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.purple.withOpacity(0.2))),
-        child: Row(children: [Text(activeName.toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.black, color: PaceColors.purple)), const SizedBox(width: 4), const Icon(LucideIcons.chevronDown, size: 10, color: PaceColors.purple)]),
+        child: Row(children: [Text(activeName.toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple)), const SizedBox(width: 4), const Icon(LucideIcons.chevronDown, size: 10, color: PaceColors.purple)]),
       ),
     );
   }
@@ -482,7 +482,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(v['voucher_code']?.toUpperCase() ?? 'CODE', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1.5)),
+                  Text(v['voucher_code']?.toUpperCase() ?? 'CODE', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -504,7 +504,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                      children: [
                        const Icon(LucideIcons.checkCircle2, size: 10, color: PaceColors.emerald),
                        const SizedBox(width: 4),
-                       Text('SALE RECORDED', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: PaceColors.emerald)),
+                       Text('SALE RECORDED', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.emerald)),
                      ],
                   )
                 else
