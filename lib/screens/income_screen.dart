@@ -345,17 +345,17 @@ class _IncomeScreenState extends State<IncomeScreen> {
         Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
         Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 32),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
-              flex: 3,
+            SizedBox(
+              height: 200,
               child: AspectRatio(
                 aspectRatio: 1,
                 child: PieChart(
                   PieChartData(
                     sectionsSpace: 4,
-                    centerSpaceRadius: 40,
+                    centerSpaceRadius: 50,
                     sections: distro.map((item) {
                       final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
                       final color = Color(int.parse(colorCode));
@@ -364,7 +364,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                         color: color,
                         value: value,
                         title: '${value.toStringAsFixed(0)}%',
-                        radius: 24,
+                        radius: 32,
                         titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                         showTitle: value > 5,
                       );
@@ -373,29 +373,25 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 ),
               ),
             ),
-              const SizedBox(width: 24),
-              Expanded(
-                flex: 4,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: distro.map((item) {
-                    final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
-                    final color = Color(int.parse(colorCode));
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
-                          Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+            const SizedBox(height: 32),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: distro.map((item) {
+                final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
+                final color = Color(int.parse(colorCode));
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
+                      Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
             ],
           ),
       ]),
