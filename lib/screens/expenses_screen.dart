@@ -132,7 +132,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final cards = [
       {'label': 'TOTAL OUTFLOW', 'value': total, 'color': Colors.redAccent, 'icon': LucideIcons.trendingDown},
       {'label': 'FIXED BILLS', 'value': summary['bill'] ?? 0, 'color': Colors.blueAccent, 'icon': LucideIcons.receipt},
-      {'label': 'OPERATIONAL', 'value': summary['running expenses'] ?? 0, 'color': Colors.emerald, 'icon': LucideIcons.zap},
+      {'label': 'OPERATIONAL', 'value': summary['running expenses'] ?? 0, 'color': PaceColors.emerald, 'icon': LucideIcons.zap},
       {'label': 'INFRASTRUCTURE', 'value': summary['upgrade'] ?? 0, 'color': Colors.orangeAccent, 'icon': LucideIcons.layers},
     ];
 
