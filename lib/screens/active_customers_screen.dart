@@ -35,8 +35,8 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
     final res = await _apiService.getActiveCustomers(forceRefresh: true);
     if (mounted) {
       setState(() {
-        // active_connections.php returns 'data'
-        _active = res?['data'] ?? res?['users'] ?? [];
+        final dynamic raw = res;
+        _active = raw?['data'] ?? raw?['users'] ?? raw?['customers'] ?? [];
         _isLoading = false;
       });
     }
