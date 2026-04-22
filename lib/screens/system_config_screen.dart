@@ -151,7 +151,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
           const Icon(LucideIcons.settings2, size: 18, color: PaceColors.purple),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('TARGET NODE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1)),
+            Text('TARGET NODE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
             Text(activeOne['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
           ])),
           const Icon(LucideIcons.chevronDown, size: 16, color: Colors.grey),
@@ -168,7 +168,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
         Row(children: [
           const Icon(LucideIcons.wifi, size: 14, color: PaceColors.purple),
           const SizedBox(width: 8),
-          Text('IDENTITY METADATA', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text('IDENTITY METADATA', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         ]),
         const SizedBox(height: 24),
         _buildField('WIFI SSID (NETWORK NAME)', _wifiNameCtrl, LucideIcons.smartphone, isDark),
@@ -191,7 +191,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
                  Row(children: [
                    const Icon(LucideIcons.link, size: 14, color: Colors.blue),
                    const SizedBox(width: 8),
-                   Text('SYSTEM API LINKS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                   Text('SYSTEM API LINKS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                  ]),
                  if (!_isLocked) IconButton(onPressed: () => setState(() => _isLocked = true), icon: const Icon(LucideIcons.unlock, size: 14, color: PaceColors.purple)),
               ]),
@@ -225,7 +225,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
 
   Widget _buildField(String label, TextEditingController ctrl, IconData icon, bool isDark, {bool isMono = false, bool enabled = true}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.black, color: Colors.grey, letterSpacing: 1)),
+      Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
       const SizedBox(height: 8),
       TextField(
         controller: ctrl,
