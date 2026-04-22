@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
@@ -49,6 +50,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
   void _changeMonth(int offset) {
     setState(() {
       _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + offset);
+      _isLoading = true;
     });
     _fetchReport();
   }
@@ -85,10 +87,16 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
   }
 
   Widget _buildHeader(bool isDark) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('FINANCIAL REPORT', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-        Text('ANALYSIS OF INCOME AND OPERATIONAL COSTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
-    ]);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('FINANCIAL REPORT', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+            Text('ANALYSIS OF INCOME AND OPERATIONAL COSTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+        ]),
+        IconButton(onPressed: () {}, icon: const Icon(LucideIcons.printer, color: PaceColors.purple, size: 20)),
+      ],
+    );
   }
 
   Widget _buildMonthNavigator(bool isDark) {
@@ -96,9 +104,9 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Row(children: [
-        IconButton(onPressed: () => _changeMonth(-1), icon: Icon(Icons.chevron_left, color: PaceColors.getDimText(isDark))),
+        IconButton(onPressed: () => _changeMonth(-1), icon: Icon(LucideIcons.chevronLeft, color: PaceColors.getDimText(isDark))),
         Expanded(child: Center(child: Text(DateFormat('MMMM yyyy').format(_selectedDate).toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)))),
-        IconButton(onPressed: () => _changeMonth(1), icon: Icon(Icons.chevron_right, color: PaceColors.getDimText(isDark))),
+        IconButton(onPressed: () => _changeMonth(1), icon: Icon(LucideIcons.chevronRight, color: PaceColors.getDimText(isDark))),
       ]),
     );
   }
@@ -111,27 +119,27 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
 
     return Column(children: [
       Row(children: [
-        Expanded(child: _buildMetricCard('INCOME', income, Icons.trending_up_rounded, PaceColors.emerald, isDark)),
+        Expanded(child: _buildMetricCard('INCOME', income, LucideIcons.trendingUp, PaceColors.emerald, isDark)),
         const SizedBox(width: 12),
-        Expanded(child: _buildMetricCard('EXPENSES', expenses, Icons.trending_down_rounded, Colors.red, isDark)),
+        Expanded(child: _buildMetricCard('EXPENSES', expenses, LucideIcons.trendingDown, Colors.red, isDark)),
       ]),
       const SizedBox(height: 12),
-      _buildMetricCard('NET PROFIT', profit, Icons.account_balance_rounded, PaceColors.purple, isDark, subLabel: 'MARGIN: $margin%'),
+      _buildMetricCard('NET PROFIT', profit, LucideIcons.activity, PaceColors.purple, isDark, subLabel: 'MARGIN: $margin%'),
     ]);
   }
 
   Widget _buildMetricCard(String label, dynamic value, IconData icon, Color color, bool isDark, {String? subLabel}) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 16)),
-          if (subLabel != null) Text(subLabel, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
+          if (subLabel != null) Text(subLabel, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: color, letterSpacing: 0.5)),
         ]),
-        const SizedBox(height: 16),
-        Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-        Text('KSH ${_currencyFormat.format(value)}', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+        const SizedBox(height: 24),
+        Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text('KSH ${_currencyFormat.format(value)}', style: GoogleFonts.figtree(fontSize: 20, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
       ]),
     );
   }
@@ -142,39 +150,65 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('DAILY TREND', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
-        Text('INCOME VS EXPENSES', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+        Text('DAILY TREND', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
+        Text('INCOME VS OPERATIONAL EXPENSES', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
         const SizedBox(height: 32),
         SizedBox(
-          height: 200,
+          height: 220,
           child: LineChart(
             LineChartData(
-              gridData: const FlGridData(show: false),
-              titlesData: const FlTitlesData(show: false),
+              gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 1000, getDrawingHorizontalLine: (v) => FlLine(color: PaceColors.getBorder(isDark), strokeWidth: 1, dashArray: [4, 4])),
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (v, m) => Text(v >= 1000 ? '${(v/1000).toInt()}k' : v.toInt().toString(), style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold)))),
+                bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, m) => Text(v.toInt().toString(), style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold)))),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
               borderData: FlBorderData(show: false),
               lineBarsData: [
                 LineChartBarData(
-                  isCurved: true,
-                  color: PaceColors.emerald,
-                  barWidth: 3,
-                  dotData: const FlDotData(show: false),
-                  spots: trend.map((e) => FlSpot((e['day'] as num).toDouble(), (e['income'] as num).toDouble())).toList(),
+                   spots: trend.map((e) => FlSpot(double.parse(e['day'].toString()), double.parse(e['income'].toString()))).toList(),
+                   isCurved: true,
+                   color: PaceColors.emerald,
+                   barWidth: 4,
+                   isStrokeCapRound: true,
+                   dotData: const FlDotData(show: false),
+                   belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [PaceColors.emerald.withOpacity(0.1), PaceColors.emerald.withOpacity(0)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
                 ),
                 LineChartBarData(
-                  isCurved: true,
-                  color: Colors.red,
-                  barWidth: 3,
-                  dotData: const FlDotData(show: false),
-                  spots: trend.map((e) => FlSpot((e['day'] as num).toDouble(), (e['expenses'] as num).toDouble())).toList(),
+                   spots: trend.map((e) => FlSpot(double.parse(e['day'].toString()), double.parse(e['expenses'].toString()))).toList(),
+                   isCurved: true,
+                   color: Colors.redAccent,
+                   barWidth: 4,
+                   isStrokeCapRound: true,
+                   dotData: const FlDotData(show: false),
+                   belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.redAccent.withOpacity(0.1), Colors.redAccent.withOpacity(0)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
                 ),
               ],
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildLegendItem('INCOME', PaceColors.emerald),
+            const SizedBox(width: 24),
+            _buildLegendItem('EXPENSES', Colors.redAccent),
+          ],
+        ),
       ]),
     );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(children: [
+      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+      const SizedBox(width: 8),
+      Text(label, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: color, letterSpacing: 1)),
+    ]);
   }
 
   Widget _buildExpenseBreakdown(bool isDark) {
@@ -183,18 +217,18 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('EXPENSE BREAKDOWN', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
-        Text('DISTRIBUTION ACROSS CATEGORIES', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-        const SizedBox(height: 24),
+        Text('EXPENSE BREAKDOWN', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
+        Text('DISTRIBUTION ACROSS COST CATEGORIES', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+        const SizedBox(height: 32),
         ...breakdown.map((item) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(children: [
-            Container(width: 8, height: 8, decoration: const BoxDecoration(color: PaceColors.purple, shape: BoxShape.circle)),
+            Container(width: 10, height: 10, decoration: const BoxDecoration(color: PaceColors.purple, shape: BoxShape.circle)),
             const SizedBox(width: 12),
-            Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)))),
-            Text('KSH ${_currencyFormat.format(item['value'])}', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+            Expanded(child: Text(item['name'].toString().toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.black, color: PaceColors.getPrimaryText(isDark), letterSpacing: 0.5))),
+            Text('KSH ${_currencyFormat.format(item['value'])}', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple)),
           ]),
         )).toList(),
       ]),
