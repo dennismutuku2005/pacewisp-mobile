@@ -246,23 +246,87 @@ class ApiService {
   Future<Map<String, dynamic>?> getRecentTransactions({String? router, String? startDate, String? endDate, int limit = 5, bool forceRefresh = false}) async => 
     fetchData(slug: 'recent_transactions', params: {'action': 'recent_transactions', 'limit': limit, 'router': router, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
 
+  // Customers (Mirrors wispportal/src/services/customers.js)
+  Future<Map<String, dynamic>?> getCustomers({
+    String? search, 
+    int page = 1, 
+    int limit = 12, 
+    String? routerName,
+    bool forceRefresh = false
+  }) async {
+    final Map<String, dynamic> params = {'page': page, 'limit': limit};
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    if (routerName != null && routerName.isNotEmpty) params['router_name'] = routerName;
+    return fetchData(slug: 'customers', params: params, forceRefresh: forceRefresh);
+  }
+
+  Future<Map<String, dynamic>?> getCustomerHistory({
+    required String phone, 
+    int page = 1, 
+    int limit = 12, 
+    String? month, 
+    String? year,
+    bool forceRefresh = false
+  }) async {
+    final Map<String, dynamic> params = {'phone': phone, 'page': page, 'limit': limit};
+    if (month != null && month.isNotEmpty) params['month'] = month;
+    if (year != null && year.isNotEmpty) params['year'] = year;
+    return fetchData(slug: 'customer_history', params: params, forceRefresh: forceRefresh);
+  }
+
+  Future<Map<String, dynamic>?> getMonthlyUsers({String? month, String? year, String? router, bool forceRefresh = false}) async {
+    final Map<String, dynamic> params = <String, dynamic>{};
+    if (month != null) params['month'] = month;
+    if (year != null) params['year'] = year;
+    if (router != null) params['router'] = router;
+    return fetchData(slug: 'monthly_customers', params: params, forceRefresh: forceRefresh);
+  }
+
+  // Alias for backward compatibility
+  Future<Map<String, dynamic>?> getMonthlyCustomers({bool forceRefresh = false}) async => 
+    getMonthlyUsers(forceRefresh: forceRefresh);
+
+  // Active Connections (Mirrors wispportal/src/services/activeConnections.js)
+  Future<Map<String, dynamic>?> getActiveConnections({
+    int page = 1, 
+    int limit = 25, 
+    String? search,
+    bool forceRefresh = false
+  }) async {
+    final Map<String, dynamic> params = {'page': page, 'limit': limit};
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    return fetchData(slug: 'active_customers', params: params, forceRefresh: forceRefresh);
+  }
+
+  // Blacklist / STK Push Control (Mirrors wispportal/src/services/blockStk.js)
+  Future<Map<String, dynamic>?> getBlockedNumbers({
+    String? phone, 
+    int page = 1, 
+    int limit = 25,
+    bool forceRefresh = false
+  }) async {
+    final params = <String, dynamic>{
+      'page': page, 
+      'limit': limit,
+      't': DateTime.now().millisecondsSinceEpoch
+    };
+    if (phone != null && phone.isNotEmpty) params['phone'] = phone;
+    
+    // We use _requestWithFallback directly for block_stk to bypass some cache logic if needed
+    return await _requestWithFallback('/block_stk.php', queryParameters: params);
+  }
+
+  Future<Map<String, dynamic>?> blockNumber(String phone, {String reason = 'Manual Block'}) async => 
+    _requestWithFallback('/block_stk.php', method: 'POST', data: {'phone': phone, 'reason': reason});
+
+  Future<Map<String, dynamic>?> unblockNumber(String phone) async => 
+    _requestWithFallback('/block_stk.php?phone=$phone', method: 'DELETE');
+
   // Vouchers
   Future<Map<String, dynamic>?> getVouchers({String? search, String? router, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'vouchers', params: {'search': search, 'router_name': router, 'page': page}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> createVoucher(Map<String, dynamic> data) async => _requestWithFallback('/vouchers.php', method: 'POST', data: data);
   Future<Map<String, dynamic>?> deleteVoucher(String id) async => _requestWithFallback('/vouchers.php', method: 'DELETE', data: {'ids': [id]});
   Future<Map<String, dynamic>?> deleteVouchers(List<String> ids) async => _requestWithFallback('/vouchers.php', method: 'DELETE', data: {'ids': ids});
-
-  // Customers
-  Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customers', params: {'search': search, 'page': page, 'limit': 12}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getMonthlyCustomers({bool forceRefresh = false}) async => fetchData(slug: 'monthly_customers', params: {}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getActiveCustomers({bool forceRefresh = false}) async => fetchData(slug: 'active_customers', params: {}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getCustomerHistory({required String phone, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customer_history', params: {'phone': phone, 'page': page, 'limit': 12}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> deleteCustomer(String phone) async => _requestWithFallback('/customers.php?action=delete', method: 'POST', data: {'phone': phone});
-
-  // Blacklist / STK Push Control (uses block_stk.php)
-  Future<Map<String, dynamic>?> checkBlockStatus(String phone) async => _requestWithFallback('/block_stk.php?phone=$phone&t=${DateTime.now().millisecondsSinceEpoch}');
-  Future<Map<String, dynamic>?> blockNumber(String phone, {String reason = 'Manual Block'}) async => _requestWithFallback('/block_stk.php', method: 'POST', data: {'phone': phone, 'reason': reason});
-  Future<Map<String, dynamic>?> unblockNumber(String phone) async => _requestWithFallback('/block_stk.php?phone=$phone', method: 'DELETE');
 
   // Plans
   Future<Map<String, dynamic>?> getPlans(String routerId, {bool forceRefresh = false}) async => fetchData(slug: 'plans', params: {'router_id': routerId}, forceRefresh: forceRefresh);
@@ -363,4 +427,5 @@ class ApiService {
       'mpesa_code': mpesaCode ?? '',
       'invoice_id': invoiceId ?? '',
     });
+
 }
