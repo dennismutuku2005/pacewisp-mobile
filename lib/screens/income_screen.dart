@@ -222,7 +222,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.4),
       itemBuilder: (context, index) {
         final c = cards[index];
-        final num trend = c['t'] as num;
+        final num trend = num.tryParse(c['t']?.toString() ?? '0') ?? 0;
+        final num value = num.tryParse(c['v']?.toString() ?? '0') ?? 0;
         final bool up = trend >= 0;
         return Container(
           padding: const EdgeInsets.all(16),
@@ -242,7 +243,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
             ]),
             const Spacer(),
             Text(c['l'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-            Text('KES ${_currencyFormat.format(c['v'])}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+            Text('KES ${_currencyFormat.format(value)}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
           ]),
         );
       },
