@@ -37,6 +37,10 @@ class AppTheme {
       backgroundColor: PaceColors.background,
       type: BottomNavigationBarType.fixed,
     ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: PaceColors.purple,
+        foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         elevation: 0,
       ),
