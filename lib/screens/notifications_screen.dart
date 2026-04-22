@@ -27,9 +27,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _fetchNotifications();
   }
 
-  Future<void> _fetchNotifications() async {
+  Future<void> _fetchNotifications({bool isRefresh = false}) async {
+    if (!isRefresh) setState(() => _isLoading = true);
     setState(() => _isRefreshing = true);
-    final res = await _apiService.fetchData('notifications'); 
+    final res = await _apiService.getNotifications(forceRefresh: true);
     if (mounted) {
       setState(() {
         _notifications = res?['data'] ?? [];
@@ -39,19 +40,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  Future<void> _markRead(String? id) async {
-    // Optimistic UI
-    setState(() {
-      if (id == null) {
-        for (var n in _notifications) { n['is_read'] = 1; }
-      } else {
+  Future<void> _markAllRead() async {
+    final res = await _apiService.markNotificationRead(null);
+    if (res?['status'] == 'success') {
+      _fetchNotifications(isRefresh: true);
+    }
+  }
+
+  Future<void> _markOneRead(String id) async {
+    final res = await _apiService.markNotificationRead(id);
+    if (res?['status'] == 'success') {
+      setState(() {
         final idx = _notifications.indexWhere((n) => n['id'].toString() == id);
         if (idx != -1) _notifications[idx]['is_read'] = 1;
-      }
-    });
-    
-    // Call API (Add mark_notification_read to ApiService if needed)
-    // await _apiService.sendAction('mark_notification_read', {'id': id});
+      });
+    }
   }
 
   @override
@@ -59,115 +62,93 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: RefreshIndicator(
-        onRefresh: _fetchNotifications,
-        color: PaceColors.purple,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('NOTIFICATIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-                      Text('SYSTEM ALERTS & CONNECTION ERRORS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                    ]),
-                  ),
-                  TextButton(
-                    onPressed: () => _markRead(null),
-                    child: Text('MARK ALL READ', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
-                  ),
-                ],
+    return Column(
+      children: [
+        _buildHeader(isDark),
+        Expanded(
+          child: _isLoading 
+            ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList())
+            : RefreshIndicator(
+                onRefresh: () => _fetchNotifications(isRefresh: true),
+                color: PaceColors.purple,
+                child: _notifications.isEmpty ? _buildEmpty(isDark) : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  itemCount: _notifications.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (ctx, i) => _buildCard(_notifications[i], isDark),
+                ),
               ),
-            ),
-            Expanded(
-              child: _isLoading
-                ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 10))
-                : _notifications.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                      itemCount: _notifications.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) => _buildNotificationCard(_notifications[index], isDark),
-                    ),
-            ),
-          ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildHeader(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(LucideIcons.bell, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.2)),
-          const SizedBox(height: 16),
-          Text('NO NOTIFICATIONS', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('NOTIFICATIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+            Text('SYSTEM ALERTS & CONNECTION ERRORS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          ]),
+          TextButton(onPressed: _markAllRead, child: Text('MARK ALL READ', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1))),
         ],
       ),
     );
   }
 
-  Widget _buildNotificationCard(dynamic n, bool isDark) {
-    final bool isUnread = n['is_read'] == 0 || n['is_read'] == false;
-    final type = n['type']?.toString().toUpperCase() ?? 'ALERT';
+  Widget _buildCard(dynamic n, bool isDark) {
+    final bool isUnread = n['is_read'] == 0 || n['is_read'] == "0";
+    final type = n['type']?.toString().toLowerCase() ?? 'alert';
     
+    BadgeVariant variant = BadgeVariant.info;
+    if (type.contains('payment')) variant = BadgeVariant.success;
+    if (type.contains('reconnect')) variant = BadgeVariant.warning;
+    if (type.contains('error')) variant = BadgeVariant.error;
+
     return InkWell(
-      onTap: isUnread ? () => _markRead(n['id'].toString()) : null,
-      borderRadius: BorderRadius.circular(20),
+      onTap: isUnread ? () => _markOneRead(n['id'].toString()) : null,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isUnread ? PaceColors.purple.withOpacity(isDark ? 0.05 : 0.03) : PaceColors.getCard(isDark),
+          color: isUnread ? PaceColors.purple.withOpacity(0.05) : PaceColors.getCard(isDark),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: isUnread ? PaceColors.purple.withOpacity(0.3) : PaceColors.getBorder(isDark), width: 1.2),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: (isUnread ? PaceColors.purple : PaceColors.getDimText(isDark)).withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(LucideIcons.alertCircle, size: 16, color: isUnread ? PaceColors.purple : PaceColors.getDimText(isDark)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(type.replaceAll('_', ' '), style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.black, color: PaceColors.purple, letterSpacing: 1)),
-                      Text(n['created_at']?.toString().split(' ')[0] ?? '', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(n['error_message'] ?? 'No detail provided', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), height: 1.4)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.user, size: 10, color: PaceColors.purple).pOnly(right: 4),
-                      Text(n['user_mac'] ?? 'Unknown MAC', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            Container(width: 32, height: 32, decoration: BoxDecoration(color: (isUnread ? PaceColors.purple : Colors.grey).withOpacity(0.1), shape: BoxShape.circle), child: Center(child: Icon(LucideIcons.bell, size: 14, color: isUnread ? PaceColors.purple : Colors.grey))),
+            const SizedBox(width: 14),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                PaceBadge(label: type.replaceFirst('_', ' ').toUpperCase(), variant: variant),
+                Text(n['created_at']?.toString().split(' ')[0] ?? '', style: GoogleFonts.figtree(fontSize: 8, color: Colors.grey)),
+              ]),
+              const SizedBox(height: 8),
+              Text(n['error_message'] ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), height: 1.4)),
+              const SizedBox(height: 12),
+              Row(children: [
+                const Icon(LucideIcons.user, size: 10, color: Colors.grey),
+                const SizedBox(width: 6),
+                Text(n['user_mac'] ?? 'SYSTEM', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
+              ]),
+            ])),
           ],
         ),
       ),
     );
   }
-}
 
-extension PaddingExtension on Widget {
-  Widget pOnly({double left = 0, double right = 0, double top = 0, double bottom = 0}) => Padding(padding: EdgeInsets.only(left: left, right: right, top: top, bottom: bottom), child: this);
+  Widget _buildEmpty(bool isDark) {
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Icon(LucideIcons.bellOff, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
+      const SizedBox(height: 16),
+      Text('ALL CAUGHT UP', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.black, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+      Text('No pending system notifications', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
+    ]));
+  }
 }
