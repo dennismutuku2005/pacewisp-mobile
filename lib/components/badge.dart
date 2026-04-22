@@ -42,20 +42,13 @@ class PaceBadge extends StatelessWidget {
         break;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          color: textColor,
-          fontSize: 9,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
-        ),
+    return Text(
+      label.toUpperCase(),
+      style: TextStyle(
+        color: textColor,
+        fontSize: 9,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5,
       ),
     );
   }
