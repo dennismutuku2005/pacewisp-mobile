@@ -256,7 +256,7 @@ class ApiService {
   Future<Map<String, dynamic>?> getCustomers({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customers', params: {'search': search, 'page': page, 'limit': 12}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> getMonthlyCustomers({bool forceRefresh = false}) async => fetchData(slug: 'monthly_customers', params: {}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> getActiveCustomers({bool forceRefresh = false}) async => fetchData(slug: 'active_customers', params: {}, forceRefresh: forceRefresh);
-  Future<Map<String, dynamic>?> getCustomerHistory({required String phone, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customer_history', params: {'phone': phone, 'page': page}, forceRefresh: forceRefresh);
+  Future<Map<String, dynamic>?> getCustomerHistory({required String phone, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'customer_history', params: {'phone': phone, 'page': page, 'limit': 12}, forceRefresh: forceRefresh);
   Future<Map<String, dynamic>?> deleteCustomer(String phone) async => _requestWithFallback('/customers.php?action=delete', method: 'POST', data: {'phone': phone});
 
   // Blacklist / STK Push Control (uses block_stk.php)
