@@ -346,12 +346,13 @@ class _IncomeScreenState extends State<IncomeScreen> {
         Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
         Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 32),
-        SizedBox(
-          height: 200,
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: AspectRatio(
+                aspectRatio: 1,
                 child: PieChart(
                   PieChartData(
                     sectionsSpace: 4,
@@ -372,6 +373,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                   ),
                 ),
               ),
+            ),
               const SizedBox(width: 24),
               Expanded(
                 flex: 4,
