@@ -296,8 +296,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('INCOME TREND', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
-        Text('DAILY REVENUE FOR SELECTED PERIOD', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text('INCOME TREND', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        Text('DAILY REVENUE FOR SELECTED PERIOD', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 32),
         SizedBox(
           height: 200,
@@ -380,8 +380,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('PLAN DISTRIBUTION', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
-        Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text('PLAN DISTRIBUTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 32),
         Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -423,8 +423,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
                     children: [
                       Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
-                      Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                      Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
+                      Text('${item['value']}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
                     ],
                   ),
                 );
