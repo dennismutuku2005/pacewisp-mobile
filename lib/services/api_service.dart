@@ -164,8 +164,8 @@ class ApiService {
     else if (slug == 'mpesa') phpFile = '/mpesa_transactions.php';
     else if (slug == 'invoices') phpFile = '/invoices.php';
     else if (slug == 'notifications') phpFile = '/notifications.php';
-    else if (slug == 'monthly_customers') phpFile = '/customers.php';
-    else if (slug == 'active_customers') phpFile = '/customers.php';
+    else if (slug == 'monthly_customers') phpFile = '/monthly_users.php';
+    else if (slug == 'active_customers') phpFile = '/active_connections.php';
     else if (slug == 'themes') phpFile = '/themes.php';
     else if (slug == 'active_themes') phpFile = '/themes.php';
     else if (slug == 'system_settings') phpFile = '/system_data.php';
