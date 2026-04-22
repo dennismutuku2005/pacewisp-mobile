@@ -26,6 +26,7 @@ class PaceAccount {
     'token': token,
     'lastLogin': lastLogin,
     'type': type,
+    'phone': phone,
     'policies': policies,
   };
 
@@ -36,6 +37,7 @@ class PaceAccount {
     token: json['token'],
     lastLogin: json['lastLogin'],
     type: json['type'] ?? 'admin',
+    phone: json['phone'],
     policies: List<String>.from(json['policies'] ?? []),
   );
 }
