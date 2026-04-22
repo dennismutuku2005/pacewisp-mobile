@@ -98,7 +98,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                 children: [
                   FadeTransition(
                     opacity: _fadeAnimation,
-                    child: Center(child: Image.asset('assets/images/logoc.png', height: 50, errorBuilder: (_, __, ___) => const SizedBox())),
+                    child: Center(child: Image.asset('assets/images/logoc.png', height: 35, errorBuilder: (_, __, ___) => const SizedBox())),
                   ),
                   const Spacer(),
                   FadeTransition(
