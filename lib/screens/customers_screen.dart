@@ -41,6 +41,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
     _scrollController.addListener(_onScroll);
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
+
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       if (!_isLoadingMore && _hasMore) {
@@ -50,12 +57,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   Future<void> _fetchStats() async {
-    final res = await _apiService.getSummaryWidgets(forceRefresh: true);
-    if (mounted && res != null) {
-      setState(() {
-        _onlineCount = int.tryParse(res['data']?['widgets']?['online_customers']?['value']?.toString() ?? '0') ?? 0;
-        _monthlyCount = int.tryParse(res['data']?['widgets']?['customers_month']?['value']?.toString() ?? '0') ?? 0;
-      });
+    try {
+      final res = await _apiService.getSummaryWidgets(forceRefresh: true);
+      if (mounted && res != null) {
+        setState(() {
+          final widgets = res['data']?['widgets'];
+          _onlineCount = int.tryParse(widgets?['online_customers']?['value']?.toString() ?? '0') ?? 0;
+          _monthlyCount = int.tryParse(widgets?['customers_month']?['value']?.toString() ?? '0') ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint("Stats fetch error: $e");
     }
   }
 
@@ -63,28 +75,48 @@ class _CustomersScreenState extends State<CustomersScreen> {
     if (!force && _customers.isNotEmpty) return;
     
     setState(() => _isLoading = true);
-    final res = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: force);
-    if (mounted) {
-      if (res != null) {
-        _processCustomers(res, 1);
-      } else {
-        setState(() => _isLoading = false);
+    try {
+      final res = await _apiService.getCustomers(search: _search, page: 1, forceRefresh: force);
+      if (mounted) {
+        if (res != null) {
+          _processCustomers(res, 1);
+        } else {
+          setState(() => _isLoading = false);
+        }
       }
+    } catch (e) {
+      debugPrint("Fetch customers error: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _processCustomers(Map<String, dynamic> res, int page) {
     setState(() {
-      final items = res['data'] is List ? res['data'] : (res['data']?['data'] ?? res['customers'] ?? []);
-      if (page == 1) _customers = items;
-      else _customers.addAll(items);
+      // Robust extraction: backend returns data: [...]
+      final dynamic rawData = res['data'];
+      List<dynamic> items = [];
+      
+      if (rawData is List) {
+        items = rawData;
+      } else if (rawData is Map && rawData['data'] is List) {
+        items = rawData['data'];
+      } else if (res['customers'] is List) {
+        items = res['customers'];
+      }
 
-      final p = res['pagination'] ?? res['data']?['pagination'];
-      if (p is Map) {
-        _hasMore = p['has_more'] ?? false;
-        _total = p['total'] ?? 0;
+      if (page == 1) {
+        _customers = items;
       } else {
-        _hasMore = items.length >= 12; // Fallback
+        _customers.addAll(items);
+      }
+
+      // Robust pagination extraction
+      final dynamic p = res['pagination'] ?? (rawData is Map ? rawData['pagination'] : null);
+      if (p is Map) {
+        _hasMore = p['has_more'] ?? (page < (p['total_pages'] ?? 1));
+        _total = p['total'] ?? items.length;
+      } else {
+        _hasMore = items.length >= 12; 
       }
       _page = page;
       _isLoading = false;
@@ -94,13 +126,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
   void _onSearchChanged(String val) {
     if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
-      setState(() {
-        _search = val;
-        _isLoading = true;
-        _customers = [];
-        _page = 1;
-      });
-      _fetchCustomers(force: true);
+      if (mounted) {
+        setState(() {
+          _search = val;
+          _isLoading = true;
+          _customers = [];
+          _page = 1;
+        });
+        _fetchCustomers(force: true);
+      }
     });
   }
 
@@ -108,12 +142,16 @@ class _CustomersScreenState extends State<CustomersScreen> {
     if (_isLoadingMore) return;
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
-    final res = await _apiService.getCustomers(search: _search, page: nextPage);
-    if (mounted) {
-      if (res != null) {
-        _processCustomers(res, nextPage);
+    try {
+      final res = await _apiService.getCustomers(search: _search, page: nextPage);
+      if (mounted) {
+        if (res != null) {
+          _processCustomers(res, nextPage);
+        }
+        setState(() => _isLoadingMore = false);
       }
-      setState(() => _isLoadingMore = false);
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingMore = false);
     }
   }
 
