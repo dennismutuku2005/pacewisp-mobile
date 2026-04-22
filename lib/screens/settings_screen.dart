@@ -114,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(_user['name'] ?? 'USER', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text(_user['username'] ?? 'username', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(_user['username'] ?? 'username', style: TextStyle(fontSize: 12, color: PaceColors.getDimText(isDark))),
             ])),
             PaceBadge(label: _user['type']?.toString().toUpperCase() ?? 'STAFF', variant: BadgeVariant.secondary),
           ]),
@@ -129,9 +129,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildInfoRow(IconData icon, String label, String val, bool isDark) {
     return Row(children: [
-      Icon(icon, size: 14, color: Colors.grey),
+      Icon(icon, size: 14, color: PaceColors.getDimText(isDark)),
       const SizedBox(width: 12),
-      Text(label, style: GoogleFonts.figtree(fontSize: 12, color: Colors.grey)),
+      Text(label, style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark))),
       const Spacer(),
       Text(val, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
     ]);
