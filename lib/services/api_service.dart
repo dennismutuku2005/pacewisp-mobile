@@ -46,6 +46,8 @@ class ApiService {
 
   final List<String> _possibleApiPaths = [
     '/dashboard/v1',
+    '/dashboard',
+    '/portal',
     '/',
   ];
 
@@ -68,48 +70,54 @@ class ApiService {
     final protocols = ['https'];
     List<String> pathsToTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
 
-    for (var protocol in protocols) {
-      for (var path in pathsToTry) {
-        String cleanPath = path;
-        if (!cleanPath.startsWith('/')) cleanPath = '/$cleanPath';
-        if (cleanPath.endsWith('/') && cleanPath != '/') cleanPath = cleanPath.substring(0, cleanPath.length - 1);
-        
-        final separator = cleanPath == '/' ? '' : cleanPath;
-        final url = '$protocol://$host$separator$endpoint';
-        
-        try {
-          debugPrint('API: Probing URL: $url');
-          final response = await _dio.request(
-            url,
-            data: data,
-            queryParameters: queryParameters,
-            options: Options(
-              method: method,
-              headers: headers,
-              validateStatus: (s) => true,
-            ),
-          ).timeout(const Duration(seconds: 15));
+    // If we have a detected path, try it first. If it fails with 404, we might be looking for a file in a different folder.
+    List<String> currentTry = _detectedPath != null ? [_detectedPath!] : _possibleApiPaths;
+    
+    for (var path in currentTry) {
+      final res = await _doRequest('https', host, path, endpoint, method, data, queryParameters, headers);
+      if (res != null) return res;
+    }
 
-          if (response.statusCode == 200) {
-            _detectedPath = cleanPath;
-            if (response.data is Map) return response.data as Map<String, dynamic>;
-            if (response.data is String) return jsonDecode(response.data) as Map<String, dynamic>;
-          } else if (response.statusCode == 401) {
-            debugPrint('API: AUTH ERROR 401 at $url - Token might be invalid');
-            return {'status': 'error', 'message': 'Authentication failed'};
-          } else {
-            debugPrint('API: ERROR ${response.statusCode} at $url');
-          }
-        } catch (e) {
-          debugPrint('API: EXCEPTION at $url: $e');
-          if (e is DioException) {
-            final String msg = (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) 
-              ? 'Connection timed out' 
-              : 'Network connectivity issue detected';
-            _showGlobalError(msg);
-          }
-        }
+    // If we tried a specific detected path and it failed, try all others.
+    if (_detectedPath != null) {
+      for (var path in _possibleApiPaths) {
+        if (path == _detectedPath) continue;
+        final res = await _doRequest('https', host, path, endpoint, method, data, queryParameters, headers);
+        if (res != null) return res;
       }
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _doRequest(String protocol, String host, String path, String endpoint, String method, Map<String, dynamic>? data, Map<String, dynamic>? queryParameters, Map<String, String> headers) async {
+    String cleanPath = path;
+    if (!cleanPath.startsWith('/')) cleanPath = '/$cleanPath';
+    if (cleanPath.endsWith('/') && cleanPath != '/') cleanPath = cleanPath.substring(0, cleanPath.length - 1);
+    
+    final separator = cleanPath == '/' ? '' : cleanPath;
+    final url = '$protocol://$host$separator$endpoint';
+    
+    try {
+      debugPrint('API: Probing URL: $url');
+      final response = await _dio.request(
+        url,
+        data: data,
+        queryParameters: queryParameters,
+        options: Options(
+          method: method,
+          headers: headers,
+          validateStatus: (s) => true,
+        ),
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        // Only set detected path if it's a "standard" data response or we don't have one
+        if (_detectedPath == null) _detectedPath = cleanPath;
+        if (response.data is Map) return response.data as Map<String, dynamic>;
+        if (response.data is String) return jsonDecode(response.data) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('API: EXCEPTION at $url: $e');
     }
     return null;
   }
