@@ -207,7 +207,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
             children: [
               const Icon(Icons.people_outline_rounded, color: PaceColors.purple, size: 24),
               const SizedBox(width: 10),
-              Text('CUSTOMERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+              Text('PREPAID USERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
             ],
           ),
           const SizedBox(height: 6),
