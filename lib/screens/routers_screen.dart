@@ -112,8 +112,6 @@ class _RoutersScreenState extends State<RoutersScreen> {
               Text('CONTROL AND SYNCHRONIZATION STATUS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
             ],
           ),
-          if (settings.hasPolicy('manage_routers'))
-            IconButton(onPressed: () => _handleSaveRouter(), icon: const Icon(LucideIcons.plusCircle, color: PaceColors.purple, size: 28)),
         ],
       ),
     );
@@ -213,25 +211,12 @@ class _RoutersScreenState extends State<RoutersScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('ROUTER MANAGEMENT', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
+            Text('ROUTER CONTROL', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
             const SizedBox(height: 24),
-            _buildActionItem('Edit Identity & Login', LucideIcons.edit3, Colors.orange, () {
-              Navigator.pop(context);
-              if (settings.hasPolicy('manage_routers')) _handleSaveRouter(editing: r);
-            }),
-            _buildActionItem('Edit Payment Config', LucideIcons.creditCard, Colors.blue, () {
-              Navigator.pop(context);
-              if (settings.hasPolicy('manage_routers')) _showBillingDialog(r, isDark);
-            }),
             _buildActionItem('Restart Hardware', LucideIcons.power, Colors.red, () {
               Navigator.pop(context);
               _handleRestart(r);
             }),
-            if (settings.hasPolicy('manage_routers'))
-              _buildActionItem('Remove Data Unit', LucideIcons.trash2, Colors.grey, () {
-                Navigator.pop(context);
-                _handleDelete(r);
-              }),
             const SizedBox(height: 24),
           ],
         ),
@@ -248,27 +233,20 @@ class _RoutersScreenState extends State<RoutersScreen> {
     );
   }
 
-  void _handleDelete(dynamic r) async {
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('DELETE ROUTER'),
-        content: Text('Permanently remove ${r['router_name']}? This action is irreversible.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      setState(() => _isProcessing = true);
-      try {
-        final res = await _apiService.fetchData(slug: 'routers', method: 'DELETE', params: {'id': r['id']});
-        if (res?['status'] == 'success') _fetchRouters();
-      } finally {
-        if (mounted) setState(() => _isProcessing = false);
-      }
+
+  void _handleApiResponse(Map<String, dynamic>? res, VoidCallback retry) {
+    if (res?['status'] == 'otp_required') {
+      _showOtpModal((code) => retry());
+    } else if (res?['status'] == 'success') {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Command Executed'), backgroundColor: PaceColors.emerald));
     }
+  }
+
+  void _showOtpModal(Function(String) onVerify) {
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => OtpModal(
+      phoneNumber: Provider.of<SettingsProvider>(context, listen: false).activeAccount?.phone ?? '',
+      onVerify: (code) { Navigator.pop(context); onVerify(code); },
+    ));
   }
 
   void _handleRestart(dynamic r) async {
@@ -287,153 +265,5 @@ class _RoutersScreenState extends State<RoutersScreen> {
       final res = await _apiService.restartRouter(r['ip_address'], r['winbox_port'] ?? 8728);
       _handleApiResponse(res, () => _handleRestart(r));
     }
-  }
-
-  void _handleSaveRouter({Map<String, dynamic>? editing}) async {
-    final name = TextEditingController(text: editing?['router_name'] ?? '');
-    final ip = TextEditingController(text: editing?['ip_address'] ?? '');
-    final user = TextEditingController(text: editing?['username'] ?? '');
-    final pass = TextEditingController(text: editing?['password'] ?? '');
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(editing == null ? 'ADD NEW ROUTER' : 'EDIT ROUTER', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildEditField('ROUTER NAME', name, LucideIcons.tag),
-              const SizedBox(height: 16),
-              _buildEditField('IP ADDRESS', ip, LucideIcons.wifi),
-              const SizedBox(height: 16),
-              _buildEditField('API USERNAME', user, LucideIcons.user),
-              const SizedBox(height: 16),
-              _buildEditField('API PASSWORD', pass, LucideIcons.lock),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple), child: const Text('SAVE CONFIG', style: TextStyle(color: Colors.white))),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      final data = {
-        'router_name': name.text,
-        'ip_address': ip.text,
-        'username': user.text,
-        'password': pass.text,
-      };
-      final res = await _apiService.updateRouter(editing?['id']?.toString() ?? 'new', data);
-      if (res?['status'] == 'success') _fetchRouters();
-    }
-  }
-
-  Widget _buildEditField(String label, TextEditingController ctrl, IconData icon) {
-    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: const EdgeInsets.only(left: 4, bottom: 6), child: Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1))),
-      TextField(
-        controller: ctrl, 
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, size: 16, color: PaceColors.purple), 
-          filled: true, fillColor: PaceColors.getSurface(isDark),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none)
-        )
-      ),
-    ]);
-  }
-
-  void _handleApiResponse(Map<String, dynamic>? res, VoidCallback retry) {
-    if (res?['status'] == 'otp_required') {
-      _showOtpModal((code) => retry());
-    } else if (res?['status'] == 'success') {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Command Executed'), backgroundColor: PaceColors.emerald));
-    }
-  }
-
-  void _showOtpModal(Function(String) onVerify) {
-    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => OtpModal(
-      phoneNumber: Provider.of<SettingsProvider>(context, listen: false).activeAccount?.phone ?? '',
-      onVerify: (code) { Navigator.pop(context); onVerify(code); },
-    ));
-  }
-
-  void _showBillingDialog(dynamic r, bool isDark) {
-    String selectedBank = r['accountType']?.toString().toLowerCase() ?? 'kcb';
-    final accController = TextEditingController(text: r['accountNumber']?.toString());
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => Container(
-          padding: EdgeInsets.fromLTRB(24, 32, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
-          decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('BILLING CONFIGURATION', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
-              const SizedBox(height: 24),
-              Text('PAYMENT GATEWAY', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1.5)),
-              const SizedBox(height: 12),
-              Wrap(spacing: 8, children: ['kcb', 'equity', 'ncba', 'till', 'custom'].map((b) => ChoiceChip(
-                label: Text(b.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
-                selected: selectedBank == b,
-                onSelected: (s) => setS(() => selectedBank = b),
-                selectedColor: PaceColors.purple.withOpacity(0.2),
-              )).toList()),
-              const SizedBox(height: 24),
-              Text('ACCOUNT REFERENCE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1.5)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: accController,
-                decoration: InputDecoration(
-                  hintText: 'e.g. PACE_001 or Till Number',
-                  filled: true, fillColor: PaceColors.getSurface(isDark),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(width: double.infinity, height: 56, child: ElevatedButton(
-                onPressed: () async {
-                   setState(() => _isProcessing = true);
-                   try {
-                     final res = await _apiService.updateRouter(r['id'].toString(), {'accountType': selectedBank, 'accountNumber': accController.text});
-                     if (res?['status'] == 'otp_required') {
-                        Navigator.pop(ctx);
-                        _showOtpModal((code) async {
-                          setState(() => _isProcessing = true);
-                          try {
-                            await _apiService.updateRouter(r['id'].toString(), {'accountType': selectedBank, 'accountNumber': accController.text, 'otp_code': code});
-                            _fetchRouters();
-                          } finally {
-                            if (mounted) setState(() => _isProcessing = false);
-                          }
-                        });
-                     } else {
-                       Navigator.pop(ctx);
-                       _fetchRouters();
-                     }
-                   } finally {
-                     if (mounted) setState(() => _isProcessing = false);
-                   }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: const Text('SAVE CONFIGURATION', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              )),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
