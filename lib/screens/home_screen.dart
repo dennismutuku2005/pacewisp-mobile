@@ -199,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 32),
             if (_isLoading && _widgets == null)
               const SkeletonGrid(count: 4)
-            else ...[
+            else if (_widgets != null) ...[
               _buildMetricsGrid(isDark),
               const SizedBox(height: 24),
               _buildCreateVoucherButton(isDark),
