@@ -139,13 +139,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
                 Text(
                   _isReachable ? 'ACCESS YOUR ACCOUNT' : 'CONNECT TO INSTANCE',
-                  style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2),
+                  style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   _isReachable ? 'Enter your credentials' : 'Enter your account details',
-                  style: TextStyle(color: PaceColors.getPrimaryText(isDark), fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                  style: TextStyle(color: PaceColors.getPrimaryText(isDark), fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: -0.5),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   TextButton(
                     onPressed: () => setState(() => _isReachable = false),
-                    child: Text('Change Account', style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontWeight: FontWeight.bold)),
+                    child: Text('Change Account', style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontWeight: FontWeight.w600)),
                   ),
                 ],
                 
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
                   Text(
                     'SAVED ACCOUNTS',
-                    style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -206,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: Text(
                     'PACEWISP v1.0  SECURE',
-                    style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w600, letterSpacing: 1),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -247,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
         TextField(
           controller: controller,
           obscureText: obscure,
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 13),
@@ -268,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLabel(String text, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(text, style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+      child: Text(text, style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1)),
     );
   }
 
@@ -285,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
           value: _selectedDomain,
           isExpanded: true,
           dropdownColor: PaceColors.getCard(isDark),
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
           items: _domains.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
           onChanged: (val) => setState(() => _selectedDomain = val!),
         ),
@@ -306,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: isLoading
             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : Text(label, style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 13)),
+            : Text(label, style: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: 1, fontSize: 13)),
       ),
     );
   }
@@ -327,8 +327,8 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('CONNECTED TO', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.bold)),
-                Text('${_subdomainController.text}.${_selectedDomain}', style: TextStyle(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.bold)),
+                Text('CONNECTED TO', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w600)),
+                Text('${_subdomainController.text}.${_selectedDomain}', style: TextStyle(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -366,7 +366,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(acc.subdomain, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                    Text(acc.subdomain, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.purple)),
                     Text(acc.domain, style: TextStyle(fontSize: 9, color: PaceColors.getDimText(isDark))),
                   ],
                 ),
