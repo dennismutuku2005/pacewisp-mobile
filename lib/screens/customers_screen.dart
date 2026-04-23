@@ -170,7 +170,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('CUSTOMER REGISTRY', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+          Text('CUSTOMER LIST', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
           Text('CENTRALIZED HOTSPOT USER MANAGEMENT', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
@@ -281,23 +281,30 @@ class _CustomersScreenState extends State<CustomersScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Text('FILTER BY NODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
             ),
-            ListTile(
-              onTap: () { setState(() => _selectedRouter = 'all'); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
-              leading: Icon(LucideIcons.globe, size: 18, color: _selectedRouter == 'all' ? PaceColors.purple : PaceColors.getDimText(isDark)),
-              title: Text('All Nodes', style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == 'all' ? FontWeight.w600 : FontWeight.normal)),
-              selected: _selectedRouter == 'all',
-              selectedTileColor: PaceColors.purple.withOpacity(0.05),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  ListTile(
+                    onTap: () { setState(() => _selectedRouter = 'all'); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
+                    leading: Icon(LucideIcons.globe, size: 18, color: _selectedRouter == 'all' ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                    title: Text('All Nodes', style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == 'all' ? FontWeight.w600 : FontWeight.normal)),
+                    selected: _selectedRouter == 'all',
+                    selectedTileColor: PaceColors.purple.withOpacity(0.05),
+                  ),
+                  ..._routers.map((r) {
+                    final name = r['router_name']?.toString() ?? 'Unknown';
+                    return ListTile(
+                      onTap: () { setState(() => _selectedRouter = name); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
+                      leading: Icon(LucideIcons.router, size: 18, color: _selectedRouter == name ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                      title: Text(name.toUpperCase(), style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == name ? FontWeight.w600 : FontWeight.normal)),
+                      selected: _selectedRouter == name,
+                      selectedTileColor: PaceColors.purple.withOpacity(0.05),
+                    );
+                  }).toList(),
+                ],
+              ),
             ),
-            ..._routers.map((r) {
-              final name = r['router_name']?.toString() ?? 'Unknown';
-              return ListTile(
-                onTap: () { setState(() => _selectedRouter = name); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
-                leading: Icon(LucideIcons.router, size: 18, color: _selectedRouter == name ? PaceColors.purple : PaceColors.getDimText(isDark)),
-                title: Text(name.toUpperCase(), style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == name ? FontWeight.w600 : FontWeight.normal)),
-                selected: _selectedRouter == name,
-                selectedTileColor: PaceColors.purple.withOpacity(0.05),
-              );
-            }).toList(),
             const SizedBox(height: 24),
           ],
         ),
