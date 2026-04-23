@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/search_bar.dart';
 import '../components/overlay_loader.dart';
 
 class BlockStkScreen extends StatefulWidget {
