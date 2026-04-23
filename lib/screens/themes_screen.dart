@@ -144,7 +144,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('THEME LIBRARY', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-          Text('PREMIUM PORTAL DESIGNS FOR YOUR HOTSPOT', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('PREMIUM PORTAL DESIGNS FOR YOUR HOTSPOT', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -175,18 +175,18 @@ class _ThemesScreenState extends State<ThemesScreen> {
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Text(t['theme_name'] ?? 'THEME', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+              Text(t['theme_name'] ?? 'THEME', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
               if (isActive) ...[
                  const SizedBox(width: 8),
                  PaceBadge(label: 'ACTIVE', variant: BadgeVariant.success),
               ],
             ]),
-            Text(t['theme_category']?.toString().toUpperCase() ?? 'GENERAL', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+            Text(t['theme_category']?.toString().toUpperCase() ?? 'GENERAL', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
           ])),
           ElevatedButton(
             onPressed: () => _showActivateModal(t, isDark),
             style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 16)),
-            child: const Text('ACTIVATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            child: const Text('ACTIVATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -230,15 +230,15 @@ class _ThemesScreenState extends State<ThemesScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ACTIVATE DESIGN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+              Text('ACTIVATE DESIGN', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
               const SizedBox(height: 24),
               Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16)), child: Row(children: [
                 Container(width: 48, height: 36, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)), clipBehavior: Clip.antiAlias, child: Image.network(t['preview_url'], fit: BoxFit.cover)),
                 const SizedBox(width: 16),
-                Text(t['theme_name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(t['theme_name'], style: const TextStyle(fontWeight: FontWeight.w600)),
               ])),
               const SizedBox(height: 24),
-              Text('TARGET ROUTER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+              Text('TARGET ROUTER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1)),
               DropdownButton<String>(
                 isExpanded: true,
                 value: selectedRouterId,
@@ -253,7 +253,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
                    await _activateTheme(t['id'].toString(), selectedRouterId!);
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: _isActivating ? const CircularProgressIndicator(color: Colors.white) : const Text('ACTIVATE NOW', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: _isActivating ? const CircularProgressIndicator(color: Colors.white) : const Text('ACTIVATE NOW', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
               )),
             ],
           ),
