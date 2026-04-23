@@ -123,11 +123,11 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(isDark),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(title, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple)),
+        title: Text(title, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple)),
         content: Text(msg, style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getPrimaryText(isDark))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('CONFIRM', style: TextStyle(fontWeight: FontWeight.bold, color: PaceColors.purple))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('CONFIRM', style: TextStyle(fontWeight: FontWeight.w600, color: PaceColors.purple))),
         ],
       ),
     );
