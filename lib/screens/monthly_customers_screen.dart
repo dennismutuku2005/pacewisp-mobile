@@ -103,8 +103,8 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('MONTHLY RECURRING', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-          Text('DISTINCT USERS SINCE ${_cycleStart.toUpperCase()}', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('MONTHLY CUSTOMERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+          Text('DISTINCT USERS ACTIVE SINCE ${(_cycleStart.isEmpty ? "CURRENT CYCLE" : _cycleStart).toUpperCase()}', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -112,33 +112,31 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
 
   Widget _buildStatsCard(bool isDark, double revenue) {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: PaceColors.purple.withOpacity(0.05),
+        color: PaceColors.getSurface(isDark).withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.purple.withOpacity(0.1)),
+        border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatBox('UNIQUE USERS', _users.length.toString(), isDark),
-          Container(width: 1.5, height: 40, color: PaceColors.purple.withOpacity(0.1), margin: const EdgeInsets.symmetric(horizontal: 24)),
-          _buildStatBox('CYCLE REVENUE', 'KES ${NumberFormat("#,###").format(revenue)}', isDark),
+          _statItem('CYCLE USERS', _users.length.toString(), isDark),
+          _statItem('CYCLE REVENUE', 'KES ${NumberFormat("#,###").format(revenue)}', isDark),
+          _statItem('BILLING WINDOW', _cycleStart.isEmpty ? 'ACTIVE' : _cycleStart.split(' ')[0], isDark),
         ],
       ),
     );
   }
 
-  Widget _buildStatBox(String label, String value, bool isDark) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
-          const SizedBox(height: 4),
-          Text(value, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-        ],
-      ),
+  Widget _statItem(String label, String value, bool isDark) {
+    return Column(
+      children: [
+        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
+        const SizedBox(height: 6),
+        Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+      ],
     );
   }
 
@@ -147,13 +145,16 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: PaceColors.getSurface(isDark).withOpacity(0.3),
-        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5))),
+        border: Border(
+          top: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+          bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+        ),
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('CUSTOMER PHONE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('CONTRIBUTION', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('PHONE NUMBER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('CYCLE PAID', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
       ),
     );
@@ -173,22 +174,22 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(u['phone']?.toString() ?? 'PRIVATE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                  Text(u['phone']?.toString() ?? 'PRIVATE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
                   const SizedBox(height: 4),
-                  Text('SINCE ${u['first_bought']?.toString().split(' ')[0] ?? 'N/A'}', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                  Text('FIRST EVER: ${u['first_bought']?.toString().split(' ')[0] ?? 'N/A'}', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text('KES ${u['total_amount']}', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
+              child: Text('KES ${u['total_amount']}', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.emerald)),
             ),
             Expanded(
               flex: 2,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  PaceBadge(label: isActive ? 'ACTIVE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
+                  PaceBadge(label: isActive ? 'ONLINE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
                 ],
               ),
             ),
@@ -201,72 +202,75 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
   void _showUserDrawer(dynamic u, bool isDark) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32)), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('BILLING SUMMARY', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
-                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
-            _buildDrawerInfo('CUSTOMER PHONE', u['phone']?.toString() ?? 'N/A', isDark, isBig: true),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildDrawerInfo('FIRST BOUGHT', u['first_bought']?.toString() ?? 'N/A', isDark)),
-                Expanded(child: _buildDrawerInfo('CYCLE START', u['first_purchase_this_month']?.toString() ?? 'N/A', isDark)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildDrawerInfo('CYCLE REVENUE', 'KES ${u['total_amount'] ?? '0'}', isDark)),
-                Expanded(child: _buildDrawerInfo('STATUS', (u['is_active'] == 1 ? 'ACTIVE' : 'EXPIRED'), isDark)),
-              ],
-            ),
+            Icon(LucideIcons.user, color: PaceColors.purple, size: 32),
+            const SizedBox(height: 12),
+            Text('BILLING SUMMARY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
             const SizedBox(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: u['phone'].toString())));
-                    },
-                    icon: const Icon(LucideIcons.history, size: 16),
-                    label: const Text('VIEW FULL HISTORY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: PaceColors.purple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  _buildDrawerItem('CUSTOMER PHONE', u['phone']?.toString() ?? 'N/A', isDark),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDrawerItem('FIRST BOUGHT', u['first_bought']?.toString().split(' ')[0] ?? 'N/A', isDark)),
+                      Expanded(child: _buildDrawerItem('LAST SEEN', u['last_bought']?.toString().split(' ')[0] ?? 'N/A', isDark)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDrawerItem('CYCLE REVENUE', 'KES ${u['total_amount'] ?? '0'}', isDark, valueColor: PaceColors.emerald)),
+                      Expanded(child: _buildDrawerItem('STATUS', (u['is_active'] == 1 ? 'ONLINE' : 'EXPIRED'), isDark, valueColor: (u['is_active'] == 1 ? PaceColors.emerald : Colors.red))),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: u['phone'].toString())));
+                      },
+                      icon: const Icon(LucideIcons.history, size: 16),
+                      label: const Text('VIEW FULL HISTORY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: PaceColors.purple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDrawerInfo(String label, String value, bool isDark, {bool isBig = false}) {
+  Widget _buildDrawerItem(String label, String value, bool isDark, {Color? valueColor}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: isBig ? 18 : 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? PaceColors.getPrimaryText(isDark))),
       ],
     );
   }
@@ -276,11 +280,12 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.calendarX, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
+          Icon(LucideIcons.users, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
           const SizedBox(height: 16),
-          Text('NO RECURRING USERS THIS CYCLE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text('NO CUSTOMERS FOUND THIS CYCLE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         ],
       ),
     );
   }
 }
+
