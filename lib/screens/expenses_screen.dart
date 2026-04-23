@@ -103,7 +103,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       children: [
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('EXPENSES MANAGEMENT', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-            Text('TRACK AND MANAGE OPERATIONAL COSTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            Text('TRACK AND MANAGE OPERATIONAL COSTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ]),
         IconButton(onPressed: () {}, icon: const Icon(LucideIcons.plusCircle, color: PaceColors.purple, size: 28)),
       ],
@@ -117,7 +117,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Row(children: [
         IconButton(onPressed: () => _changeMonth(-1), icon: Icon(LucideIcons.chevronLeft, color: PaceColors.getDimText(isDark))),
-        Expanded(child: Center(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)))),
+        Expanded(child: Center(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)))),
         IconButton(onPressed: () => _changeMonth(1), icon: Icon(LucideIcons.chevronRight, color: PaceColors.getDimText(isDark))),
       ]),
     );
@@ -150,7 +150,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(c['icon'] as IconData, color: color, size: 16)),
             const Spacer(),
-            Text(c['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text(c['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
             Text('KSH ${_currencyFormat.format(c['value'])}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
           ]),
         );
@@ -160,7 +160,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   Widget _buildRecentExpenses(bool isDark) {
     if (_isLoading && _expenses.isEmpty) return const SkeletonList(count: 5);
-    if (_expenses.isEmpty) return Container(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('NO EXPENSES RECORDED', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 2))));
+    if (_expenses.isEmpty) return Container(padding: const EdgeInsets.symmetric(vertical: 40), child: Center(child: Text('NO EXPENSES RECORDED', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 2))));
 
     return Container(
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
@@ -168,8 +168,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         Padding(
           padding: const EdgeInsets.all(24),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('EXPENSE LOG', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.purple)),
-            Text('DETAILED OPERATIONAL COST BREAKDOWN', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+            Text('EXPENSE LOG', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.purple)),
+            Text('DETAILED OPERATIONAL COST BREAKDOWN', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 1.5)),
           ]),
         ),
         ListView.separated(
@@ -204,12 +204,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               Row(children: [
                 Icon(LucideIcons.calendar, size: 10, color: PaceColors.getDimText(isDark)),
                 const SizedBox(width: 6),
-                Text(e['date'] ?? '', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                Text(e['date'] ?? '', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.purple)),
                 const SizedBox(width: 12),
                 PaceBadge(label: cat.toUpperCase(), variant: variant),
               ]),
               const SizedBox(height: 12),
-              Text(e['description'] ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), maxLines: 2, overflow: TextOverflow.ellipsis),
+              Text(e['description'] ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), maxLines: 2, overflow: TextOverflow.ellipsis),
             ]),
           ),
           const SizedBox(width: 16),
