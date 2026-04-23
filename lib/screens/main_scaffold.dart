@@ -172,7 +172,6 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     const IncomeScreen(),
     const EntriesScreen(),
     const NotificationsScreen(),
-    const CustomersScreen(),
     const MonthlyCustomersScreen(),
     const ActiveCustomersScreen(),
     const PlansScreen(),
@@ -252,52 +251,50 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                     if (settings.hasPolicy('view_vouchers'))
                       _buildDrawerItem(1, 'Browse Vouchers', LucideIcons.ticket, isDark),
                     if (settings.hasPolicy('manage_plans'))
-                      _buildDrawerItem(8, 'Hotspot Plans', LucideIcons.layers, isDark),
+                      _buildDrawerItem(7, 'Hotspot Plans', LucideIcons.layers, isDark),
 
                     _buildDrawerSection('FINANCIALS', isDark),
                     if (settings.hasPolicy('view_income'))
                       _buildDrawerItem(2, 'Revenue Analytics', LucideIcons.pieChart, isDark),
                     if (settings.hasPolicy('manage_expenses'))
-                      _buildDrawerItem(10, 'Expense Tracker', LucideIcons.receipt, isDark),
+                      _buildDrawerItem(9, 'Expense Tracker', LucideIcons.receipt, isDark),
                     if (settings.hasPolicy('view_reports'))
-                      _buildDrawerItem(13, 'System Reports', LucideIcons.fileText, isDark),
+                      _buildDrawerItem(12, 'System Reports', LucideIcons.fileText, isDark),
                     if (settings.hasPolicy('view_mpesa'))
-                      _buildDrawerItem(14, 'M-Pesa History', LucideIcons.smartphone, isDark),
+                      _buildDrawerItem(13, 'M-Pesa History', LucideIcons.smartphone, isDark),
 
                     _buildDrawerSection('CUSTOMER BASE', isDark),
                     if (settings.hasPolicy('view_customers'))
-                      _buildDrawerItem(5, 'Customer List', LucideIcons.users, isDark),
-                    if (settings.hasPolicy('view_customers'))
-                      _buildDrawerItem(6, 'Monthly Distinct', LucideIcons.calendarDays, isDark),
+                      _buildDrawerItem(5, 'Monthly Distinct', LucideIcons.calendarDays, isDark),
                     if (settings.hasPolicy('view_active_users'))
-                      _buildDrawerItem(7, 'Live Connections', LucideIcons.zap, isDark),
+                      _buildDrawerItem(6, 'Live Connections', LucideIcons.zap, isDark),
                     if (settings.hasPolicy('manage_customers'))
-                      _buildDrawerItem(20, 'Blocked STK Push', LucideIcons.shieldAlert, isDark),
+                      _buildDrawerItem(19, 'Blocked STK Push', LucideIcons.shieldAlert, isDark),
 
                     _buildDrawerSection('INFRASTRUCTURE', isDark),
                     if (settings.hasPolicy('view_routers'))
-                      _buildDrawerItem(9, 'Your Mikrotiks', LucideIcons.router, isDark),
+                      _buildDrawerItem(8, 'Your Mikrotiks', LucideIcons.router, isDark),
                     if (settings.hasPolicy('wa_alerts'))
-                      _buildDrawerItem(12, 'Automated Alerts', LucideIcons.messageSquare, isDark),
+                      _buildDrawerItem(11, 'Automated Alerts', LucideIcons.messageSquare, isDark),
 
                     _buildDrawerSection('CONFIGURATION', isDark),
                     if (settings.hasPolicy('manage_users'))
-                      _buildDrawerItem(11, 'Staff Accounts', LucideIcons.badgeCheck, isDark),
+                      _buildDrawerItem(10, 'Staff Accounts', LucideIcons.badgeCheck, isDark),
                     if (settings.hasPolicy('system_config'))
-                      _buildDrawerItem(17, 'System Setup', LucideIcons.sliders, isDark),
+                      _buildDrawerItem(16, 'System Setup', LucideIcons.sliders, isDark),
                     if (settings.hasPolicy('manage_themes'))
-                      _buildDrawerItem(21, 'Design Library', LucideIcons.palette, isDark),
+                      _buildDrawerItem(20, 'Design Library', LucideIcons.palette, isDark),
                     if (settings.hasPolicy('view_logs'))
-                      _buildDrawerItem(18, 'System Logs', LucideIcons.terminal, isDark),
+                      _buildDrawerItem(17, 'System Logs', LucideIcons.terminal, isDark),
 
                     _buildDrawerSection('YOUR BILLING', isDark),
                     if (settings.hasPolicy('view_bills'))
-                      _buildDrawerItem(16, 'My Service Bill', LucideIcons.creditCard, isDark),
+                      _buildDrawerItem(15, 'My Service Bill', LucideIcons.creditCard, isDark),
                     if (settings.hasPolicy('view_bills'))
-                      _buildDrawerItem(15, 'Past Invoices', LucideIcons.history, isDark),
+                      _buildDrawerItem(14, 'Past Invoices', LucideIcons.history, isDark),
 
                     const Divider(height: 32),
-                    _buildDrawerItem(19, 'App Preferences', LucideIcons.settings, isDark),
+                    _buildDrawerItem(18, 'App Preferences', LucideIcons.settings, isDark),
                     
                     const SizedBox(height: 40),
                   ],
@@ -316,7 +313,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
             ],
           ),
         ),
-        body: IndexedStack(index: _selectedIndex, children: _screens),
+        body: _screens[_selectedIndex],
         bottomNavigationBar: _selectedIndex < 4 ? BottomNavigationBar(
           elevation: 12,
           currentIndex: _selectedIndex > 3 ? 0 : _selectedIndex,
