@@ -5,6 +5,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/skeleton.dart';
+import '../components/empty_state.dart';
 import '../components/search_bar.dart';
 import '../components/overlay_loader.dart';
 
@@ -177,11 +178,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
                   onRefresh: () => _fetchCachedThenLive(),
                   color: PaceColors.purple,
                   child: _transactions.isEmpty
-                    ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Icon(LucideIcons.creditCard, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-                        const SizedBox(height: 16),
-                        Text('NO TRANSACTIONS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                      ]))
+                    ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchCachedThenLive(), isDark: isDark))
                     : ListView.separated(
                         controller: _scrollController,
                         padding: const EdgeInsets.only(bottom: 120),
