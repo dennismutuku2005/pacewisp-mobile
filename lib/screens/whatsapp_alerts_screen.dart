@@ -117,7 +117,7 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('WHATSAPP ALERTS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-          Text('CONFIGURE AUTOMATED REPORTING & HEALTH LOGS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('CONFIGURE AUTOMATED REPORTING & HEALTH LOGS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -132,8 +132,8 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
           Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: Icon(icon, color: PaceColors.purple, size: 20)),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
-            Text(sub.toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+            Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+            Text(sub.toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
           ])),
           Switch(value: val, onChanged: _isSaving ? null : onChanged, activeColor: PaceColors.purple),
         ],
@@ -152,12 +152,12 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
           Row(children: [
             const Icon(LucideIcons.smartphone, size: 14, color: PaceColors.purple),
             const SizedBox(width: 8),
-            Text('ADMIN VERIFICATION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text('ADMIN VERIFICATION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
             const Spacer(),
             PaceBadge(label: verified ? 'CONNECTED' : 'UNVERIFIED', variant: verified ? BadgeVariant.success : BadgeVariant.error),
           ]),
           const SizedBox(height: 24),
-          Text(_data['user']?['phone'] ?? 'NO PHONE SET', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+          Text(_data['user']?['phone'] ?? 'NO PHONE SET', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
           Text('Automated reports will be sent to this number.', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
           const SizedBox(height: 24),
           if (!verified) ...[
@@ -165,21 +165,21 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
               ElevatedButton(
                 onPressed: _isSaving ? null : () => _handleAction('send_otp'),
                 style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: Text('SEND VERIFICATION CODE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text('SEND VERIFICATION CODE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
               )
             else ...[
               TextField(
                 onChanged: (v) => setState(() => _otp = v),
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: TextStyle(letterSpacing: 8, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+                style: TextStyle(letterSpacing: 8, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
                 decoration: InputDecoration(hintText: '000000', filled: true, fillColor: PaceColors.getBackground(isDark), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none)),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: (_isSaving || _otp.length < 4) ? null : () => _handleAction('verify_otp', body: {'otp': _otp}),
                 style: ElevatedButton.styleFrom(backgroundColor: PaceColors.emerald, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: Text('VERIFY & ACTIVATE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text('VERIFY & ACTIVATE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
               ),
             ],
           ],
@@ -199,10 +199,10 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
           children: [
             const Icon(LucideIcons.router, color: PaceColors.purple, size: 32),
             const SizedBox(height: 16),
-            Text('INFRASTRUCTURE SELECTION', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w900, color: PaceColors.purple)),
+            Text('INFRASTRUCTURE SELECTION', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.purple)),
             Text('Monitoring $subCount active nodes', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
             const SizedBox(height: 16),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: PaceColors.purple, borderRadius: BorderRadius.circular(12)), child: Text('MANAGE SUBSCRIPTIONS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white))),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: PaceColors.purple, borderRadius: BorderRadius.circular(12)), child: Text('MANAGE SUBSCRIPTIONS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white))),
           ],
         ),
       ),
@@ -222,7 +222,7 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('NODE ALERTS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+              Text('NODE ALERTS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
               const SizedBox(height: 24),
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
@@ -235,7 +235,7 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
                     final bool sub = r['subscribed'] == true || r['subscribed'] == 1;
                     return ListTile(
                       dense: true,
-                      title: Text(r['router_name'] ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
+                      title: Text(r['router_name'] ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
                       subtitle: Text(r['ip_address'] ?? '', style: GoogleFonts.jetBrainsMono(fontSize: 9, color: Colors.grey)),
                       trailing: IconButton(
                         onPressed: () async {
