@@ -39,7 +39,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
     return Scaffold(
       backgroundColor: PaceColors.getBackground(false),
       appBar: AppBar(
-        title: Text(widget.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+        title: Text(widget.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 1.0)),
         backgroundColor: PaceColors.getBackground(false),
         foregroundColor: PaceColors.getPrimaryText(false),
         elevation: 0,
