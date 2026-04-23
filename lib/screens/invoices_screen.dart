@@ -83,7 +83,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('INVOICES', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-          Text('MANAGE AND PAY YOUR MONTHLY BILLS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('MANAGE AND PAY YOUR MONTHLY BILLS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -105,9 +105,9 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('OUTSTANDING BALANCE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+            Text('OUTSTANDING BALANCE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
             const SizedBox(height: 4),
-            Text('KES ${_currencyFormat.format(totalDue)}', style: GoogleFonts.figtree(fontSize: 22, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+            Text('KES ${_currencyFormat.format(totalDue)}', style: GoogleFonts.figtree(fontSize: 22, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
           ]),
           Container(
             padding: const EdgeInsets.all(12),
@@ -144,15 +144,15 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(inv['invoice_number'] ?? 'INV-000', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w800, color: PaceColors.getPrimaryText(isDark))),
-                    Text('DUE DATE: ${inv['due_date']}', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                    Text(inv['invoice_number'] ?? 'INV-000', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+                    Text('DUE DATE: ${inv['due_date']}', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('KES ${_currencyFormat.format(inv['amount'])}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                  Text('KES ${_currencyFormat.format(inv['amount'])}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple)),
                   PaceBadge(label: status.toUpperCase(), variant: isPaid ? BadgeVariant.success : BadgeVariant.warning),
                 ],
               ),
@@ -168,7 +168,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 TextButton.icon(
                   onPressed: () => _handlePayment(inv),
                   icon: const Icon(LucideIcons.creditCard, size: 14),
-                  label: Text('PAY VIA M-PESA', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  label: Text('PAY VIA M-PESA', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1)),
                   style: TextButton.styleFrom(foregroundColor: PaceColors.purple),
                 ),
                 TextButton.icon(
@@ -179,7 +179,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                     ));
                   },
                   icon: const Icon(LucideIcons.download, size: 14),
-                  label: Text('DOWNLOAD', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  label: Text('DOWNLOAD', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1)),
                   style: TextButton.styleFrom(foregroundColor: Colors.grey),
                 ),
               ],
@@ -198,7 +198,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('SETTLE INVOICE', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+        title: Text('SETTLE INVOICE', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +213,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: Text('INITIATE', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, color: Colors.white)),
+            child: Text('INITIATE', style: GoogleFonts.figtree(fontWeight: FontWeight.w600, color: Colors.white)),
           ),
         ],
       ),
@@ -230,7 +230,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -238,7 +238,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           child: TextField(
             controller: controller,
             keyboardType: type,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             decoration: InputDecoration(icon: Icon(icon, size: 14, color: PaceColors.purple), border: InputBorder.none),
           ),
         ),
