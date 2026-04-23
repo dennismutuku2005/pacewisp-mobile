@@ -596,7 +596,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildDrawerInfo('SALE STATUS', (v['sale']?.toString() == '1') ? 'RECORDED AS SALE' : 'NOT RECORDED AS SALE', isDark, isSaleColor: true)),
+                  Expanded(child: _buildDrawerInfo('SALE STATUS', (v['sale']?.toString() == '1') ? 'YES' : 'NO', isDark, isSaleColor: true)),
                   Expanded(child: _buildDrawerInfo('VOUCHER STATUS', (v['used']?.toString() == '1') ? 'USED' : 'AVAILABLE', isDark)),
                 ],
               ),
