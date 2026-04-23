@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'login_screen.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
@@ -79,7 +80,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildToggleItem('Vouchers as Sale', 'Mark new vouchers as final sales instantly', _systemSettings['vouchers_as_sale'] == 1, (v) => _updateSystem('vouchers_as_sale', v), LucideIcons.tag, isDark),
                     ],
                     const SizedBox(height: 32),
-                    _buildAccountSwitcherHeader(isDark),
+                    _buildSecurityHeader(isDark),
+                    _buildToggleItem('App Lock (Biometrics)', 'Require fingerprint or PIN to open app', settings.isAppLockEnabled, (v) => settings.toggleAppLock(v), LucideIcons.lock, isDark),
+                    const SizedBox(height: 32),
+                    _buildAccountSwitcherHeader(isDark, settings),
                     _buildAccountList(settings, isDark),
                   ],
                 ),
@@ -151,15 +155,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildAccountSwitcherHeader(bool isDark) {
+  Widget _buildSecurityHeader(bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ACCOUNT SWITCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
+          Text('SECURITY & PRIVACY', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
           const SizedBox(height: 4),
-          Text('Seamlessly transition between managed ISP instances', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
+          Text('Manage access and biometric authentication', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountSwitcherHeader(bool isDark, SettingsProvider settings) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('ACCOUNT SWITCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
+              const SizedBox(height: 4),
+              Text('Seamlessly transition between managed ISP instances', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
+            ],
+          ),
+          if (settings.accounts.length < 4)
+            IconButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
+              icon: const Icon(LucideIcons.plusCircle, size: 20, color: PaceColors.purple),
+            ),
         ],
       ),
     );
