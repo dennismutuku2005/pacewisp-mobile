@@ -29,7 +29,7 @@ class _StaffScreenState extends State<StaffScreen> {
   final List<Map<String, String>> _availablePolicies = [
     {'id': 'view_dashboard', 'label': 'View Dashboard', 'desc': 'Access main dashboard overview'},
     {'id': 'view_entries', 'label': 'View Entries', 'desc': 'Monitor live connections'},
-    {'id': 'view_logs', 'label': 'System Debug Logs', 'desc': 'View detailed debug info'},
+    {'id': 'view_logs', 'label': 'System Logs', 'desc': 'View system activity logs'},
     {'id': 'view_notifications', 'label': 'Notifications', 'desc': 'Access system alerts center'},
     {'id': 'manage_plans', 'label': 'Manage Plans', 'desc': 'Create/edit hotspot packages'},
     {'id': 'view_vouchers', 'label': 'Browse Vouchers', 'desc': 'Search existing access codes'},
@@ -38,7 +38,7 @@ class _StaffScreenState extends State<StaffScreen> {
     {'id': 'manage_customers', 'label': 'Manage Customers', 'desc': 'Edit or block accounts'},
     {'id': 'view_active_users', 'label': 'Live Connections', 'desc': 'Monitor connected devices'},
     {'id': 'view_income', 'label': 'Revenue Analytics', 'desc': 'Access core income data'},
-    {'id': 'manage_expenses', 'label': 'Expense Tracking', 'desc': 'Record system overheads'},
+    {'id': 'manage_expenses', 'label': 'Expense Tracking', 'record system overheads'},
     {'id': 'view_reports', 'label': 'Financial Reports', 'desc': 'Access compiled statements'},
     {'id': 'view_mpesa', 'label': 'Gateway Logs', 'desc': 'Monitor M-Pesa history'},
     {'id': 'view_routers', 'label': 'View Nodes', 'desc': 'Monitor router connectivity'},
@@ -84,79 +84,98 @@ class _StaffScreenState extends State<StaffScreen> {
       builder: (ctx) {
         final settings = Provider.of<SettingsProvider>(ctx);
         final isDark = settings.isDarkMode;
-        return StatefulBuilder(
-          builder: (ctx, setM) => Container(
-          height: MediaQuery.of(ctx).size.height * 0.9,
-          decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 48),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32)), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+          child: StatefulBuilder(
+            builder: (ctx, setM) => Column(
               children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(2)))),
-                const SizedBox(height: 32),
-                Text(isEdit ? 'UPDATE PERSONNEL' : 'PROVISION ACCOUNT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
-                Text(isEdit ? 'Modifying ${staff['username']}' : 'Assign credentials for new member', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 32),
-                _buildField('FULL NAME', nameCtrl, LucideIcons.user, isDark),
-                const SizedBox(height: 16),
-                _buildField('USERNAME', userCtrl, LucideIcons.atSign, isDark, enabled: !isEdit),
-                const SizedBox(height: 16),
-                _buildField('PHONE NUMBER', phoneCtrl, LucideIcons.phone, isDark),
-                const SizedBox(height: 16),
-                _buildField(isEdit ? 'NEW PASSWORD (OPT) ' : 'PASSWORD', passCtrl, LucideIcons.key, isDark, isPass: true),
-                const SizedBox(height: 24),
-                Row(children: [
-                  Expanded(child: _buildDropdown('ROLE', type, ['user', 'admin'], (v) => setM(() => type = v!), isDark)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildDropdown('STATUS', status, ['active', 'suspended', 'inactive'], (v) => setM(() => status = v!), isDark)),
-                ]),
-                if (type == 'user') ...[
-                  const SizedBox(height: 32),
-                  Row(children: [
-                    const Icon(LucideIcons.shield, color: PaceColors.purple, size: 14),
-                    const SizedBox(width: 8),
-                    Text('SYSTEM POLICIES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
-                  ]),
-                  const SizedBox(height: 16),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 1, mainAxisExtent: 60, mainAxisSpacing: 8),
-                    itemCount: _availablePolicies.length,
-                    itemBuilder: (ctx, i) {
-                      final p = _availablePolicies[i];
-                      final isSel = policies.contains(p['id']);
-                      return InkWell(
-                        onTap: () => setM(() { if (isSel) policies.remove(p['id']); else policies.add(p['id']!); }),
-                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(color: isSel ? PaceColors.purple.withOpacity(0.05) : PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: isSel ? PaceColors.purple : PaceColors.getBorder(isDark))),
-                          child: Row(children: [
-                            Icon(isSel ? LucideIcons.checkCircle2 : LucideIcons.circle, color: isSel ? PaceColors.purple : Colors.grey, size: 16),
-                            const SizedBox(width: 16),
-                            Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(p['label']!, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isSel ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
-                              Text(p['desc']!, style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark))),
-                            ])),
-                          ]),
+                const SizedBox(height: 12),
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 48),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(isEdit ? 'UPDATE PERSONNEL' : 'PROVISION ACCOUNT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
+                                Text(isEdit ? 'Modifying ${staff['username']}' : 'Assign credentials for new member', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
+                          ],
                         ),
-                      );
-                    },
+                        const SizedBox(height: 32),
+                        _buildField('FULL NAME', nameCtrl, LucideIcons.user, isDark),
+                        const SizedBox(height: 16),
+                        _buildField('USERNAME', userCtrl, LucideIcons.atSign, isDark, enabled: !isEdit),
+                        const SizedBox(height: 16),
+                        _buildField('PHONE NUMBER', phoneCtrl, LucideIcons.phone, isDark),
+                        const SizedBox(height: 16),
+                        _buildField(isEdit ? 'NEW PASSWORD (OPT) ' : 'PASSWORD', passCtrl, LucideIcons.key, isDark, isPass: true),
+                        const SizedBox(height: 24),
+                        Row(children: [
+                          Expanded(child: _buildDropdown('ROLE', type, ['user', 'admin'], (v) => setM(() => type = v!), isDark)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildDropdown('STATUS', status, ['active', 'suspended', 'inactive'], (v) => setM(() => status = v!), isDark)),
+                        ]),
+                        if (type == 'user') ...[
+                          const SizedBox(height: 32),
+                          Row(children: [
+                            const Icon(LucideIcons.shield, color: PaceColors.purple, size: 14),
+                            const SizedBox(width: 8),
+                            Text('SYSTEM POLICIES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
+                          ]),
+                          const SizedBox(height: 16),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _availablePolicies.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (ctx, i) {
+                              final p = _availablePolicies[i];
+                              final isSel = policies.contains(p['id']);
+                              return InkWell(
+                                onTap: () => setM(() { if (isSel) policies.remove(p['id']); else policies.add(p['id']!); }),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(color: isSel ? PaceColors.purple.withOpacity(0.05) : PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: isSel ? PaceColors.purple : PaceColors.getBorder(isDark))),
+                                  child: Row(children: [
+                                    Icon(isSel ? LucideIcons.checkCircle2 : LucideIcons.circle, color: isSel ? PaceColors.purple : Colors.grey, size: 16),
+                                    const SizedBox(width: 16),
+                                    Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      Text(p['label']!, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isSel ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+                                      Text(p['desc']!, style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark))),
+                                    ])),
+                                  ]),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                        const SizedBox(height: 48),
+                        SizedBox(height: 56, child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : () => _handleAction(isEdit, staff?['id'], {'name': nameCtrl.text, 'username': userCtrl.text, 'phone': phoneCtrl.text, 'password': passCtrl.text, 'type': type, 'status': status, 'policies': policies}),
+                          style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
+                          child: _isSubmitting ? const CircularProgressIndicator(color: Colors.white) : Text(isEdit ? 'UPDATE ACCOUNT' : 'CREATE ACCOUNT', style: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: 1.2, color: Colors.white)),
+                        )),
+                      ],
+                    ),
                   ),
-                ],
-                const SizedBox(height: 48),
-                SizedBox(height: 56, child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : () => _handleAction(isEdit, staff?['id'], {'name': nameCtrl.text, 'username': userCtrl.text, 'phone': phoneCtrl.text, 'password': passCtrl.text, 'type': type, 'status': status, 'policies': policies}),
-                  style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                  child: _isSubmitting ? const CircularProgressIndicator(color: Colors.white) : Text(isEdit ? 'UPDATE ACCOUNT' : 'CREATE ACCOUNT', style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 1.2)),
-                )),
+                ),
               ],
             ),
           ),
-        ),
-      );
-    },
+        );
+      },
+    );
+  }
   );
 }
 
@@ -255,8 +274,20 @@ class _StaffScreenState extends State<StaffScreen> {
           Container(width: 40, height: 40, decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle), child: Center(child: Icon(isAdmin ? LucideIcons.shieldCheck : LucideIcons.user, color: PaceColors.purple, size: 18))),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(s['name'] ?? 'STAFF', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            Text(s['username'] ?? '', style: TextStyle(fontSize: 9, color: Colors.grey)),
+            Text(s['name'] ?? 'STAFF', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(s['username'] ?? '', style: const TextStyle(fontSize: 9, color: Colors.grey)),
+            if (s['policies'] != null && (s['policies'] as List).isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: (s['policies'] as List).take(4).map((p) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(4), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
+                  child: Text(p.toString().replaceAll('_', ' ').toUpperCase(), style: const TextStyle(fontSize: 6, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                )).toList(),
+              ),
+            ],
           ])),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             PaceBadge(label: type, variant: isAdmin ? BadgeVariant.info : BadgeVariant.secondary),
