@@ -100,8 +100,8 @@ class _UserPolicyScreenState extends State<UserPolicyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s['username']?.toString().toUpperCase() ?? 'STAFF', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: -0.2)),
-                    Text(s['action'] ?? 'SYSTEM ADMINISTRATOR', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    Text(s['username']?.toString().toUpperCase() ?? 'STAFF', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, letterSpacing: -0.2)),
+                    Text(s['action'] ?? 'SYSTEM ADMINISTRATOR', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1)),
                   ],
                 ),
               ),
@@ -131,7 +131,7 @@ class _UserPolicyScreenState extends State<UserPolicyScreen> {
       ),
       child: Text(
         label.toUpperCase(),
-        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 0.5),
+        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 0.5),
       ),
     );
   }
