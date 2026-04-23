@@ -177,9 +177,9 @@ class _MyBillScreenState extends State<MyBillScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('ALGORITHMIC BREAKDOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 24),
-        _buildCalcRow('BASE', 'STARTER PLAN (PRO-RATED)', 'KSH 1,499 x ${billing?['cycle_progress']}% ELAPSED', 'KSH ${_currencyFormat.format(billing?['base_fee'] * (billing?['cycle_progress'] ?? 0) / 100)}', isDark),
+        _buildCalcRow('BASE', 'STARTER PLAN (PRO-RATED)', 'KSH 1,499 x ${billing?['cycle_progress'] ?? 0}% ELAPSED', 'KSH ${_currencyFormat.format((billing?['base_fee'] ?? 0) * (billing?['cycle_progress'] ?? 0) / 100)}', isDark),
         const Divider(height: 32),
-        _buildCalcRow('ADD', 'CLIENT SURCHARGE', '${billing?['additional_users']} CLIENTS ABOVE TIER 1', 'KSH ${_currencyFormat.format(billing?['extra_fee'])}', isDark, iconColor: Colors.orangeAccent),
+        _buildCalcRow('ADD', 'CLIENT SURCHARGE', '${billing?['additional_users'] ?? 0} CLIENTS ABOVE TIER 1', 'KSH ${_currencyFormat.format(billing?['extra_fee'] ?? 0)}', isDark, iconColor: Colors.orangeAccent),
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(20),
@@ -211,7 +211,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
 
   Widget _buildSidebarStats(bool isDark, dynamic billing, dynamic sub) {
     return Column(children: [
-        _buildSmallStatCard('CLIENT DENSITY', '${billing?['user_count']} ACTIVE NODES', LucideIcons.users, isDark, PaceColors.purple),
+        _buildSmallStatCard('CLIENT DENSITY', '${billing?['user_count'] ?? 0} ACTIVE NODES', LucideIcons.users, isDark, PaceColors.purple),
         const SizedBox(height: 12),
         _buildSmallStatCard('BILLING POLICY', 'KSH 1,499 BASE TIER', LucideIcons.shieldCheck, isDark, Colors.blueAccent),
         const SizedBox(height: 12),
