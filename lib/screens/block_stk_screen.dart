@@ -143,31 +143,34 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
     return PaceOverlayLoader(
       isLoading: _isProcessing,
       message: 'Processing security policy...',
-      child: Container(
-        color: PaceColors.getBackground(isDark),
-        child: Column(
+      child: Scaffold(
+        backgroundColor: PaceColors.getBackground(isDark),
+        body: Column(
           children: [
             _buildHeader(isDark),
+            _buildQuickActions(isDark),
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: _fetchData,
-                color: PaceColors.purple,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                  children: [
-                    _buildForm(isDark),
-                    const SizedBox(height: 32),
-                    _buildListHeader(isDark),
-                    const SizedBox(height: 16),
-                    if (_isLoading && _blocked.isEmpty)
-                      const SkeletonList(count: 5)
-                    else if (filtered.isEmpty) 
-                      _buildEmptyState(isDark)
-                    else
-                      ...filtered.map((item) => _buildBlockedItem(item, isDark)),
-                  ],
-                ),
-              ),
+              child: _isLoading && _blocked.isEmpty
+                ? const Padding(padding: EdgeInsets.all(24.0), child: SkeletonList(count: 8))
+                : Column(
+                    children: [
+                      _buildTableHeader(isDark),
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: _fetchData,
+                          color: PaceColors.purple,
+                          child: filtered.isEmpty 
+                            ? _buildEmptyState(isDark)
+                            : ListView.separated(
+                                padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
+                                itemBuilder: (context, index) => _buildBlockedRow(filtered[index], isDark),
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
             ),
           ],
         ),
@@ -178,56 +181,109 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
+      child: Row(
         children: [
-          Row(
-            children: [
-              const Icon(LucideIcons.shieldAlert, color: Colors.redAccent, size: 20),
-              const SizedBox(width: 8),
-              Text('STK SECURITY CONTROL', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-            ],
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(LucideIcons.arrowLeft, color: PaceColors.getPrimaryText(isDark), size: 20),
+            style: IconButton.styleFrom(
+              backgroundColor: PaceColors.getSurface(isDark),
+              padding: const EdgeInsets.all(12),
+            ),
           ),
-          Text('PREVENT SUSPICIOUS NUMBERS FROM INITIATING PUSH PAYMENTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('STK SECURITY CONTROL', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+                Text('RESTRICT SUSPICIOUS NUMBERS FROM PAYMENTS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _showBlockModal,
+            icon: const Icon(LucideIcons.plusCircle, color: PaceColors.purple, size: 28),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildForm(bool isDark) {
+  Widget _buildQuickActions(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: PaceSearchBar(
+        hint: 'Search blocked numbers...', 
+        isDark: isDark, 
+        onChanged: (val) => setState(() => _search = val)
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      margin: const EdgeInsets.only(top: 24),
       decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: PaceColors.getBorder(isDark)),
-        boxShadow: [
-          if (!isDark) BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 8)),
+        color: PaceColors.getSurface(isDark).withOpacity(0.3),
+        border: Border(
+          top: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+          bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(flex: 3, child: Text('RESTRICTED PHONE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('TRIALS', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('ACTION', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _buildBlockedRow(dynamic item, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
         children: [
-          Text('ADD RESTRICTION', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
-          const SizedBox(height: 20),
-          _inputField('PHONE NUMBER', _phoneController, LucideIcons.phone, isDark),
-          const SizedBox(height: 12),
-          _inputField('REASON', _reasonController, LucideIcons.alertTriangle, isDark),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _handleBlock,
-              icon: const Icon(LucideIcons.lock, size: 16),
-              label: const Text('CONFIRM RESTRICTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-              ),
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item['phone']?.toString() ?? 'PRIVATE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+                const SizedBox(height: 4),
+                Text('REASON: ${item['reason']?.toString().toUpperCase() ?? 'MANUAL BLOCK'}', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+              child: Text('${item['trial_count'] ?? 0} ATTEMPTS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.red)),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => _handleUnblock(item['phone']),
+                  style: TextButton.styleFrom(
+                    foregroundColor: PaceColors.emerald,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('ALLOW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                ),
+              ],
             ),
           ),
         ],
@@ -235,11 +291,68 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
     );
   }
 
-  Widget _inputField(String label, TextEditingController controller, IconData icon, bool isDark) {
+  void _showBlockModal() {
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32)), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 24),
+              Icon(LucideIcons.shieldAlert, color: Colors.redAccent, size: 32),
+              const SizedBox(height: 12),
+              Text('ADD SECURITY RESTRICTION', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    _modalInput('PHONE NUMBER', _phoneController, LucideIcons.phone, isDark),
+                    const SizedBox(height: 16),
+                    _modalInput('REASON', _reasonController, LucideIcons.alertTriangle, isDark),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _handleBlock();
+                        },
+                        icon: const Icon(LucideIcons.lock, size: 16),
+                        label: const Text('CONFIRM RESTRICTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modalInput(String label, TextEditingController controller, IconData icon, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -250,7 +363,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
           ),
           child: TextField(
             controller: controller,
-            style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+            style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w500, color: PaceColors.getPrimaryText(isDark)),
             decoration: InputDecoration(
               icon: Icon(icon, color: PaceColors.getDimText(isDark), size: 14),
               border: InputBorder.none,
@@ -263,90 +376,19 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
     );
   }
 
-  Widget _buildListHeader(bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('RESTRICTED LIST', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-        PaceBadge(label: '${_blocked.length} ACTIVE', variant: BadgeVariant.error),
-      ],
-    );
-  }
-
-  Widget _buildBlockedItem(dynamic item, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PaceColors.getBorder(isDark)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['phone']?.toString() ?? 'PRIVATE', 
-                  style: GoogleFonts.jetBrainsMono(fontSize: 15, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'REASON: ${item['reason']?.toString().toUpperCase() ?? 'MANUAL BLOCK'}', 
-                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _miniStat('TRIALS: ${item['trial_count'] ?? 0}', Colors.orangeAccent, isDark),
-                    const SizedBox(width: 8),
-                    _miniStat('SINCE: ${item['blocked_at']?.toString().split(' ')[0] ?? 'N/A'}', PaceColors.getDimText(isDark), isDark),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          OutlinedButton(
-            onPressed: () => _handleUnblock(item['phone']),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: PaceColors.emerald,
-              side: BorderSide(color: PaceColors.emerald.withOpacity(0.3)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            child: const Text('ALLOW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _miniStat(String label, Color color, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.1)),
-      ),
-      child: Text(label, style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: color)),
-    );
-  }
-
   Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 60),
+        padding: const EdgeInsets.symmetric(vertical: 80),
         child: Column(
           children: [
             Icon(LucideIcons.shieldCheck, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
             const SizedBox(height: 16),
-            Text('NO SECURITY RESTRICTIONS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text('NO SECURITY RESTRICTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
           ],
         ),
       ),
     );
   }
 }
+
