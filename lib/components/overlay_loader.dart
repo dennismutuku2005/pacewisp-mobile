@@ -47,7 +47,7 @@ class PaceOverlayLoader extends StatelessWidget {
                           message!.toUpperCase(),
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             color: PaceColors.purple,
                             letterSpacing: 1,
                           ),
