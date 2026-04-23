@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/otp_modal.dart';
 import '../components/overlay_loader.dart';
@@ -82,12 +83,14 @@ class _RoutersScreenState extends State<RoutersScreen> {
               : RefreshIndicator(
                   onRefresh: _fetchRouters,
                   color: PaceColors.purple,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                    itemCount: _routers.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) => _buildRouterCard(_routers[index], isDark, settings),
-                  ),
+                  child: _routers.isEmpty
+                    ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchRouters, isDark: isDark))
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                        itemCount: _routers.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (context, index) => _buildRouterCard(_routers[index], isDark, settings),
+                      ),
                 ),
           ),
         ],
