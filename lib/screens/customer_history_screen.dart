@@ -237,19 +237,6 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 80),
-        child: Column(
-          children: [
-            Icon(LucideIcons.history, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-            const SizedBox(height: 16),
-            Text('NO HISTORY RECORDED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-          ],
-        ),
-      ),
-    );
   }
 }
 
