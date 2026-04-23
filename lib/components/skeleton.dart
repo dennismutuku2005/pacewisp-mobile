@@ -57,23 +57,167 @@ class _PaceSkeletonState extends State<PaceSkeleton> with SingleTickerProviderSt
   }
 }
 
-class SkeletonGrid extends StatelessWidget {
+/// Mimics the Dashboard/Monthly Summary cards
+class CardSkeleton extends StatelessWidget {
   final int count;
-  const SkeletonGrid({super.key, this.count = 4});
+  const CardSkeleton({super.key, this.count = 3});
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
+    return Container(
+      height: 100,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: count,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, __) => const PaceSkeleton(width: 140, height: 100, borderRadius: 24),
+      ),
+    );
+  }
+}
+
+/// Mimics the Router/Mikrotik list tiles
+class RouterSkeleton extends StatelessWidget {
+  final int count;
+  const RouterSkeleton({super.key, this.count = 4});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: count,
-      itemBuilder: (_, __) => const PaceSkeleton(),
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder: (_, __) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
+          children: [
+            PaceSkeleton(width: 36, height: 36, borderRadius: 10),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PaceSkeleton(height: 12, width: 100),
+                  SizedBox(height: 6),
+                  PaceSkeleton(height: 8, width: 60),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                PaceSkeleton(height: 10, width: 30),
+                SizedBox(height: 6),
+                PaceSkeleton(height: 8, width: 40),
+              ],
+            ),
+            SizedBox(width: 12),
+            PaceSkeleton(width: 14, height: 14, borderRadius: 4),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Mimics Transaction/Entry/Voucher rows
+class TransactionSkeleton extends StatelessWidget {
+  final int count;
+  const TransactionSkeleton({super.key, this.count = 8});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: count,
+      separatorBuilder: (_, __) => const Divider(height: 32),
+      itemBuilder: (_, __) => const Row(
+        children: [
+          PaceSkeleton(width: 40, height: 40, borderRadius: 20),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PaceSkeleton(height: 14, width: 120),
+                SizedBox(height: 8),
+                PaceSkeleton(height: 10, width: 80),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              PaceSkeleton(height: 14, width: 60),
+              SizedBox(height: 8),
+              PaceSkeleton(height: 10, width: 40),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Mimics Table rows (Monthly/Active customers)
+class TableSkeleton extends StatelessWidget {
+  final int count;
+  const TableSkeleton({super.key, this.count = 10});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: count,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (_, __) => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PaceSkeleton(height: 14, width: 110),
+                  SizedBox(height: 6),
+                  PaceSkeleton(height: 8, width: 60),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PaceSkeleton(height: 12, width: 50),
+                  SizedBox(height: 6),
+                  PaceSkeleton(height: 8, width: 40),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  PaceSkeleton(height: 20, width: 60, borderRadius: 6),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -84,28 +228,6 @@ class SkeletonList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: count,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, __) => Row(
-        children: [
-          const PaceSkeleton(width: 48, height: 48, borderRadius: 12),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const PaceSkeleton(height: 16, width: 140),
-                const SizedBox(height: 8),
-                const PaceSkeleton(height: 12, width: 80),
-              ],
-            ),
-          ),
-          const PaceSkeleton(height: 24, width: 60, borderRadius: 6),
-        ],
-      ),
-    );
+    return TransactionSkeleton(count: count);
   }
 }
