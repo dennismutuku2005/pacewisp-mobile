@@ -125,17 +125,32 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
 
   Widget _buildToggleCard(String title, String sub, IconData icon, bool val, Function(bool) onChanged, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark))),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark), 
+        borderRadius: BorderRadius.circular(20), 
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]
+      ),
       child: Row(
         children: [
-          Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: Icon(icon, color: PaceColors.purple, size: 20)),
+          Container(
+            padding: const EdgeInsets.all(10), 
+            decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(12)), 
+            child: Icon(icon, color: PaceColors.purple, size: 18)
+          ),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-            Text(sub.toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+            Text(title, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+            Text(sub.toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
           ])),
-          Switch(value: val, onChanged: _isSaving ? null : onChanged, activeColor: PaceColors.purple),
+          Switch(
+            value: val, 
+            onChanged: _isSaving ? null : onChanged, 
+            activeColor: PaceColors.purple,
+            activeTrackColor: PaceColors.purple.withOpacity(0.2),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
         ],
       ),
     );
