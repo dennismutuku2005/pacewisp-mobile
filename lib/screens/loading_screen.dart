@@ -40,7 +40,7 @@ class LoadingScreen extends StatelessWidget {
               style: TextStyle(
                 color: PaceColors.getDimText(isDark),
                 fontSize: 10,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 letterSpacing: 2,
               ),
             ),
