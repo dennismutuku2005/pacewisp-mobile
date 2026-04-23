@@ -79,15 +79,15 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: _isLoading && _users.isEmpty 
-              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
-              : Column(
-                  children: [
-                    _buildTableHeader(isDark),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: _fetchData,
-                        color: PaceColors.purple,
+            child: _isLoading && _users.isEmpty
+              ? const CustomerRowSkeleton(count: 6)
+              : RefreshIndicator(
+                  onRefresh: _fetchData,
+                  color: PaceColors.purple,
+                  child: Column(
+                    children: [
+                      _buildTableHeader(isDark),
+                      Expanded(
                         child: filtered.isEmpty 
                           ? SingleChildScrollView(
                               physics: const AlwaysScrollableScrollPhysics(), 
