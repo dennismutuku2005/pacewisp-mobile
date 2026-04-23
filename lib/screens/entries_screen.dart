@@ -206,8 +206,8 @@ class _EntriesScreenState extends State<EntriesScreen> {
           _buildSearchBox(isDark),
           _buildTableHeader(isDark),
           Expanded(
-            child: _isLoading && _entries.isEmpty 
-              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
+            child: _isLoading 
+              ? const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: TransactionSkeleton(count: 10))
               : RefreshIndicator(
                   onRefresh: () => _fetchCachedThenLive(),
                   color: PaceColors.purple,
