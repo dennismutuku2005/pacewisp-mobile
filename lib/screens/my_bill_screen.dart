@@ -85,7 +85,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('YOUR BILL', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-        Text('LIVE USAGE CYCLE SUMMARY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+        Text('LIVE USAGE CYCLE SUMMARY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
       ]),
       IconButton(
         onPressed: () {},
@@ -114,12 +114,12 @@ class _MyBillScreenState extends State<MyBillScreen> {
             padding: const EdgeInsets.all(24),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('AMOUNT DUE TO DATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                Text('AMOUNT DUE TO DATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                 const Icon(LucideIcons.receipt, color: PaceColors.purple, size: 18),
               ]),
               const SizedBox(height: 16),
               Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-                Text('KSH', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                Text('KSH', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
                 const SizedBox(width: 8),
                 Text(_currencyFormat.format(billing?['current_estimated_bill'] ?? 0), style: GoogleFonts.figtree(fontSize: 34, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -1)),
               ]),
@@ -127,7 +127,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
               Row(children: [
                 Icon(LucideIcons.calendar, size: 12, color: PaceColors.getDimText(isDark)),
                 const SizedBox(width: 8),
-                Text(cyclesubs, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                Text(cyclesubs, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
               ]),
             ]),
           ),
@@ -139,7 +139,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            child: Text('${(progress * 100).toInt()}% CYCLE PROGRESS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+            child: Text('${(progress * 100).toInt()}% CYCLE PROGRESS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
           ),
         ],
       ),
@@ -151,7 +151,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ALGORITHMIC BREAKDOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1.5)),
+        Text('ALGORITHMIC BREAKDOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 24),
         _buildCalcRow('BASE', 'STARTER PLAN (PRO-RATED)', 'KSH 1,499 x ${billing?['cycle_progress']}% ELAPSED', 'KSH ${_currencyFormat.format(billing?['base_fee'] * (billing?['cycle_progress'] ?? 0) / 100)}', isDark),
         const Divider(height: 32),
@@ -164,9 +164,9 @@ class _MyBillScreenState extends State<MyBillScreen> {
             Row(children: [
                 Icon(LucideIcons.info, size: 14, color: PaceColors.purple),
                 const SizedBox(width: 10),
-                Text('MONTHLY PROJECTION', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 0.5)),
+                Text('MONTHLY PROJECTION', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 0.5)),
             ]),
-            Text('KSH ${_currencyFormat.format(billing?['total_monthly_projection'] ?? 0)}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+            Text('KSH ${_currencyFormat.format(billing?['total_monthly_projection'] ?? 0)}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple)),
           ]),
         ),
       ]),
@@ -175,13 +175,13 @@ class _MyBillScreenState extends State<MyBillScreen> {
 
   Widget _buildCalcRow(String tag, String title, String sub, String amount, bool isDark, {Color? iconColor}) {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(width: 36, height: 36, decoration: BoxDecoration(color: (iconColor ?? PaceColors.purple).withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Center(child: Text(tag, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: iconColor ?? PaceColors.purple)))),
+      Container(width: 36, height: 36, decoration: BoxDecoration(color: (iconColor ?? PaceColors.purple).withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Center(child: Text(tag, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: iconColor ?? PaceColors.purple)))),
       const SizedBox(width: 16),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-        Text(sub, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+        Text(sub, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
       ])),
-      Text(amount, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w900, color: PaceColors.getPrimaryText(isDark))),
+      Text(amount, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
     ]);
   }
 
@@ -213,8 +213,8 @@ class _MyBillScreenState extends State<MyBillScreen> {
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 20),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-          Text(value, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text(value, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
         ])),
       ]),
     );
