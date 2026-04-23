@@ -348,7 +348,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
                 children: [
                   PaceBadge(label: isActive ? 'ACTIVE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
                   const SizedBox(height: 6),
-                  Text(entry['used'] == 1 ? 'USED' : 'UNUSED', style: TextStyle(fontSize: 7, color: entry['used'] == 1 ? PaceColors.emerald : Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  Text((entry['used'] == 1 || entry['used'] == true || entry['used'] == '1') ? 'USED' : 'UNUSED', style: TextStyle(fontSize: 7, color: (entry['used'] == 1 || entry['used'] == true || entry['used'] == '1') ? PaceColors.emerald : Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                 ],
               ),
             ),
@@ -359,6 +359,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
   }
 
   void _showDetailModal(dynamic entry, bool isDark) {
+    final bool isUsed = (entry['used'] == 1 || entry['used'] == true || entry['used'] == '1');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -385,7 +386,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
                    _buildPopupItem('PHONE NUMBER', entry['phone'] ?? 'SYSTEM', isDark, isMono: true),
                    _buildPopupItem('M-PESA CODE', entry['code'] ?? 'NO_CODE', isDark, isMono: true),
                    _buildPopupItem('MAC ADDRESS', entry['mac'] ?? 'UNKNOWN', isDark, isMono: true, smallValue: true),
-                   _buildPopupItem('USED STATUS', (entry['used'] == 1) ? 'USED ON MIKROTIK' : 'NOT RECORDED', isDark, valueColor: (entry['used'] == 1) ? PaceColors.emerald : Colors.red),
+                   _buildPopupItem('MIKROTIK USED', isUsed ? 'YES' : 'NO', isDark, valueColor: isUsed ? PaceColors.emerald : Colors.red),
                    _buildPopupItem('STATION', entry['router'] ?? 'DEFAULT', isDark),
                    _buildPopupItem('AMOUNT PAID', 'KES ${entry['amount']}', isDark, valueColor: PaceColors.purple),
                    _buildPopupItem('STATUS', (entry['active'] == true || entry['active'] == 1) ? 'ACTIVE' : 'EXPIRED', isDark, valueColor: (entry['active'] == true || entry['active'] == 1) ? PaceColors.emerald : Colors.red),
