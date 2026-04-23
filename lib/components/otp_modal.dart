@@ -121,7 +121,7 @@ class _OtpModalState extends State<OtpModal> {
             'TWO-STEP VERIFICATION',
             style: GoogleFonts.figtree(
               fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
               color: PaceColors.purple,
               letterSpacing: 1,
             ),
@@ -133,7 +133,7 @@ class _OtpModalState extends State<OtpModal> {
             style: GoogleFonts.figtree(
               fontSize: 10,
               color: PaceColors.getDimText(isDark),
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
             ),
           ),
@@ -155,7 +155,7 @@ class _OtpModalState extends State<OtpModal> {
                 _timer > 0 ? "RESEND IN ${_timer}S" : "DIDN'T RECEIVE CODE? RESEND",
                 style: GoogleFonts.figtree(
                   fontSize: 10,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: _timer > 0 ? PaceColors.getDimText(isDark) : PaceColors.purple,
                   letterSpacing: 1,
                 ),
@@ -178,7 +178,7 @@ class _OtpModalState extends State<OtpModal> {
                 ),
                 child: Text(
                   'VERIFY IDENTITY',
-                  style: GoogleFonts.figtree(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13),
+                  style: GoogleFonts.figtree(fontWeight: FontWeight.w600, letterSpacing: 1.5, fontSize: 13),
                 ),
               ),
             ),
@@ -208,7 +208,7 @@ class _OtpModalState extends State<OtpModal> {
         maxLength: 1,
         style: GoogleFonts.jetBrainsMono(
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: PaceColors.purple,
         ),
         decoration: const InputDecoration(
