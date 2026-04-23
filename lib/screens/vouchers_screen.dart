@@ -142,7 +142,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('GENERATE VOUCHERS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                        const Text('GENERATE VOUCHERS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                         IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx, false)),
                       ],
                     ),
@@ -170,7 +170,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('CANCEL', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                            child: const Text('CANCEL', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -179,7 +179,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
                           child: ElevatedButton(
                             onPressed: (selectedRouterId != null && selectedPlan != null) ? () => Navigator.pop(ctx, true) : null,
                             style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                            child: const Text('GENERATE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                            child: const Text('GENERATE', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
                           ),
                         ),
                       ],
@@ -222,11 +222,11 @@ class _VouchersScreenState extends State<VouchersScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
-        title: Text('DELETE VOUCHERS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red)),
+        title: Text('DELETE VOUCHERS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.red)),
         content: Text('Permanently remove ${idsToDelete.length} selected vouchers? This action cannot be undone.', style: GoogleFonts.figtree(fontSize: 12)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE ALL', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE ALL', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600))),
         ],
       ),
     );
@@ -254,7 +254,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -264,7 +264,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               isExpanded: true,
               value: value,
               hint: Text('Select Router', style: TextStyle(fontSize: 12, color: PaceColors.getDimText(isDark))),
-              items: options.map((r) => DropdownMenuItem<String>(value: r['id'].toString(), child: Text(r['router_name'].toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)))).toList(),
+              items: options.map((r) => DropdownMenuItem<String>(value: r['id'].toString(), child: Text(r['router_name'].toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)))).toList(),
               onChanged: onChanged,
             ),
           ),
@@ -277,7 +277,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -287,7 +287,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               isExpanded: true,
               value: value,
               hint: Text(plans.isEmpty ? 'Loading Plans...' : 'Select Plan', style: TextStyle(fontSize: 12, color: PaceColors.getDimText(isDark))),
-              items: plans.map((p) => DropdownMenuItem<String>(value: p['name'].toString(), child: Text('${p['name']} - KES ${p['price']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)))).toList(),
+              items: plans.map((p) => DropdownMenuItem<String>(value: p['name'].toString(), child: Text('${p['name']} - KES ${p['price']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)))).toList(),
               onChanged: onChanged,
             ),
           ),
@@ -300,7 +300,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -308,7 +308,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
           child: TextField(
             onChanged: onChanged,
             keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             decoration: const InputDecoration(hintText: '1', border: InputBorder.none),
           ),
         ),
@@ -327,7 +327,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
       child: Row(
         children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(value ? 'SALES RECORDING ACTIVE' : 'RECORD AS SALE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: value ? PaceColors.emerald : PaceColors.getPrimaryText(isDark))),
+            Text(value ? 'SALES RECORDING ACTIVE' : 'RECORD AS SALE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: value ? PaceColors.emerald : PaceColors.getPrimaryText(isDark))),
             Text(value ? 'FORCED BY SYSTEM POLICY' : 'Creates an income entry on use', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark))),
           ])),
           Switch(
@@ -393,9 +393,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
       child: Row(
         children: [
           const SizedBox(width: 36), // Checkbox space
-          Expanded(flex: 3, child: Text('VOUCHER & PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('STATION', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('VOUCHER & PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('STATION', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
           const SizedBox(width: 32), // Trash icon space
         ],
       ),
@@ -412,8 +412,8 @@ class _VouchersScreenState extends State<VouchersScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('PREPAID VOUCHERS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-              Text('MULTI-ACCESS HOTSPOT CODES', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              Text('PREPAID VOUCHERS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+              Text('MULTI-ACCESS HOTSPOT CODES', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
             ],
           ),
           IconButton(
@@ -448,12 +448,12 @@ class _VouchersScreenState extends State<VouchersScreen> {
               decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), border: Border.all(color: Colors.red.withOpacity(0.1)), borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
-                  Text('${_selectedVoucherIds.length} SELECTED', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red)),
+                  Text('${_selectedVoucherIds.length} SELECTED', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.red)),
                   const Spacer(),
                   TextButton.icon(
                     onPressed: () => _handleDeleteVouchers(),
                     icon: const Icon(LucideIcons.trash2, size: 12, color: Colors.red),
-                    label: const Text('REMOVE ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red)),
+                    label: const Text('REMOVE ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.red)),
                   ),
                   IconButton(onPressed: () => setState(() => _selectedVoucherIds.clear()), icon: const Icon(LucideIcons.x, size: 14, color: Colors.grey)),
                 ],
@@ -504,15 +504,15 @@ class _VouchersScreenState extends State<VouchersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(v['voucher_code']?.toUpperCase() ?? 'CODE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1.5)),
+                  Text(v['voucher_code']?.toUpperCase() ?? 'CODE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
                   const SizedBox(height: 2),
-                  Text(v['plan']?.toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark)), overflow: TextOverflow.ellipsis),
+                  Text(v['plan']?.toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark)), overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text(v['router_name']?.toString().toUpperCase() ?? 'NODE', style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+              child: Text(v['router_name']?.toString().toUpperCase() ?? 'NODE', style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
             ),
             Expanded(
               flex: 2,
@@ -522,9 +522,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
                   PaceBadge(label: isUsed ? 'USED' : 'AVAILABLE', variant: isUsed ? BadgeVariant.secondary : BadgeVariant.success),
                   const SizedBox(height: 4),
                   if (isSale)
-                    Text('SALE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.emerald))
+                    Text('SALE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.emerald))
                   else
-                    const Text('NOT SALE', style: TextStyle(fontSize: 9, color: Colors.red, fontWeight: FontWeight.bold)),
+                    const Text('NOT SALE', style: TextStyle(fontSize: 9, color: Colors.red, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -544,69 +544,75 @@ class _VouchersScreenState extends State<VouchersScreen> {
   void _showVoucherDrawer(dynamic v, bool isDark) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32)), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('VOUCHER DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
-                  IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('VOUCHER CODE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                        const SizedBox(height: 4),
-                        Text(v['voucher_code']?.toUpperCase() ?? 'CODE', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: 2)),
+                        Text('VOUCHER DETAILS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
+                        IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
                       ],
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: v['voucher_code']?.toString() ?? ''));
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Voucher code copied to clipboard!')));
-                      },
-                      icon: const Icon(LucideIcons.copy, color: PaceColors.purple),
-                      style: IconButton.styleFrom(backgroundColor: PaceColors.purple.withOpacity(0.1)),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('VOUCHER CODE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                              const SizedBox(height: 4),
+                              Text(v['voucher_code']?.toUpperCase() ?? 'CODE', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: 2)),
+                            ],
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: v['voucher_code']?.toString() ?? ''));
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Voucher code copied to clipboard!')));
+                            },
+                            icon: const Icon(LucideIcons.copy, color: PaceColors.purple),
+                            style: IconButton.styleFrom(backgroundColor: PaceColors.purple.withOpacity(0.1)),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(child: _buildDrawerInfo('PLAN', v['plan']?.toUpperCase() ?? 'N/A', isDark)),
+                        Expanded(child: _buildDrawerInfo('ROUTER', v['router_name']?.toString().toUpperCase() ?? 'N/A', isDark)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(child: _buildDrawerInfo('SALE STATUS', (v['sale']?.toString() == '1') ? 'YES' : 'NO', isDark, isSaleColor: true)),
+                        Expanded(child: _buildDrawerInfo('VOUCHER STATUS', (v['used']?.toString() == '1') ? 'USED' : 'AVAILABLE', isDark)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildDrawerInfo('CREATED AT', v['created_at']?.toString() ?? 'N/A', isDark),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(child: _buildDrawerInfo('PLAN', v['plan']?.toUpperCase() ?? 'N/A', isDark)),
-                  Expanded(child: _buildDrawerInfo('ROUTER', v['router_name']?.toString().toUpperCase() ?? 'N/A', isDark)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildDrawerInfo('SALE STATUS', (v['sale']?.toString() == '1') ? 'YES' : 'NO', isDark, isSaleColor: true)),
-                  Expanded(child: _buildDrawerInfo('VOUCHER STATUS', (v['used']?.toString() == '1') ? 'USED' : 'AVAILABLE', isDark)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildDrawerInfo('CREATED AT', v['created_at']?.toString() ?? 'N/A', isDark)),
-                ],
-              ),
-              const SizedBox(height: 24),
             ],
           ),
         );
@@ -626,9 +632,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: valColor)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: valColor)),
       ],
     );
   }
