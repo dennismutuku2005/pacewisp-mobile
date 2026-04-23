@@ -95,24 +95,24 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: PaceColors.purple.withOpacity(isDark ? 0.2 : 0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.purple.withOpacity(0.2)),
+        gradient: LinearGradient(colors: [PaceColors.purple, PaceColors.purple.withOpacity(0.7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [BoxShadow(color: PaceColors.purple.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('OUTSTANDING BALANCE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
-            const SizedBox(height: 4),
-            Text('KES ${_currencyFormat.format(totalDue)}', style: GoogleFonts.figtree(fontSize: 22, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+            Text('OUTSTANDING BALANCE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.8), letterSpacing: 1.5)),
+            const SizedBox(height: 8),
+            Text('KES ${_currencyFormat.format(totalDue)}', style: GoogleFonts.figtree(fontSize: 28, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: -1)),
           ]),
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-            child: const Icon(LucideIcons.receipt, color: PaceColors.purple, size: 24),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+            child: const Icon(LucideIcons.receipt, color: Colors.white, size: 28),
           ),
         ],
       ),
