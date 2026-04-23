@@ -115,7 +115,7 @@ class _PlansScreenState extends State<PlansScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(editingPlan == null ? 'NEW ACCESS PLAN' : 'EDIT PLAN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                    Text(editingPlan == null ? 'NEW ACCESS PLAN' : 'EDIT PLAN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                     IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(ctx, false)),
                   ],
                 ),
@@ -133,7 +133,7 @@ class _PlansScreenState extends State<PlansScreen> {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('CANCEL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        child: const Text('CANCEL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -142,7 +142,7 @@ class _PlansScreenState extends State<PlansScreen> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(ctx, true),
                         style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                        child: Text(editingPlan == null ? 'COMMIT' : 'UPDATE', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                        child: Text(editingPlan == null ? 'COMMIT' : 'UPDATE', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
                   ],
@@ -196,11 +196,11 @@ class _PlansScreenState extends State<PlansScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(isDark),
-        title: const Text('REMOVE PLAN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red)),
+        title: const Text('REMOVE PLAN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.red)),
         content: const Text('Are you sure you want to delete this plan?', style: TextStyle(fontSize: 12)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('KEEP')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600))),
         ],
       ),
     );
@@ -239,7 +239,7 @@ class _PlansScreenState extends State<PlansScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('PLAN DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                Text('PLAN DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                 IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(ctx)),
               ],
             ),
@@ -256,7 +256,7 @@ class _PlansScreenState extends State<PlansScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () { Navigator.pop(ctx); _handleSavePlan(editingPlan: plan, index: index); },
                     icon: const Icon(LucideIcons.edit3, size: 14),
-                    label: const Text('EDIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    label: const Text('EDIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(foregroundColor: PaceColors.purple, side: const BorderSide(color: PaceColors.purple), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                   ),
                 ),
@@ -265,7 +265,7 @@ class _PlansScreenState extends State<PlansScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () { Navigator.pop(ctx); _handleDeletePlan(index); },
                     icon: const Icon(LucideIcons.trash2, size: 14),
-                    label: const Text('DELETE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    label: const Text('DELETE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                   ),
                 ),
@@ -283,8 +283,8 @@ class _PlansScreenState extends State<PlansScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
         ],
       ),
     );
@@ -294,7 +294,7 @@ class _PlansScreenState extends State<PlansScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -302,7 +302,7 @@ class _PlansScreenState extends State<PlansScreen> {
           child: TextField(
             controller: controller,
             keyboardType: type,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
             decoration: InputDecoration(hintText: hint, hintStyle: TextStyle(color: PaceColors.getDimText(isDark)), border: InputBorder.none),
           ),
         ),
@@ -328,9 +328,9 @@ class _PlansScreenState extends State<PlansScreen> {
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
           child: Row(
             children: [
-              Expanded(flex: 3, child: Text('PLAN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-              Expanded(flex: 2, child: Text('PRICE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-              Expanded(flex: 2, child: Text('SPEED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+              Expanded(flex: 3, child: Text('PLAN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+              Expanded(flex: 2, child: Text('PRICE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+              Expanded(flex: 2, child: Text('SPEED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
               const SizedBox(width: 24),
             ],
           ),
@@ -345,7 +345,7 @@ class _PlansScreenState extends State<PlansScreen> {
                   ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Icon(LucideIcons.tag, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
                       const SizedBox(height: 16),
-                      Text('NO PLANS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                      Text('NO PLANS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                     ]))
                   : ListView.separated(
                     padding: const EdgeInsets.only(bottom: 120),
@@ -371,8 +371,8 @@ class _PlansScreenState extends State<PlansScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ACCESS PLANS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-              Text('MANAGE HOTSPOT PACKAGES', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              Text('ACCESS PLANS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+              Text('MANAGE HOTSPOT PACKAGES', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
             ],
           ),
           IconButton(
@@ -400,8 +400,8 @@ class _PlansScreenState extends State<PlansScreen> {
               const Icon(LucideIcons.wifi, size: 16, color: PaceColors.purple),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                 Text('TARGET ROUTER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-                 Text(activeRouter['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                 Text('TARGET ROUTER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                 Text(activeRouter['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
               ])),
               const Icon(LucideIcons.chevronDown, size: 16, color: Colors.grey),
             ],
@@ -425,14 +425,14 @@ class _PlansScreenState extends State<PlansScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('SELECT ROUTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                Text('SELECT ROUTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                 IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
               ],
             ),
             const SizedBox(height: 16),
             ..._routers.map((r) => ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(r['router_name']?.toUpperCase() ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              title: Text(r['router_name']?.toUpperCase() ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
               trailing: r['id'].toString() == _activeRouterId ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
               onTap: () {
                  setState(() => _activeRouterId = r['id'].toString());
@@ -458,7 +458,7 @@ class _PlansScreenState extends State<PlansScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(plan['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                  Text(plan['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
                   const SizedBox(height: 2),
                   Text(plan['duration']?.toString() ?? plan['time']?.toString() ?? '-', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
                 ],
@@ -466,11 +466,11 @@ class _PlansScreenState extends State<PlansScreen> {
             ),
             Expanded(
               flex: 2,
-              child: Text('KES ${plan['price'] ?? '0'}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
+              child: Text('KES ${plan['price'] ?? '0'}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.emerald)),
             ),
             Expanded(
               flex: 2,
-              child: Text(plan['rate_limit']?.toString() ?? '6M/6M', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+              child: Text(plan['rate_limit']?.toString() ?? '6M/6M', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
             ),
             Icon(Icons.more_vert, size: 18, color: PaceColors.getDimText(isDark)),
           ],
