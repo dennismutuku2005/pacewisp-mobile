@@ -54,6 +54,20 @@ class _MyBillScreenState extends State<MyBillScreen> {
     final isDark = settings.isDarkMode;
 
     if (_isLoading && _accountData == null) return const Scaffold(body: SkeletonList());
+    if (_accountData == null) return Scaffold(
+      backgroundColor: PaceColors.getBackground(isDark),
+      body: RefreshIndicator(
+        onRefresh: () => _fetchCachedThenLive(),
+        color: PaceColors.purple,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: PaceEmptyState(onRetry: () => _fetchCachedThenLive(), isDark: isDark, title: 'ACCOUNT DATA UNAVAILABLE', subtitle: 'We couldn\'t load your billing information. Please check your connection and retry.'),
+          ),
+        ),
+      ),
+    );
 
     final billing = _accountData?['billing'];
     final sub = _accountData?['subscription'];
