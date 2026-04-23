@@ -38,7 +38,7 @@ class _StaffScreenState extends State<StaffScreen> {
     {'id': 'manage_customers', 'label': 'Manage Customers', 'desc': 'Edit or block accounts'},
     {'id': 'view_active_users', 'label': 'Live Connections', 'desc': 'Monitor connected devices'},
     {'id': 'view_income', 'label': 'Revenue Analytics', 'desc': 'Access core income data'},
-    {'id': 'manage_expenses', 'label': 'Expense Tracking', 'record system overheads'},
+    {'id': 'manage_expenses', 'label': 'Expense Tracking', 'desc': 'Record system overheads'},
     {'id': 'view_reports', 'label': 'Financial Reports', 'desc': 'Access compiled statements'},
     {'id': 'view_mpesa', 'label': 'Gateway Logs', 'desc': 'Monitor M-Pesa history'},
     {'id': 'view_routers', 'label': 'View Nodes', 'desc': 'Monitor router connectivity'},
