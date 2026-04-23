@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -88,9 +89,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           const SizedBox(height: 24),
           _buildMonthNavigator(isDark),
           const SizedBox(height: 32),
-          _buildMetricsGrid(isDark),
-          const SizedBox(height: 32),
-          _buildRecentExpenses(isDark),
+          if (_isLoading && _metrics == null)
+            const SkeletonGrid(count: 4)
+          else if (_metrics == null && _expenses.isEmpty)
+            PaceEmptyState(onRetry: _fetchCachedThenLive, isDark: isDark, title: 'NO EXPENSE DATA', subtitle: 'We couldn\'t find any operational costs for this period. Slide down to refresh or try another month.')
+          else ...[
+            _buildMetricsGrid(isDark),
+            const SizedBox(height: 32),
+            _buildRecentExpenses(isDark),
+          ],
           const SizedBox(height: 100),
         ],
       ),
