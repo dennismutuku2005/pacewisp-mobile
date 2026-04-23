@@ -55,7 +55,7 @@ class PaceBadge extends StatelessWidget {
       style: TextStyle(
         color: textColor,
         fontSize: 9,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
       ),
     );
