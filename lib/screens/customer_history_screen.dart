@@ -154,9 +154,9 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statItem('TOTAL SPENT', 'KES ${_summary?['total_amount'] ?? 0}', isDark),
-          _statItem('SESSIONS', '${_summary?['total_visits'] ?? 0}', isDark),
-          _statItem('LAST SEEN', _summary?['last_bought']?.toString().split(' ')[0] ?? 'N/A', isDark),
+          _statItem('TOTAL SPENT', 'KES ${_summary?['total_spent'] ?? _summary?['total_amount'] ?? 0}', isDark),
+          _statItem('ENTRIES', '${_summary?['sessions'] ?? _summary?['total_visits'] ?? 0}', isDark),
+          _statItem('LAST SEEN', _summary?['last_seen']?.toString().split(',')[0] ?? 'N/A', isDark),
         ],
       ),
     );
@@ -185,8 +185,8 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('TRANSACTION / PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('DATE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('TRANSACTION / NODE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('USAGE STATUS', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
           Expanded(flex: 2, child: Text('AMOUNT', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
       ),
@@ -194,15 +194,20 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
   }
 
   Widget _buildSessionRow(dynamic s, bool isDark) {
-    final bool isUsed = (s['used']?.toString() == '1' || s['status']?.toString().toLowerCase() == 'used' || s['is_used'] == true);
+    final bool isActive = (s['active'] == true || s['active']?.toString() == '1');
+    final bool isUsed = (s['used'] == true || s['used']?.toString() == '1');
+    
     final amount = s['amount'] ?? s['price'] ?? 0;
-    final date = (s['created'] ?? s['created_at'] ?? s['date'] ?? s['time'] ?? 'N/A').toString().split(' ')[0];
-    final plan = s['plan'] ?? s['plan_name'] ?? 'SERVICE PLAN';
-    final code = (s['mpesa_code'] ?? s['voucher'] ?? s['code'] ?? s['transaction_id'] ?? 'SESSION').toString().toUpperCase();
+    final created = s['created'] ?? s['created_at'] ?? 'N/A';
+    final expires = s['expires'] ?? s['expire_time'] ?? 'N/A';
+    final mac = s['mac'] ?? 'N/A';
+    final router = s['router'] ?? s['router_name'] ?? 'SYSTEM';
+    final code = (s['code'] ?? s['mpesa_code'] ?? s['voucher'] ?? 'SESSION').toString().toUpperCase();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 3,
@@ -211,22 +216,32 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
               children: [
                 Text(code, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(plan.toString().toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.purple, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-                    const SizedBox(width: 8),
-                    PaceBadge(
-                      label: isUsed ? 'USED' : 'ACTIVE', 
-                      variant: isUsed ? BadgeVariant.secondary : BadgeVariant.success,
-                    ),
-                  ],
-                ),
+                Text(router.toString().toUpperCase(), style: TextStyle(fontSize: 7, color: PaceColors.purple, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text(mac.toString().toUpperCase(), style: GoogleFonts.jetBrainsMono(fontSize: 8, color: PaceColors.getDimText(isDark))),
               ],
             ),
           ),
           Expanded(
             flex: 2,
-            child: Text(date, style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    PaceBadge(
+                      label: isActive ? 'ACTIVE' : 'EXPIRED', 
+                      variant: isActive ? BadgeVariant.success : BadgeVariant.error,
+                    ),
+                    const SizedBox(width: 4),
+                    if (isUsed) PaceBadge(label: 'USED', variant: BadgeVariant.secondary),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text('IN: $created', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
+                Text('EX: $expires', style: TextStyle(fontSize: 7, color: PaceColors.purple.withOpacity(0.7), fontWeight: FontWeight.w600)),
+              ],
+            ),
           ),
           Expanded(
             flex: 2,
