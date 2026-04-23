@@ -56,7 +56,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
 
   Future<void> _fetchThemes({required int page}) async {
     final res = await _apiService.fetchData(slug: 'themes', params: {'page': page, 'limit': 10});
-    if (mounted && res?['success'] == true) {
+    if (mounted && (res?['status'] == 'success' || res?['status'] == 200)) {
       setState(() {
         if (page == 1) {
           _themes = res?['data'] ?? [];
@@ -82,7 +82,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
 
   Future<void> _fetchActiveThemes() async {
     final res = await _apiService.fetchData(slug: 'active_themes');
-    if (mounted && res?['success'] == true) {
+    if (mounted && (res?['status'] == 'success' || res?['status'] == 200)) {
       setState(() => _activeThemes = res?['data'] ?? []);
     }
   }
@@ -94,7 +94,7 @@ class _ThemesScreenState extends State<ThemesScreen> {
       'router_id': routerId,
     });
     if (mounted) {
-      if (res?['success'] == true) {
+      if (res?['status'] == 'success' || res?['status'] == 200) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Theme Activated Successfully'), backgroundColor: PaceColors.emerald));
         _fetchActiveThemes();
       } else {
