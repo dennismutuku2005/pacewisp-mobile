@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 import '../components/overlay_loader.dart';
@@ -141,7 +142,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         onRefresh: _loadInitialData,
                         color: PaceColors.purple,
                         child: _customers.isEmpty 
-                          ? _buildEmptyState(isDark)
+                          ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _loadInitialData, isDark: isDark))
                           : ListView.separated(
                               controller: _scrollController,
                               padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
@@ -446,16 +447,4 @@ class _CustomersScreenState extends State<CustomersScreen> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.users, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-          const SizedBox(height: 16),
-          Text('NO CUSTOMERS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-        ],
-      ),
-    );
-  }
 }
