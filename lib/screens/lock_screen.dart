@@ -106,7 +106,7 @@ class _LockScreenState extends State<LockScreen> {
                 style: GoogleFonts.figtree(
                   color: Colors.white,
                   fontSize: 22,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: 4,
                 ),
                 textAlign: TextAlign.center,
@@ -120,7 +120,7 @@ class _LockScreenState extends State<LockScreen> {
                   children: [
                     const CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 3),
                     const SizedBox(height: 16),
-                    Text('SCANNING...', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 2)),
+                    Text('SCANNING...', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white54, letterSpacing: 2)),
                   ],
                 )
               else
@@ -134,7 +134,7 @@ class _LockScreenState extends State<LockScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _authenticate,
                           icon: const Icon(Icons.fingerprint_rounded, size: 24),
-                          label: Text('UNLOCK TO CONTINUE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                          label: Text('UNLOCK TO CONTINUE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: PaceColors.purple,
                             foregroundColor: Colors.white,
@@ -161,7 +161,7 @@ class _LockScreenState extends State<LockScreen> {
                               Flexible(
                                 child: Text(
                                   _error,
-                                  style: GoogleFonts.figtree(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                                  style: GoogleFonts.figtree(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.5),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
