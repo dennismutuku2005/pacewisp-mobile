@@ -122,8 +122,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('REVENUE ANALYTICS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-            Text('FINANCIAL PERFORMANCE & INSIGHTS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            Text('REVENUE ANALYTICS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+            Text('FINANCIAL PERFORMANCE & INSIGHTS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ]),
         IconButton(
           onPressed: () {},
@@ -160,7 +160,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
       child: Row(children: [
         Icon(icon, size: 14, color: PaceColors.purple),
         const SizedBox(width: 10),
-        Expanded(child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
+        Expanded(child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
         const Icon(LucideIcons.chevronDown, size: 12, color: Colors.grey),
       ]),
     );
@@ -181,14 +181,14 @@ class _IncomeScreenState extends State<IncomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('SELECT TIMELINE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                Text('SELECT TIMELINE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                 IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
               ],
             ),
             const SizedBox(height: 16),
             ...times.map((t) => ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              title: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
               trailing: _selectedTimeline == t ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
               onTap: () { setState(() => _selectedTimeline = t); Navigator.pop(context); _fetchIncome(); },
             )).toList(),
@@ -212,7 +212,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('SELECT ROUTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                Text('SELECT ROUTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                 IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
               ],
             ),
@@ -223,13 +223,13 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('ALL ROUTERS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    title: const Text('ALL ROUTERS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                     trailing: _activeRouterId == 'all' ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
                     onTap: () { setState(() => _activeRouterId = 'all'); Navigator.pop(context); _fetchIncome(); },
                   ),
                   ..._routers.map((r) => ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(r['router_name'].toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    title: Text(r['router_name'].toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                     trailing: _activeRouterId == r['id'].toString() ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
                     onTap: () { setState(() => _activeRouterId = r['id'].toString()); Navigator.pop(context); _fetchIncome(); },
                   )).toList(),
@@ -275,13 +275,13 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 child: Row(children: [
                   Icon(up ? LucideIcons.trendingUp : LucideIcons.trendingDown, size: 8, color: up ? PaceColors.emerald : Colors.red),
                   const SizedBox(width: 4),
-                  Text('${up ? '+' : ''}$trend%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: up ? PaceColors.emerald : Colors.red)),
+                  Text('${up ? '+' : ''}$trend%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: up ? PaceColors.emerald : Colors.red)),
                 ]),
               ),
             ]),
             const Spacer(),
-            Text(c['l'] as String, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-            Text('KES ${_currencyFormat.format(value)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+            Text(c['l'] as String, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text('KES ${_currencyFormat.format(value)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
           ]),
         );
       },
@@ -296,8 +296,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('INCOME TREND', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-        Text('DAILY REVENUE FOR SELECTED PERIOD', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text('INCOME TREND', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+        Text('DAILY REVENUE FOR SELECTED PERIOD', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 32),
         SizedBox(
           height: 200,
@@ -324,7 +324,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                        if (history.length > 7 && value.toInt() % (history.length ~/ 5) != 0 && value.toInt() != history.length - 1) return const SizedBox();
                        return Padding(
                          padding: const EdgeInsets.only(top: 8.0),
-                         child: Text(dayStr, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold)),
+                         child: Text(dayStr, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600)),
                        );
                      }
                      return const SizedBox();
@@ -338,7 +338,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                    getTitlesWidget: (value, meta) {
                      if (value == 0) return const SizedBox();
                      final str = value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(0);
-                     return Text(str, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold));
+                     return Text(str, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600));
                    },
                  ),
                ),
@@ -351,7 +351,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                    return touchedSpots.map((spot) {
                      return LineTooltipItem(
                        'KES ${_currencyFormat.format(spot.y)}',
-                       TextStyle(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.bold, fontSize: 12),
+                       TextStyle(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.w600, fontSize: 12),
                      );
                    }).toList();
                  },
@@ -380,8 +380,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('PLAN DISTRIBUTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-        Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text('PLAN DISTRIBUTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+        Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 32),
         Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -403,7 +403,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                         value: value,
                         title: '${value.toStringAsFixed(0)}%',
                         radius: 32,
-                        titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                        titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white),
                         showTitle: value > 5,
                       );
                     }).toList(),
@@ -423,8 +423,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
                     children: [
                       Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
-                      Text('${item['value']}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                      Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
+                      Text('${item['value']}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
                     ],
                   ),
                 );
