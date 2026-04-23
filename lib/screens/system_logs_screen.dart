@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 
@@ -87,16 +88,18 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
             : RefreshIndicator(
                 onRefresh: _fetchLogs,
                 color: PaceColors.purple,
-                child: ListView.separated(
-                  controller: _scrollCtrl,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  itemCount: filtered.length + (_isLoadingMore ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (ctx, i) {
-                    if (i == filtered.length) return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
-                    return _buildLogCard(filtered[i], isDark);
-                  },
-                ),
+                child: filtered.isEmpty
+                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchLogs, isDark: isDark))
+                  : ListView.separated(
+                      controller: _scrollCtrl,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                      itemCount: filtered.length + (_isLoadingMore ? 1 : 0),
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (ctx, i) {
+                        if (i == filtered.length) return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
+                        return _buildLogCard(filtered[i], isDark);
+                      },
+                    ),
               ),
         ),
       ],
