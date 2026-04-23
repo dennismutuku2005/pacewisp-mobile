@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 import '../components/overlay_loader.dart';
@@ -107,7 +108,7 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
                         onRefresh: () => _fetchData(pageNum: 1),
                         color: PaceColors.purple,
                         child: _active.isEmpty 
-                          ? _buildEmptyState(isDark)
+                          ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchData(pageNum: 1), isDark: isDark))
                           : ListView.separated(
                               controller: _scrollController,
                               padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
@@ -221,16 +222,4 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.zapOff, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-          const SizedBox(height: 16),
-          Text('NO ACTIVE SESSIONS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-        ],
-      ),
-    );
-  }
 }
