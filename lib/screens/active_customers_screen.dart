@@ -139,10 +139,10 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
             children: [
               const Icon(LucideIcons.zap, color: PaceColors.purple, size: 20),
               const SizedBox(width: 8),
-              Text('LIVE CONNECTIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+              Text('LIVE CONNECTIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
             ],
           ),
-          Text('REAL-TIME HOTSPOT SESSIONS & ACTIVITY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('REAL-TIME HOTSPOT SESSIONS & ACTIVITY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -171,9 +171,9 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('PHONE / RECEIPT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('PHONE / RECEIPT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
       ),
     );
@@ -194,15 +194,15 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(u['phone']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
+                  Text(u['phone']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
                   const SizedBox(height: 4),
-                  Text(u['mpesa_code']?.toString().toUpperCase() ?? 'VOUCHER', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  Text(u['mpesa_code']?.toString().toUpperCase() ?? 'VOUCHER', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                 ],
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text(u['plan']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+              child: Text(u['plan']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.purple)),
             ),
             Expanded(
               flex: 2,
@@ -228,7 +228,7 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
         children: [
           Icon(LucideIcons.zapOff, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
           const SizedBox(height: 16),
-          Text('NO ACTIVE SESSIONS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text('NO ACTIVE SESSIONS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         ],
       ),
     );
