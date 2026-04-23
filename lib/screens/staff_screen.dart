@@ -47,6 +47,7 @@ class _StaffScreenState extends State<StaffScreen> {
     {'id': 'manage_users', 'label': 'Staff Management', 'desc': 'Add/Remove personnel'},
     {'id': 'manage_themes', 'label': 'Portal Themes', 'desc': 'Customize landing pages'},
     {'id': 'system_config', 'label': 'Global Config', 'desc': 'Modify core system settings'},
+    {'id': 'view_bills', 'label': 'Service Billing', 'desc': 'Access your own service invoices'},
   ];
 
   @override
