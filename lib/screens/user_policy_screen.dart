@@ -5,6 +5,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/skeleton.dart';
+import '../components/empty_state.dart';
 
 class UserPolicyScreen extends StatefulWidget {
   const UserPolicyScreen({super.key});
@@ -55,16 +56,22 @@ class _UserPolicyScreenState extends State<UserPolicyScreen> {
 
     return Scaffold(
       backgroundColor: PaceColors.getBackground(isDark),
-      body: _isLoading 
+      body: _isLoading && _staff.isEmpty
         ? const SkeletonList()
-        : ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: _staff.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final s = _staff[index];
-              return _buildStaffMember(s, isDark);
-            },
+        : RefreshIndicator(
+            onRefresh: _fetchStaff,
+            color: PaceColors.purple,
+            child: _staff.isEmpty
+              ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchStaff, isDark: isDark))
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _staff.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final s = _staff[index];
+                    return _buildStaffMember(s, isDark);
+                  },
+                ),
           ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
