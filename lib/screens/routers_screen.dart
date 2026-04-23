@@ -79,7 +79,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
           _buildHeader(isDark, settings),
           Expanded(
             child: _isLoading && _routers.isEmpty
-              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 3))
+              ? const RouterSkeleton(count: 3)
               : RefreshIndicator(
                   onRefresh: _fetchRouters,
                   color: PaceColors.purple,
@@ -124,36 +124,61 @@ class _RoutersScreenState extends State<RoutersScreen> {
     final stats = r['stats'];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark), 
+        borderRadius: BorderRadius.circular(16), 
+        border: Border.all(color: PaceColors.getBorder(isDark))
+      ),
       child: Row(
         children: [
           Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(color: isOnline ? PaceColors.emerald.withOpacity(0.1) : Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: Icon(LucideIcons.router, color: isOnline ? PaceColors.emerald : Colors.red, size: 20),
+            width: 36, height: 36,
+            decoration: BoxDecoration(color: isOnline ? PaceColors.emerald.withOpacity(0.1) : Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(LucideIcons.router, color: isOnline ? PaceColors.emerald : Colors.red, size: 18),
           ),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Text(r['router_name']?.toString().toUpperCase() ?? 'NODE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-              const SizedBox(width: 6),
-              if (isOnline) Container(width: 6, height: 6, decoration: const BoxDecoration(color: PaceColors.emerald, shape: BoxShape.circle)),
-            ]),
-            Text(r['ip_address'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 9, color: Colors.grey)),
-          ])),
-          const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-             Text(stats?['cpu'] ?? '0%', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-             Text(stats?['uptime'] ?? 'OFFLINE', style: const TextStyle(fontSize: 8, color: Colors.grey)),
-          ]),
-          const SizedBox(width: 12),
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            if (settings.hasPolicy('manage_routers'))
-               IconButton(onPressed: () => _handleRestart(r), icon: const Icon(LucideIcons.refreshCw, color: PaceColors.purple, size: 16), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-            const SizedBox(width: 8),
-            IconButton(onPressed: () => _showControlPanel(r, isDark, settings), icon: const Icon(LucideIcons.moreVertical, size: 16), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-          ]),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, 
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        r['router_name']?.toString().toUpperCase() ?? 'NODE', 
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.2)
+                      ),
+                    ),
+                    if (isOnline) ...[
+                      const SizedBox(width: 4),
+                      Container(width: 5, height: 5, decoration: const BoxDecoration(color: PaceColors.emerald, shape: BoxShape.circle)),
+                    ],
+                  ]
+                ),
+                Text(r['ip_address'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 8.5, color: Colors.grey)),
+              ]
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end, 
+            children: [
+              Text(stats?['cpu'] ?? '0%', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+              Text(stats?['uptime']?.toString().toUpperCase() ?? 'OFFLINE', style: const TextStyle(fontSize: 7.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+            ]
+          ),
+          const SizedBox(width: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min, 
+            children: [
+              if (settings.hasPolicy('manage_routers'))
+                 IconButton(onPressed: () => _handleRestart(r), icon: const Icon(LucideIcons.refreshCw, color: PaceColors.purple, size: 14), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+              const SizedBox(width: 8),
+              IconButton(onPressed: () => _showControlPanel(r, isDark, settings), icon: const Icon(LucideIcons.moreVertical, size: 14, color: Colors.grey), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+            ]
+          ),
         ],
       ),
     );
