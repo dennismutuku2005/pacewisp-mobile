@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 import '../components/overlay_loader.dart';
@@ -161,7 +162,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
                           onRefresh: _fetchData,
                           color: PaceColors.purple,
                           child: filtered.isEmpty 
-                            ? _buildEmptyState(isDark)
+                            ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchData, isDark: isDark, title: 'NO SECURITY RESTRICTIONS', subtitle: 'All numbers have full payment access. Slide down to refresh.'))
                             : ListView.separated(
                                 padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
                                 itemCount: filtered.length,
@@ -377,19 +378,5 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 80),
-        child: Column(
-          children: [
-            Icon(LucideIcons.shieldCheck, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-            const SizedBox(height: 16),
-            Text('NO SECURITY RESTRICTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
