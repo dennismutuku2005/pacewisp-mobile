@@ -31,6 +31,8 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
   final _lnmo1Ctrl = TextEditingController();
   final _lnmo2Ctrl = TextEditingController();
   final _lnmo3Ctrl = TextEditingController();
+  final _lnmo4Ctrl = TextEditingController();
+  final _lnmo5Ctrl = TextEditingController();
 
   @override
   void initState() {
@@ -63,6 +65,8 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
         _lnmo1Ctrl.text = _links['lnmoapi'] ?? '';
         _lnmo2Ctrl.text = _links['lnmoapi2'] ?? '';
         _lnmo3Ctrl.text = _links['lnmoapi3'] ?? '';
+        _lnmo4Ctrl.text = _links['lnmoapi4'] ?? '';
+        _lnmo5Ctrl.text = _links['lnmoapi5'] ?? '';
         _isLoading = false;
       });
     }
@@ -77,6 +81,8 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
         'lnmoapi': _lnmo1Ctrl.text,
         'lnmoapi2': _lnmo2Ctrl.text,
         'lnmoapi3': _lnmo3Ctrl.text,
+        'lnmoapi4': _lnmo4Ctrl.text,
+        'lnmoapi5': _lnmo5Ctrl.text,
       }
     };
     final res = await _apiService.saveSystemConfig(_activeRouterId!, data);
@@ -207,6 +213,10 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
               _buildField('SECONDARY LNMO 2', _lnmo2Ctrl, LucideIcons.link2, isDark, isMono: true, enabled: !_isLocked),
               const SizedBox(height: 16),
               _buildField('SECONDARY LNMO 3', _lnmo3Ctrl, LucideIcons.link2, isDark, isMono: true, enabled: !_isLocked),
+              const SizedBox(height: 16),
+              _buildField('FALLBACK LNMO 4', _lnmo4Ctrl, LucideIcons.link2, isDark, isMono: true, enabled: !_isLocked),
+              const SizedBox(height: 16),
+              _buildField('FALLBACK LNMO 5', _lnmo5Ctrl, LucideIcons.link2, isDark, isMono: true, enabled: !_isLocked),
             ]),
           ),
         ),
