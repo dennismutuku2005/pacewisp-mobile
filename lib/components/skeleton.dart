@@ -222,6 +222,44 @@ class TableSkeleton extends StatelessWidget {
   }
 }
 
+class GridSkeleton extends StatelessWidget {
+  final int count;
+  const GridSkeleton({super.key, this.count = 4});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.5,
+      ),
+      itemCount: count,
+      itemBuilder: (_, __) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            PaceSkeleton(width: 32, height: 32, borderRadius: 10),
+            Spacer(),
+            PaceSkeleton(height: 16, width: 80),
+            SizedBox(height: 6),
+            PaceSkeleton(height: 10, width: 60),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class SkeletonList extends StatelessWidget {
   final int count;
   const SkeletonList({super.key, this.count = 6});
