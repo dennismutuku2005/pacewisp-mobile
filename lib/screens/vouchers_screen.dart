@@ -356,7 +356,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
           _buildControls(isDark),
           Expanded(
             child: _isLoading 
-              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
+              ? const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: TransactionSkeleton(count: 10))
               : Column(
                   children: [
                     _buildTableHeader(isDark),
