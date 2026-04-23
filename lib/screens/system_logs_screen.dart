@@ -109,7 +109,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('SYSTEM LOGS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-        Text('COMPREHENSIVE AUDIT TRAIL', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+        Text('COMPREHENSIVE AUDIT TRAIL', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
       ]),
     );
   }
@@ -124,7 +124,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
           onChanged: (v) { _search = v; _fetchLogs(); },
         )),
         const SizedBox(width: 12),
-        Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: _statusFilter, dropdownColor: PaceColors.getCard(isDark), items: const [DropdownMenuItem(value: 'all', child: Text('ALL')), DropdownMenuItem(value: 'success', child: Text('OK')), DropdownMenuItem(value: 'failed', child: Text('FAIL'))], style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.purple), onChanged: (v) => setState(() => _statusFilter = v!)))),
+        Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: _statusFilter, dropdownColor: PaceColors.getCard(isDark), items: const [DropdownMenuItem(value: 'all', child: Text('ALL')), DropdownMenuItem(value: 'success', child: Text('OK')), DropdownMenuItem(value: 'failed', child: Text('FAIL'))], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple), onChanged: (v) => setState(() => _statusFilter = v!)))),
       ]),
     );
   }
@@ -138,7 +138,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Row(children: [
-            Text(l['user']?.toString().toUpperCase() ?? 'SYSTEM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+            Text(l['user']?.toString().toUpperCase() ?? 'SYSTEM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
           ]),
           PaceBadge(label: l['action']?.toString().toUpperCase() ?? 'LOG', variant: isFailed ? BadgeVariant.error : BadgeVariant.standard),
         ]),
@@ -147,7 +147,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
         const SizedBox(height: 16),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text(l['ip'] ?? 'INTERNAL', style: GoogleFonts.jetBrainsMono(fontSize: 8, color: Colors.grey)),
-          Text("${l['date']?.toString().split(' ')[0]} ${l['time']}", style: TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.bold)),
+          Text("${l['date']?.toString().split(' ')[0]} ${l['time']}", style: TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.w600)),
         ]),
       ]),
     );
