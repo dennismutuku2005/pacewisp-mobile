@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/skeleton.dart';
+import '../components/empty_state.dart';
 
 class IncomeScreen extends StatefulWidget {
   const IncomeScreen({super.key});
