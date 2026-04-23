@@ -113,7 +113,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 40,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               height: 1.1,
                               letterSpacing: -1,
                             ),
@@ -149,7 +149,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                               elevation: 0,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: const Text('GET STARTED', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1.1)),
+                            child: const Text('GET STARTED', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: 1.1)),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -162,7 +162,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                             ),
                             const Text(
                               'PaceWISP v1.0',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
                             ),
                           ],
                         ),
