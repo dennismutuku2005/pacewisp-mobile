@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/overlay_loader.dart';
 
@@ -90,7 +91,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                           onRefresh: _fetchData,
                           color: PaceColors.purple,
                           child: _sessions.isEmpty
-                            ? _buildEmptyState(isDark)
+                            ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchData, isDark: isDark))
                             : ListView.separated(
                                 padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
                                 itemCount: _sessions.length,
