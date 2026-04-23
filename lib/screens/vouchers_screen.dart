@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 import '../components/overlay_loader.dart';
@@ -363,16 +364,18 @@ class _VouchersScreenState extends State<VouchersScreen> {
                       child: RefreshIndicator(
                         onRefresh: () => _fetchVouchers(pageNum: 1),
                         color: PaceColors.purple,
-                        child: ListView.separated(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                          itemCount: _vouchers.length + (_isLoadingMore ? 1 : 0),
-                          separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
-                          itemBuilder: (context, index) {
-                            if (index == _vouchers.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                            return _buildVoucherCard(_vouchers[index], isDark);
-                          },
-                        ),
+                        child: _vouchers.isEmpty 
+                          ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchVouchers(pageNum: 1), isDark: isDark))
+                          : ListView.separated(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                              itemCount: _vouchers.length + (_isLoadingMore ? 1 : 0),
+                              separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
+                              itemBuilder: (context, index) {
+                                if (index == _vouchers.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
+                                return _buildVoucherCard(_vouchers[index], isDark);
+                              },
+                            ),
                       ),
                     ),
                   ],
