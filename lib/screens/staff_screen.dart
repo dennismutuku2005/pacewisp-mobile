@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 import '../components/otp_modal.dart';
@@ -220,12 +221,14 @@ class _StaffScreenState extends State<StaffScreen> {
               : RefreshIndicator(
                   onRefresh: _fetchStaff,
                   color: PaceColors.purple,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                    itemCount: list.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (ctx, i) => _buildStaffCard(list[i], isDark),
-                  ),
+                  child: list.isEmpty
+                    ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchStaff, isDark: isDark))
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (ctx, i) => _buildStaffCard(list[i], isDark),
+                      ),
                 ),
           ),
         ],
