@@ -104,7 +104,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
           _buildFilters(isDark),
           const SizedBox(height: 32),
           if (_isLoading && _incomeData == null)
-            const SkeletonGrid(count: 6)
+            const GridSkeleton(count: 6)
           else if (_incomeData == null)
             PaceEmptyState(onRetry: _fetchIncome, isDark: isDark, title: 'REVENUE DATA UNAVAILABLE', subtitle: 'We couldn\'t load your financial reports. Please check your connection and retry.')
           else ...[
