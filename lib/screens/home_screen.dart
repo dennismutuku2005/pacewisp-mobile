@@ -9,6 +9,7 @@ import '../theme/colors.dart';
 import '../components/dashboard_chart.dart';
 import '../components/skeleton.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../services/widget_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -213,6 +214,13 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 48),
               _buildSectionHeader('YOUR MIKROTIKS', 'ONLINE/OFFLINE', isDark),
               _buildStationTable(isDark),
+            ] else ...[
+               PaceEmptyState(
+                 onRetry: _fetchCachedThenLive,
+                 isDark: isDark,
+                 title: 'DASHBOARD UNAVAILABLE',
+                 subtitle: 'We couldn\'t load your summary metrics. Please check your connection and retry.',
+               ),
             ],
             const SizedBox(height: 100),
           ],
