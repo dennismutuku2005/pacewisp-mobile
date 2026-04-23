@@ -92,10 +92,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('NOTIFICATIONS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-            Text('SYSTEM ALERTS & ERRORS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            Text('NOTIFICATIONS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+            Text('SYSTEM ALERTS & ERRORS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
           ]),
-          TextButton(onPressed: _markAllRead, child: const Text('MARK ALL READ', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1))),
+          TextButton(onPressed: _markAllRead, child: const Text('MARK ALL READ', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1))),
         ],
       ),
     );
@@ -123,9 +123,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(type.replaceFirst('_', ' ').toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor, letterSpacing: 0.5)),
+                  Text(type.replaceFirst('_', ' ').toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor, letterSpacing: 0.5)),
                   const SizedBox(height: 4),
-                  Text(n['user_mac'] ?? 'SYSTEM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                  Text(n['user_mac'] ?? 'SYSTEM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
                 ],
               ),
             ),
@@ -134,7 +134,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Text(n['error_message'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: PaceColors.getPrimaryText(isDark))),
             ),
             const SizedBox(width: 8),
-            Text(n['created_at']?.toString().split(' ')[0] ?? '', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+            Text(n['created_at']?.toString().split(' ')[0] ?? '', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
           ],
         ),
       ),
@@ -145,7 +145,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(LucideIcons.bellOff, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
       const SizedBox(height: 16),
-      Text('ALL CAUGHT UP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+      Text('ALL CAUGHT UP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
       Text('No pending system notifications', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
     ]));
   }
