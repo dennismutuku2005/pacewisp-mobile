@@ -25,7 +25,7 @@ class AppTheme {
       titleTextStyle: TextStyle(
         color: PaceColors.purple,
         fontSize: 18,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w600,
       ),
     ),
     drawerTheme: const DrawerThemeData(
@@ -94,7 +94,7 @@ class AppTheme {
       titleTextStyle: TextStyle(
         color: PaceColors.purpleDark,
         fontSize: 18,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w600,
       ),
     ),
     drawerTheme: const DrawerThemeData(
