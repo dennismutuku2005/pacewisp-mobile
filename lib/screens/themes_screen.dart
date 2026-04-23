@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 
 class ThemesScreen extends StatefulWidget {
@@ -120,16 +121,18 @@ class _ThemesScreenState extends State<ThemesScreen> {
             : RefreshIndicator(
                 onRefresh: _loadInitialData,
                 color: PaceColors.purple,
-                child: ListView.separated(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  itemCount: _themes.length + (_isLoadingMore ? 1 : 0),
-                  separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
-                  itemBuilder: (ctx, i) {
-                    if (i == _themes.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                    return _buildThemeItem(_themes[i], isDark);
-                  },
-                ),
+                child: _themes.isEmpty
+                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _loadInitialData, isDark: isDark))
+                  : ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                      itemCount: _themes.length + (_isLoadingMore ? 1 : 0),
+                      separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
+                      itemBuilder: (ctx, i) {
+                        if (i == _themes.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
+                        return _buildThemeItem(_themes[i], isDark);
+                      },
+                    ),
               ),
         ),
       ],
