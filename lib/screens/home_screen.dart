@@ -198,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildGlobalFilters(isDark),
             const SizedBox(height: 32),
             if (_isLoading && _widgets == null)
-              const SkeletonGrid(count: 4)
+              const GridSkeleton(count: 6)
             else if (_widgets != null) ...[
               _buildMetricsGrid(isDark),
               const SizedBox(height: 24),
@@ -300,7 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMetricsGrid(bool isDark) {
-    if (_widgets == null) return const SkeletonGrid(count: 6);
+    if (_widgets == null) return const GridSkeleton(count: 6);
     final data = _widgets!;
     final metrics = [
       {'label': "TODAY'S EARNINGS", 'value': "KSH ${_format(data['todays_earnings']?['value'])}", 'icon': Icons.account_balance_wallet_rounded, 'color': PaceColors.purple, 'bg': PaceColors.purple.withOpacity(0.08)},
@@ -397,12 +397,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildLegend(Color color, String label) => Row(children: [Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w600, color: PaceColors.getDimText(true), letterSpacing: 1))]);
 
   Widget _buildActivityTable(bool isDark) {
-    if (_transactions.isEmpty && _isLoading) return const SkeletonList(count: 5);
     return Container(
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
       child: Column(children: [
         _buildTableHeader(['CLIENT', 'PLAN', 'AMOUNT', 'REC'], isDark),
-        if (_transactions.isEmpty)
+        if (_isLoading)
+          const TransactionSkeleton(count: 10)
+        else if (_transactions.isEmpty)
           const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('NO LIVE CONNECTIONS FOUND', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey))))
         else
           ..._transactions.map((tx) => _buildTxRow(tx, isDark)).toList(),
@@ -425,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStationTable(bool isDark) {
-    if (_routerStatus.isEmpty && _isLoading) return const SkeletonList(count: 3);
+    if (_routerStatus.isEmpty && _isLoading) return const TransactionSkeleton(count: 3);
     return Container(
       decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
       child: Column(children: [
