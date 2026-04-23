@@ -179,7 +179,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
         const SizedBox(height: 24),
         _buildCalcRow('BASE', 'STARTER PLAN (PRO-RATED)', 'KSH 1,499 x ${billing?['cycle_progress'] ?? 0}% ELAPSED', 'KSH ${_currencyFormat.format((billing?['base_fee'] ?? 0) * (billing?['cycle_progress'] ?? 0) / 100)}', isDark),
         const Divider(height: 32),
-        _buildCalcRow('ADD', 'CLIENT SURCHARGE', '${billing?['additional_users'] ?? 0} CLIENTS ABOVE TIER 1', 'KSH ${_currencyFormat.format(billing?['extra_fee'] ?? 0)}', isDark, iconColor: Colors.orangeAccent),
+        _buildCalcRow('ADD', 'CLIENT SURCHARGE', '${billing?['additional_users'] ?? 0} CLIENTS ABOVE TIER 1 (x KSH 5/EA)', 'KSH ${_currencyFormat.format(billing?['extra_fee'] ?? 0)}', isDark, iconColor: Colors.orangeAccent),
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(20),
