@@ -294,7 +294,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(LucideIcons.logOut, color: Colors.blueGrey, size: 20),
-                title: Text('Sign Out Session', style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontSize: 13, fontWeight: FontWeight.bold)),
+                title: Text('Sign Out Session', style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontSize: 13, fontWeight: FontWeight.w600)),
                 onTap: () {
                   settings.logout();
                   Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LandingScreen()));
@@ -313,7 +313,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
           backgroundColor: PaceColors.getCard(isDark),
           selectedItemColor: PaceColors.purple,
           unselectedItemColor: PaceColors.getDimText(isDark),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: const [
             BottomNavigationBarItem(icon: Icon(LucideIcons.layoutDashboard), label: 'Home'),
@@ -342,9 +342,9 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text(settings.accountName?.toUpperCase() ?? 'ADMINISTRATOR', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5)),
+            Text(settings.accountName?.toUpperCase() ?? 'ADMINISTRATOR', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 0.5)),
             const SizedBox(height: 4),
-            Text(settings.activeAccount != null ? "${settings.activeAccount!.subdomain}.${settings.activeAccount!.domain}" : 'PACE WISP', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.75), fontWeight: FontWeight.bold)),
+            Text(settings.activeAccount != null ? "${settings.activeAccount!.subdomain}.${settings.activeAccount!.domain}" : 'PACE WISP', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.75), fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -354,7 +354,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
   Widget _buildDrawerSection(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-      child: Text(title, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+      child: Text(title, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
     );
   }
 
@@ -368,7 +368,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
         selectedTileColor: PaceColors.purple.withOpacity(0.1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: Icon(icon, color: isSelected ? PaceColors.purple : PaceColors.getSecondaryText(isDark), size: 18),
-        title: Text(title, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w600, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+        title: Text(title, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w600, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
         onTap: () {
           setState(() => _selectedIndex = index);
           Navigator.pop(context);
