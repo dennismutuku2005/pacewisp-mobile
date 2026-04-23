@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 
 class WhatsAppAlertsScreen extends StatefulWidget {
@@ -77,32 +78,34 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
             : RefreshIndicator(
                 onRefresh: _fetchData,
                 color: PaceColors.purple,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  children: [
-                    _buildToggleCard(
-                      'ROUTER HEALTH ALERTS', 
-                      'Pings every 12 minutes', 
-                      LucideIcons.wifi, 
-                      _data['reporting_enabled'] == true || _data['reporting_enabled'] == 1,
-                      (val) => _handleAction('update_reporting', body: {'enable': val}),
-                      isDark
+                child: _data.isEmpty
+                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchData, isDark: isDark))
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                      children: [
+                        _buildToggleCard(
+                          'ROUTER HEALTH ALERTS', 
+                          'Pings every 12 minutes', 
+                          LucideIcons.wifi, 
+                          _data['reporting_enabled'] == true || _data['reporting_enabled'] == 1,
+                          (val) => _handleAction('update_reporting', body: {'enable': val}),
+                          isDark
+                        ),
+                        const SizedBox(height: 12),
+                        _buildToggleCard(
+                          'BILLING NOTIFICATIONS', 
+                          'Friendly 5-day reminders', 
+                          LucideIcons.bell, 
+                          _data['billing_reporting_enabled'] == true || _data['billing_reporting_enabled'] == 1,
+                          (val) => _handleAction('update_billing_reporting', body: {'enable': val}),
+                          isDark
+                        ),
+                        const SizedBox(height: 24),
+                        _buildVerificationCard(isDark),
+                        const SizedBox(height: 24),
+                        _buildRouterPanelTrigger(isDark),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    _buildToggleCard(
-                      'BILLING NOTIFICATIONS', 
-                      'Friendly 5-day reminders', 
-                      LucideIcons.bell, 
-                      _data['billing_reporting_enabled'] == true || _data['billing_reporting_enabled'] == 1,
-                      (val) => _handleAction('update_billing_reporting', body: {'enable': val}),
-                      isDark
-                    ),
-                    const SizedBox(height: 24),
-                    _buildVerificationCard(isDark),
-                    const SizedBox(height: 24),
-                    _buildRouterPanelTrigger(isDark),
-                  ],
-                ),
               ),
         ),
       ],
