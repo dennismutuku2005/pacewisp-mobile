@@ -169,8 +169,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('CUSTOMER REGISTRY', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-          Text('CENTRALIZED HOTSPOT USER MANAGEMENT', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('CUSTOMER REGISTRY', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+          Text('CENTRALIZED HOTSPOT USER MANAGEMENT', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -205,11 +205,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
               children: [
                 Icon(icon, size: 12, color: color),
                 const SizedBox(width: 6),
-                Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: color, letterSpacing: 1)),
+                Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: color, letterSpacing: 1)),
               ],
             ),
             const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+            Text(value, style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w600, color: color)),
           ],
         ),
       ),
@@ -240,7 +240,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
             children: [
               Text(
                 '$_total TOTAL RECORDS FOUND', 
-                style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)
               ),
             ],
           ),
@@ -278,12 +278,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Text('FILTER BY NODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
+              child: Text('FILTER BY NODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 2)),
             ),
             ListTile(
               onTap: () { setState(() => _selectedRouter = 'all'); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
               leading: Icon(LucideIcons.globe, size: 18, color: _selectedRouter == 'all' ? PaceColors.purple : PaceColors.getDimText(isDark)),
-              title: Text('All Nodes', style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == 'all' ? FontWeight.bold : FontWeight.normal)),
+              title: Text('All Nodes', style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == 'all' ? FontWeight.w600 : FontWeight.normal)),
               selected: _selectedRouter == 'all',
               selectedTileColor: PaceColors.purple.withOpacity(0.05),
             ),
@@ -292,7 +292,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               return ListTile(
                 onTap: () { setState(() => _selectedRouter = name); Navigator.pop(context); _fetchCustomers(pageNum: 1); },
                 leading: Icon(LucideIcons.router, size: 18, color: _selectedRouter == name ? PaceColors.purple : PaceColors.getDimText(isDark)),
-                title: Text(name.toUpperCase(), style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == name ? FontWeight.bold : FontWeight.normal)),
+                title: Text(name.toUpperCase(), style: TextStyle(fontSize: 13, fontWeight: _selectedRouter == name ? FontWeight.w600 : FontWeight.normal)),
                 selected: _selectedRouter == name,
                 selectedTileColor: PaceColors.purple.withOpacity(0.05),
               );
@@ -313,9 +313,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('PHONE & IDENTIFIER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('SPENT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('PHONE & IDENTIFIER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('SPENT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
       ),
     );
@@ -336,15 +336,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(c['phone']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                  Text(c['phone']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                   const SizedBox(height: 4),
-                  Text(c['mac']?.toString().toUpperCase() ?? 'NO MAC RECORDED', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  Text(c['mac']?.toString().toUpperCase() ?? 'NO MAC RECORDED', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                 ],
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text('KES ${c['totalSpent'] ?? '0'}', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+              child: Text('KES ${c['totalSpent'] ?? '0'}', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
             ),
             Expanded(
               flex: 2,
@@ -353,7 +353,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 children: [
                   PaceBadge(label: status.toUpperCase(), variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
                   const SizedBox(height: 4),
-                  Text('SESSIONS: ${c['sessions'] ?? 0}', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  Text('SESSIONS: ${c['sessions'] ?? 0}', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                 ],
               ),
             ),
@@ -366,62 +366,69 @@ class _CustomersScreenState extends State<CustomersScreen> {
   void _showCustomerDrawer(dynamic c, bool isDark) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32)), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('CUSTOMER PROFILE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
-                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
-            _buildDrawerInfo('PRIMARY PHONE', c['phone']?.toString() ?? 'N/A', isDark, isBig: true),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildDrawerInfo('MAC ADDRESS', c['mac']?.toString().toUpperCase() ?? 'N/A', isDark)),
-                Expanded(child: _buildDrawerInfo('LATEST STATUS', c['status']?.toString().toUpperCase() ?? 'N/A', isDark)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildDrawerInfo('TOTAL SPENT', 'KES ${c['totalSpent'] ?? 0}', isDark)),
-                Expanded(child: _buildDrawerInfo('SESSIONS', '${c['sessions'] ?? 0}', isDark)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildDrawerInfo('LAST VISIBILITY', c['lastSeen']?.toString().toUpperCase() ?? 'N/A', isDark),
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: c['phone'].toString())));
-                    },
-                    icon: const Icon(LucideIcons.history, size: 16),
-                    label: const Text('VIEW HISTORY & LOGS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: PaceColors.purple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('CUSTOMER PROFILE', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
+                      IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildDrawerInfo('PRIMARY PHONE', c['phone']?.toString() ?? 'N/A', isDark, isBig: true),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDrawerInfo('MAC ADDRESS', c['mac']?.toString().toUpperCase() ?? 'N/A', isDark)),
+                      Expanded(child: _buildDrawerInfo('LATEST STATUS', c['status']?.toString().toUpperCase() ?? 'N/A', isDark)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDrawerInfo('TOTAL SPENT', 'KES ${c['totalSpent'] ?? 0}', isDark)),
+                      Expanded(child: _buildDrawerInfo('SESSIONS', '${c['sessions'] ?? 0}', isDark)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _buildDrawerInfo('LAST VISIBILITY', c['lastSeen']?.toString().toUpperCase() ?? 'N/A', isDark),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: c['phone'].toString())));
+                      },
+                      icon: const Icon(LucideIcons.history, size: 16),
+                      label: const Text('VIEW HISTORY & LOGS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: PaceColors.purple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -432,9 +439,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: isBig ? 18 : 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        Text(value, style: TextStyle(fontSize: isBig ? 18 : 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
       ],
     );
   }
@@ -446,7 +453,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
         children: [
           Icon(LucideIcons.users, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
           const SizedBox(height: 16),
-          Text('NO CUSTOMERS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Text('NO CUSTOMERS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
         ],
       ),
     );
