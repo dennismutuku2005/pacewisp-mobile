@@ -5,6 +5,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/skeleton.dart';
+import '../components/empty_state.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -69,12 +70,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             : RefreshIndicator(
                 onRefresh: () => _fetchNotifications(isRefresh: true),
                 color: PaceColors.purple,
-              child: _notifications.isEmpty ? _buildEmpty(isDark) : ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 120),
-                  itemCount: _notifications.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, color: PaceColors.getBorder(isDark)),
-                  itemBuilder: (ctx, i) => _buildCard(_notifications[i], isDark),
-                ),
+                child: _notifications.isEmpty 
+                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchNotifications(isRefresh: true), isDark: isDark, title: 'ALL CAUGHT UP', subtitle: 'No pending system notifications. Slide down to refresh.'))
+                  : ListView.separated(
+                      padding: const EdgeInsets.only(bottom: 120),
+                      itemCount: _notifications.length,
+                      separatorBuilder: (_, __) => Divider(height: 1, color: PaceColors.getBorder(isDark)),
+                      itemBuilder: (ctx, i) => _buildCard(_notifications[i], isDark),
+                    ),
               ),
         ),
       ],
@@ -141,12 +144,4 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildEmpty(bool isDark) {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(LucideIcons.bellOff, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
-      const SizedBox(height: 16),
-      Text('ALL CAUGHT UP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-      Text('No pending system notifications', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
-    ]));
-  }
 }
