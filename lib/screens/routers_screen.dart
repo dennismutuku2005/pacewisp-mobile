@@ -106,7 +106,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('YOUR MIKROTIKS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-              Text('CONTROL AND SYNCHRONIZATION STATUS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              Text('CONTROL AND SYNCHRONIZATION STATUS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
             ],
           ),
           if (settings.hasPolicy('manage_routers'))
@@ -130,8 +130,8 @@ class _RoutersScreenState extends State<RoutersScreen> {
               Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: const Icon(LucideIcons.router, color: PaceColors.purple, size: 20)),
               const SizedBox(width: 16),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(r['router_name']?.toString().toUpperCase().replaceAll('_', ' ') ?? 'HOTSPOT UNIT', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-                Text(r['ip_address'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+                Text(r['router_name']?.toString().toUpperCase().replaceAll('_', ' ') ?? 'HOTSPOT UNIT', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple)),
+                Text(r['ip_address'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
               ])),
               PaceBadge(label: isOnline ? 'ONLINE' : 'OFFLINE', variant: isOnline ? BadgeVariant.success : BadgeVariant.error),
             ],
@@ -165,9 +165,9 @@ class _RoutersScreenState extends State<RoutersScreen> {
 
   Widget _buildHealthMet(String label, String val, IconData icon, bool isDark) {
     return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [Icon(icon, size: 10, color: Colors.grey), const SizedBox(width: 4), Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1))]),
+      Row(children: [Icon(icon, size: 10, color: Colors.grey), const SizedBox(width: 4), Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1))]),
       const SizedBox(height: 4),
-      Text(val, style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(val, style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600)),
     ]));
   }
 
@@ -177,7 +177,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(6)),
-      child: Text('$label: ${r['accountNumber'] ?? '---'}', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w900, color: PaceColors.purple)),
+      child: Text('$label: ${r['accountNumber'] ?? '---'}', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.purple)),
     );
   }
 
@@ -192,7 +192,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('ROUTER MANAGEMENT', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+            Text('ROUTER MANAGEMENT', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
             const SizedBox(height: 24),
             _buildActionItem('Edit Identity & Login', LucideIcons.edit3, Colors.orange, () {
               Navigator.pop(context);
@@ -222,7 +222,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
     return ListTile(
       onTap: onTap,
       leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 18)),
-      title: Text(label, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold)),
+      title: Text(label, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600)),
       trailing: const Icon(LucideIcons.chevronRight, size: 14),
     );
   }
@@ -279,7 +279,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(Provider.of<SettingsProvider>(context).isDarkMode),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(editing == null ? 'ADD NEW ROUTER' : 'EDIT ROUTER', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+        title: Text(editing == null ? 'ADD NEW ROUTER' : 'EDIT ROUTER', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -316,10 +316,10 @@ class _RoutersScreenState extends State<RoutersScreen> {
   Widget _buildEditField(String label, TextEditingController ctrl, IconData icon) {
     final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: const EdgeInsets.only(left: 4, bottom: 6), child: Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1))),
+      Padding(padding: const EdgeInsets.only(left: 4, bottom: 6), child: Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1))),
       TextField(
         controller: ctrl, 
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           prefixIcon: Icon(icon, size: 16, color: PaceColors.purple), 
           filled: true, fillColor: PaceColors.getSurface(isDark),
@@ -360,18 +360,18 @@ class _RoutersScreenState extends State<RoutersScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('BILLING CONFIGURATION', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1)),
+              Text('BILLING CONFIGURATION', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
               const SizedBox(height: 24),
-              Text('PAYMENT GATEWAY', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5)),
+              Text('PAYMENT GATEWAY', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1.5)),
               const SizedBox(height: 12),
               Wrap(spacing: 8, children: ['kcb', 'equity', 'ncba', 'till', 'custom'].map((b) => ChoiceChip(
-                label: Text(b.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                label: Text(b.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                 selected: selectedBank == b,
                 onSelected: (s) => setS(() => selectedBank = b),
                 selectedColor: PaceColors.purple.withOpacity(0.2),
               )).toList()),
               const SizedBox(height: 24),
-              Text('ACCOUNT REFERENCE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5)),
+              Text('ACCOUNT REFERENCE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1.5)),
               const SizedBox(height: 8),
               TextField(
                 controller: accController,
@@ -407,7 +407,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
                    }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: const Text('SAVE CONFIGURATION', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text('SAVE CONFIGURATION', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
               )),
             ],
           ),
