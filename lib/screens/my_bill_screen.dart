@@ -102,44 +102,53 @@ class _MyBillScreenState extends State<MyBillScreen> {
     return Container(
       decoration: BoxDecoration(
         color: PaceColors.getCard(isDark), 
-        borderRadius: BorderRadius.circular(24), 
+        borderRadius: BorderRadius.circular(28), 
         border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
+        boxShadow: isDark ? [] : [BoxShadow(color: PaceColors.purple.withOpacity(0.05), blurRadius: 30, offset: const Offset(0, 10))]
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
-          Container(height: 4, width: double.infinity, color: PaceColors.purple),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [PaceColors.purple, PaceColors.purple.withOpacity(0.8)]),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('CURRENT SERVICE PERIOD', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
+                Text(_formatDate(sub?['current_period_end']), style: GoogleFonts.jetBrainsMono(fontSize: 8, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('AMOUNT DUE TO DATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                const Icon(LucideIcons.receipt, color: PaceColors.purple, size: 18),
-              ]),
-              const SizedBox(height: 16),
-              Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-                Text('KSH', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
-                const SizedBox(width: 8),
-                Text(_currencyFormat.format(billing?['current_estimated_bill'] ?? 0), style: GoogleFonts.figtree(fontSize: 34, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -1)),
+                Text('ESTIMATED ACCRUAL', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(LucideIcons.activity, color: PaceColors.purple, size: 14)),
               ]),
               const SizedBox(height: 12),
+              Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
+                Text('KES', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple.withOpacity(0.5))),
+                const SizedBox(width: 8),
+                Text(_currencyFormat.format(billing?['current_estimated_bill'] ?? 0), style: GoogleFonts.figtree(fontSize: 42, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -1.5)),
+              ]),
+              const SizedBox(height: 20),
               Row(children: [
                 Icon(LucideIcons.calendar, size: 12, color: PaceColors.getDimText(isDark)),
                 const SizedBox(width: 8),
-                Text(cyclesubs, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
+                Text(cyclesubs, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
               ]),
             ]),
           ),
           Container(
-            height: 8,
+            height: 6,
             width: double.infinity,
-            decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
-            child: FractionallySizedBox(alignment: Alignment.centerLeft, widthFactor: progress.clamp(0.0, 1.0), child: Container(color: PaceColors.purple)),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            child: Text('${(progress * 100).toInt()}% CYCLE PROGRESS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+            child: FractionallySizedBox(alignment: Alignment.centerLeft, widthFactor: progress.clamp(0.0, 1.0), child: Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [PaceColors.purple, Colors.blueAccent])))),
           ),
         ],
       ),
