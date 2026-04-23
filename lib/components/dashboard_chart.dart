@@ -44,7 +44,7 @@ class DashboardChart extends StatelessWidget {
                 isRevenue ? 'REV: KSH ${rod.toY.toInt()}' : 'ENT: ${rod.toY.toInt()}',
                 GoogleFonts.figtree(
                   color: isRevenue ? PaceColors.purple : const Color(0xFF22C55E),
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                   fontSize: 10,
                 ),
               );
@@ -113,7 +113,7 @@ class DashboardChart extends StatelessWidget {
                   isRevenue ? 'REVENUE: KSH ${spot.y.toInt()}' : 'ENTRIES: ${spot.y.toInt()}',
                   GoogleFonts.figtree(
                     color: isRevenue ? PaceColors.purple : const Color(0xFF22C55E),
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     fontSize: 10,
                   ),
                 );
@@ -179,7 +179,7 @@ class DashboardChart extends StatelessWidget {
                   chartData[index]['day']?.toString().split(' ')[0].toUpperCase() ?? '',
                   style: GoogleFonts.figtree(
                     color: PaceColors.getDimText(isDark),
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     fontSize: 8,
                     letterSpacing: 1,
                   ),
@@ -197,7 +197,7 @@ class DashboardChart extends StatelessWidget {
           getTitlesWidget: (value, meta) {
              if (value == 0) return const SizedBox();
              String label = value >= 1000 ? '${(value / 1000).toStringAsFixed(0)}k' : value.toStringAsFixed(0);
-             return Text(label, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w900, fontSize: 8));
+             return Text(label, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, fontSize: 8));
           },
           reservedSize: 32,
         ),
