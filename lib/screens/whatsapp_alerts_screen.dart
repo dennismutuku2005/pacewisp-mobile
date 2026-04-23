@@ -8,6 +8,8 @@ import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/empty_state.dart';
 import '../components/skeleton.dart';
+import '../components/otp_modal.dart';
+import '../components/overlay_loader.dart';
 
 class WhatsAppAlertsScreen extends StatefulWidget {
   const WhatsAppAlertsScreen({super.key});
@@ -21,8 +23,6 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   Map<String, dynamic> _data = {};
-  String _otp = '';
-  bool _showOtpInput = false;
 
   @override
   void initState() {
@@ -48,18 +48,33 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
     if (mounted) {
       if (res?['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Action Successful'), backgroundColor: PaceColors.emerald));
-        if (action == 'send_otp') setState(() => _showOtpInput = true);
-        if (action == 'verify_otp') {
-          setState(() { _showOtpInput = false; _otp = ''; });
+        if (action == 'send_otp') {
+          _showOtpModal();
+        } else if (action == 'verify_otp') {
           _fetchData();
         } else {
           _fetchData();
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Action Failed'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Action Failed'), backgroundColor: Colors.redAccent));
       }
       setState(() => _isSaving = false);
     }
+  }
+
+  void _showOtpModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => OtpModal(
+        phoneNumber: _data['user']?['phone'] ?? '---',
+        onVerify: (code) {
+          Navigator.pop(context);
+          _handleAction('verify_otp', body: {'otp': code});
+        },
+      ),
+    );
   }
 
   @override
@@ -69,46 +84,50 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
 
     if (!settings.hasPolicy('wa_alerts')) return const Center(child: Text('ACCESS RESTRICTED'));
 
-    return Column(
-      children: [
-        _buildHeader(isDark),
-        Expanded(
-          child: _isLoading 
-            ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 3))
-            : RefreshIndicator(
-                onRefresh: _fetchData,
-                color: PaceColors.purple,
-                child: _data.isEmpty
-                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchData, isDark: isDark))
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                      children: [
-                        _buildToggleCard(
-                          'ROUTER HEALTH ALERTS', 
-                          'Pings every 12 minutes', 
-                          LucideIcons.wifi, 
-                          _data['reporting_enabled'] == true || _data['reporting_enabled'] == 1,
-                          (val) => _handleAction('update_reporting', body: {'enable': val}),
-                          isDark
-                        ),
-                        const SizedBox(height: 12),
-                        _buildToggleCard(
-                          'BILLING NOTIFICATIONS', 
-                          'Friendly 5-day reminders', 
-                          LucideIcons.bell, 
-                          _data['billing_reporting_enabled'] == true || _data['billing_reporting_enabled'] == 1,
-                          (val) => _handleAction('update_billing_reporting', body: {'enable': val}),
-                          isDark
-                        ),
-                        const SizedBox(height: 24),
-                        _buildVerificationCard(isDark),
-                        const SizedBox(height: 24),
-                        _buildRouterPanelTrigger(isDark),
-                      ],
-                    ),
-              ),
-        ),
-      ],
+    return PaceOverlayLoader(
+      isLoading: _isSaving,
+      message: 'Processing Verification...',
+      child: Column(
+        children: [
+          _buildHeader(isDark),
+          Expanded(
+            child: _isLoading 
+              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 3))
+              : RefreshIndicator(
+                  onRefresh: _fetchData,
+                  color: PaceColors.purple,
+                  child: _data.isEmpty
+                    ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchData, isDark: isDark))
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                        children: [
+                          _buildToggleCard(
+                            'ROUTER HEALTH ALERTS', 
+                            'Pings every 12 minutes', 
+                            LucideIcons.wifi, 
+                            _data['reporting_enabled'] == true || _data['reporting_enabled'] == 1,
+                            (val) => _handleAction('update_reporting', body: {'enable': val}),
+                            isDark
+                          ),
+                          const SizedBox(height: 12),
+                          _buildToggleCard(
+                            'BILLING NOTIFICATIONS', 
+                            'Friendly 5-day reminders', 
+                            LucideIcons.bell, 
+                            _data['billing_reporting_enabled'] == true || _data['billing_reporting_enabled'] == 1,
+                            (val) => _handleAction('update_billing_reporting', body: {'enable': val}),
+                            isDark
+                          ),
+                          const SizedBox(height: 24),
+                          _buildVerificationCard(isDark),
+                          const SizedBox(height: 24),
+                          _buildRouterPanelTrigger(isDark),
+                        ],
+                      ),
+                ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -163,44 +182,47 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
     final bool verified = _data['user']?['whatsapp_verified'] == true || _data['user']?['whatsapp_verified'] == 1;
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark))),
+      decoration: BoxDecoration(
+        color: PaceColors.getSurface(isDark), 
+        borderRadius: BorderRadius.circular(24), 
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            const Icon(LucideIcons.smartphone, size: 14, color: PaceColors.purple),
-            const SizedBox(width: 8),
-            Text('ADMIN VERIFICATION', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            const Icon(LucideIcons.smartphone, size: 16, color: PaceColors.purple),
+            const SizedBox(width: 12),
+            Text('ADMIN VERIFICATION', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
             const Spacer(),
             PaceBadge(label: verified ? 'CONNECTED' : 'UNVERIFIED', variant: verified ? BadgeVariant.success : BadgeVariant.error),
           ]),
           const SizedBox(height: 24),
           Text(_data['user']?['phone'] ?? 'NO PHONE SET', style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-          Text('Automated reports will be sent to this number.', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
+          Text('Automated reports and critical system logs will be sent to this verified number.', style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
           const SizedBox(height: 24),
-          if (!verified) ...[
-            if (!_showOtpInput)
-              ElevatedButton(
-                onPressed: _isSaving ? null : () => _handleAction('send_otp'),
-                style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: Text('SEND VERIFICATION CODE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
-              )
-            else ...[
-              TextField(
-                onChanged: (v) => setState(() => _otp = v),
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                style: TextStyle(letterSpacing: 8, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
-                decoration: InputDecoration(hintText: '000000', filled: true, fillColor: PaceColors.getBackground(isDark), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none)),
+          if (!verified)
+            ElevatedButton(
+              onPressed: _isSaving ? null : () => _handleAction('send_otp'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PaceColors.purple, 
+                padding: const EdgeInsets.symmetric(vertical: 16), 
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
               ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: (_isSaving || _otp.length < 4) ? null : () => _handleAction('verify_otp', body: {'otp': _otp}),
-                style: ElevatedButton.styleFrom(backgroundColor: PaceColors.emerald, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: Text('VERIFY & ACTIVATE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
-              ),
-            ],
-          ],
+              child: Text('SEND VERIFICATION CODE', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1)),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(color: PaceColors.emerald.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(LucideIcons.checkCircle2, color: PaceColors.emerald, size: 16),
+                const SizedBox(width: 8),
+                Text('VERIFICATION SECURED', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.emerald, letterSpacing: 1)),
+              ]),
+            ),
         ],
       ),
     );
@@ -210,17 +232,31 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
     int subCount = (_data['routers'] as List?)?.where((r) => r['subscribed'] == true || r['subscribed'] == 1).length ?? 0;
     return InkWell(
       onTap: () => _showRouterSelection(isDark),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: PaceColors.purple.withOpacity(0.05), 
+          borderRadius: BorderRadius.circular(24), 
+          border: Border.all(color: PaceColors.purple.withOpacity(0.1)),
+        ),
         child: Column(
           children: [
-            const Icon(LucideIcons.router, color: PaceColors.purple, size: 32),
-            const SizedBox(height: 16),
-            Text('INFRASTRUCTURE SELECTION', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.purple)),
-            Text('Monitoring $subCount active nodes', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
-            const SizedBox(height: 16),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: PaceColors.purple, borderRadius: BorderRadius.circular(12)), child: Text('MANAGE SUBSCRIPTIONS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white))),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle),
+              child: const Icon(LucideIcons.router, color: PaceColors.purple, size: 32),
+            ),
+            const SizedBox(height: 24),
+            Text('INFRASTRUCTURE SELECTION', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple, letterSpacing: 0.5)),
+            const SizedBox(height: 8),
+            Text('Currently monitoring $subCount active nodes', style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => _showRouterSelection(isDark),
+              style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), elevation: 0),
+              child: Text('MANAGE SUBSCRIPTIONS', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1)),
+            ),
           ],
         ),
       ),
@@ -235,12 +271,14 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setM) => Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('NODE ALERTS', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
+              Text('NODE ALERTS', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 2)),
+              const SizedBox(height: 8),
+              Text('Subscribe to reachability reports for specific nodes', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
               const SizedBox(height: 24),
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
@@ -252,15 +290,16 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
                     final r = routers[i];
                     final bool sub = r['subscribed'] == true || r['subscribed'] == 1;
                     return ListTile(
+                      contentPadding: EdgeInsets.zero,
                       dense: true,
-                      title: Text(r['router_name'] ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
-                      subtitle: Text(r['ip_address'] ?? '', style: GoogleFonts.jetBrainsMono(fontSize: 9, color: Colors.grey)),
+                      title: Text(r['router_name']?.toUpperCase() ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+                      subtitle: Text(r['ip_address'] ?? '', style: GoogleFonts.jetBrainsMono(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
                       trailing: IconButton(
                         onPressed: () async {
                            await _handleAction('toggle_router', body: {'router_id': r['id'], 'enable': !sub});
                            setM(() { routers[i]['subscribed'] = !sub; });
                         },
-                        icon: Icon(sub ? LucideIcons.checkCircle2 : LucideIcons.circle, color: sub ? PaceColors.purple : Colors.grey, size: 24),
+                        icon: Icon(sub ? LucideIcons.checkCircle2 : LucideIcons.circle, color: sub ? PaceColors.purple : PaceColors.getDimText(isDark), size: 24),
                       ),
                     );
                   },
@@ -268,9 +307,9 @@ class _WhatsAppAlertsScreenState extends State<WhatsAppAlertsScreen> {
               ),
               const SizedBox(height: 24),
               Row(children: [
-                Expanded(child: ElevatedButton(onPressed: () => _handleAction('toggle_all_on'), style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple.withOpacity(0.1), foregroundColor: PaceColors.purple), child: const Text('SELECT ALL'))),
+                Expanded(child: OutlinedButton(onPressed: () => _handleAction('toggle_all_on'), style: OutlinedButton.styleFrom(side: const BorderSide(color: PaceColors.purple), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text('SELECT ALL', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.purple)))),
                 const SizedBox(width: 12),
-                Expanded(child: ElevatedButton(onPressed: () => _handleAction('toggle_all_off'), style: ElevatedButton.styleFrom(backgroundColor: Colors.red.withOpacity(0.1), foregroundColor: Colors.red), child: const Text('CLEAR ALL'))),
+                Expanded(child: OutlinedButton(onPressed: () => _handleAction('toggle_all_off'), style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.red.withOpacity(0.5)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text('CLEAR ALL', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.redAccent)))),
               ]),
               const SizedBox(height: 24),
             ],
