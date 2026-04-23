@@ -127,8 +127,8 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.phone, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-                Text('CUSTOMER USAGE & TRANSACTION LOGS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                Text(widget.phone, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+                Text('CUSTOMER USAGE & TRANSACTION LOGS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
               ],
             ),
           ),
@@ -164,9 +164,9 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
   Widget _statItem(String label, String value, bool isDark) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
+        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
         const SizedBox(height: 6),
-        Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+        Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
       ],
     );
   }
@@ -184,9 +184,9 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('TRANSACTION / PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('DATE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('AMOUNT', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('TRANSACTION / PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('DATE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 2, child: Text('AMOUNT', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
       ),
     );
@@ -208,11 +208,11 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(code, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                Text(code, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(plan.toString().toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.purple, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                    Text(plan.toString().toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.purple, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                     const SizedBox(width: 8),
                     PaceBadge(
                       label: isUsed ? 'USED' : 'ACTIVE', 
@@ -229,7 +229,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
           ),
           Expanded(
             flex: 2,
-            child: Text('KES $amount', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
+            child: Text('KES $amount', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.emerald)),
           ),
         ],
       ),
@@ -244,7 +244,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
           children: [
             Icon(LucideIcons.history, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
             const SizedBox(height: 16),
-            Text('NO HISTORY RECORDED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text('NO HISTORY RECORDED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
           ],
         ),
       ),
