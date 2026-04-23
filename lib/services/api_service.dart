@@ -176,7 +176,7 @@ class ApiService {
     else if (slug == 'active_customers') phpFile = '/active_connections.php';
     else if (slug == 'themes') phpFile = '/themes.php';
     else if (slug == 'active_themes') phpFile = '/themes.php';
-    else if (slug == 'system_settings') phpFile = '/system_data.php';
+    else if (slug == 'system_settings') phpFile = '/system_config.php';
     else if (slug == 'profile') phpFile = '/account.php';
     else if (slug == 'prepaid_vouchers') phpFile = '/vouchers.php';
     else if (slug == 'prepaid_plans') phpFile = '/hotspot_plans.php';
@@ -399,10 +399,10 @@ class ApiService {
 
   // System Config
   Future<Map<String, dynamic>?> getSystemConfig(String routerId) async => 
-    _requestWithFallback('/hotspot_plans.php?action=get_system_config&router_id=$routerId');
+    fetchData(slug: 'system_settings', params: {'router_id': routerId});
 
   Future<Map<String, dynamic>?> saveSystemConfig(String routerId, Map<String, dynamic> data) async => 
-    _requestWithFallback('/hotspot_plans.php?action=save_system_config&router_id=$routerId', method: 'POST', data: data);
+    _requestWithFallback('/system_config.php', method: 'POST', data: { ...data, 'router_id': routerId });
 
   // M-Pesa Transactions
   Future<Map<String, dynamic>?> getMpesaTransactions({int page = 1, String search = '', bool forceRefresh = false}) async => 
