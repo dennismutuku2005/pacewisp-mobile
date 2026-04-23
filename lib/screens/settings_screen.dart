@@ -97,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('SYSTEM & ACCOUNT', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-          Text('CONFIGURE YOUR ISP BEHAVIOR AND PREFERENCES', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          Text('CONFIGURE YOUR ISP BEHAVIOR AND PREFERENCES', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -110,10 +110,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         children: [
           Row(children: [
-            Container(width: 48, height: 48, decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle), child: Center(child: Text(_user['name']?.toString().substring(0,1).toUpperCase() ?? '?', style: const TextStyle(color: PaceColors.purple, fontWeight: FontWeight.bold)))),
+            Container(width: 48, height: 48, decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle), child: Center(child: Text(_user['name']?.toString().substring(0,1).toUpperCase() ?? '?', style: const TextStyle(color: PaceColors.purple, fontWeight: FontWeight.w600)))),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(_user['name'] ?? 'USER', style: GoogleFonts.figtree(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(_user['name'] ?? 'USER', style: GoogleFonts.figtree(fontWeight: FontWeight.w600, fontSize: 16)),
               Text(_user['username'] ?? 'username', style: TextStyle(fontSize: 12, color: PaceColors.getDimText(isDark))),
             ])),
             PaceBadge(label: _user['type']?.toString().toUpperCase() ?? 'STAFF', variant: BadgeVariant.secondary),
@@ -133,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       const SizedBox(width: 12),
       Text(label, style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark))),
       const Spacer(),
-      Text(val, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
+      Text(val, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
     ]);
   }
 
@@ -143,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('INFRASTRUCTURE LOGIC', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+          Text('INFRASTRUCTURE LOGIC', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
           const SizedBox(height: 4),
           Text('Manage global hotspot and billing behavior', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
         ],
@@ -157,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ACCOUNT SWITCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w900, color: PaceColors.purple, letterSpacing: 1.5)),
+          Text('ACCOUNT SWITCHER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
           const SizedBox(height: 4),
           Text('Seamlessly transition between managed ISP instances', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark))),
         ],
@@ -181,7 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             dense: true,
             onTap: isActive ? null : () => settings.switchAccount(index),
             leading: Icon(LucideIcons.globe, size: 16, color: isActive ? PaceColors.purple : Colors.grey),
-            title: Text(acc.accountName.toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: isActive ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+            title: Text(acc.accountName.toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: isActive ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
             subtitle: Text("${acc.subdomain}.${acc.domain}", style: GoogleFonts.figtree(fontSize: 9, color: Colors.grey)),
             trailing: isActive 
               ? const Icon(LucideIcons.checkCircle, color: PaceColors.purple, size: 16)
@@ -202,7 +202,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Icon(icon, size: 20, color: val ? PaceColors.purple : Colors.grey),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
             Text(sub, style: GoogleFonts.figtree(fontSize: 9, color: Colors.grey)),
           ])),
           Switch(value: val, onChanged: _isSaving ? null : onChanged, activeColor: PaceColors.purple),
