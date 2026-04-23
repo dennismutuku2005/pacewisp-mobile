@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
+import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
 
@@ -210,19 +211,21 @@ class _EntriesScreenState extends State<EntriesScreen> {
               : RefreshIndicator(
                   onRefresh: () => _fetchCachedThenLive(),
                   color: PaceColors.purple,
-                  child: ListView.separated(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
-                    itemCount: _entries.length + (_isLoadingMore ? 1 : 0),
-                    separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
-                    itemBuilder: (context, index) {
-                      if (index == _entries.length) {
-                        return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                      }
-                      return _buildEntryItem(_entries[index], isDark);
-                    },
-                  ),
+                  child: _entries.isEmpty 
+                    ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchCachedThenLive, isDark: isDark))
+                    : ListView.separated(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                        itemCount: _entries.length + (_isLoadingMore ? 1 : 0),
+                        separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
+                        itemBuilder: (context, index) {
+                          if (index == _entries.length) {
+                            return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
+                          }
+                          return _buildEntryItem(_entries[index], isDark);
+                        },
+                      ),
                 ),
           ),
         ],
