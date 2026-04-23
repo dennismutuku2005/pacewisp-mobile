@@ -51,7 +51,18 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     WidgetsBinding.instance.addObserver(this);
     _checkAuth();
     _checkLock();
+    _initializeDefaultIndex();
     _setupHomeWidgetListener();
+  }
+
+  void _initializeDefaultIndex() {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    if (!settings.hasPolicy('view_dashboard')) {
+      // Find first allowed index
+      if (settings.hasPolicy('view_entries')) _selectedIndex = 3;
+      else if (settings.hasPolicy('view_vouchers')) _selectedIndex = 1;
+      else if (settings.hasPolicy('view_income')) _selectedIndex = 2;
+    }
   }
 
   void _setupHomeWidgetListener() {
@@ -230,7 +241,8 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                   padding: EdgeInsets.zero,
                   children: [
                     _buildDrawerSection('OVERVIEW', isDark),
-                    _buildDrawerItem(0, 'Dashboard', LucideIcons.layoutDashboard, isDark),
+                    if (settings.hasPolicy('view_dashboard'))
+                      _buildDrawerItem(0, 'Dashboard', LucideIcons.layoutDashboard, isDark),
                     if (settings.hasPolicy('view_entries'))
                       _buildDrawerItem(3, 'Entries', LucideIcons.activity, isDark),
                     if (settings.hasPolicy('view_notifications'))
@@ -285,7 +297,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                       _buildDrawerItem(15, 'Past Invoices', LucideIcons.history, isDark),
 
                     const Divider(height: 32),
-                    _buildDrawerItem(19, 'Preferences', LucideIcons.settings, isDark),
+                    _buildDrawerItem(19, 'App Preferences', LucideIcons.settings, isDark),
                     
                     const SizedBox(height: 40),
                   ],
