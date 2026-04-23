@@ -35,14 +35,19 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
 
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
-    final res = await _apiService.getMonthlyCustomers(forceRefresh: true);
-    if (mounted) {
-      setState(() {
-        final dynamic raw = res;
-        _users = raw?['users'] ?? raw?['data'] ?? raw?['customers'] ?? [];
-        _cycleStart = raw?['cycle_start'] ?? '';
-        _isLoading = false;
-      });
+    try {
+      final res = await _apiService.getMonthlyCustomers(forceRefresh: true);
+      if (mounted && res != null) {
+        setState(() {
+          _users = res['users'] ?? res['data'] ?? [];
+          _cycleStart = res['cycle_start']?.toString() ?? '';
+          _isLoading = false;
+        });
+      } else if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -51,19 +56,23 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    final filtered = _users.where((u) => (u['phone'] ?? '').toString().contains(_search)).toList();
-    final totalRevenue = _users.fold<double>(0, (sum, u) => sum + (double.tryParse(u['total_amount'].toString()) ?? 0));
+    final filtered = _users.where((u) {
+      final phone = (u['phone'] ?? '').toString().toLowerCase();
+      return phone.contains(_search.toLowerCase());
+    }).toList();
+    
+    final double totalRevenue = _users.fold(0, (sum, u) => sum + (double.tryParse(u['total_amount'].toString()) ?? 0));
 
-    return Container(
-      color: PaceColors.getBackground(isDark),
-      child: Column(
+    return Scaffold(
+      backgroundColor: PaceColors.getBackground(isDark),
+      body: Column(
         children: [
           _buildHeader(isDark),
-          _buildStatsCard(isDark, totalRevenue),
+          _buildSummaryBanner(isDark, totalRevenue),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: PaceSearchBar(
-              hint: 'Filter distinct users...', 
+              hint: 'FILTER BY PHONE...', 
               isDark: isDark, 
               onChanged: (val) => setState(() => _search = val)
             ),
@@ -80,7 +89,18 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
                         onRefresh: _fetchData,
                         color: PaceColors.purple,
                         child: filtered.isEmpty 
-                          ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchData, isDark: isDark))
+                          ? SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(), 
+                              child: Container(
+                                height: MediaQuery.of(context).size.height * 0.6,
+                                child: PaceEmptyState(
+                                  onRetry: _fetchData, 
+                                  isDark: isDark,
+                                  title: 'NO CYCLE DATA FOUND',
+                                  subtitle: 'No synchronization found for this billing period.',
+                                ),
+                              )
+                            )
                           : ListView.separated(
                               padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
                               itemCount: filtered.length,
@@ -105,38 +125,41 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('MONTHLY CUSTOMERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-          Text('DISTINCT USERS ACTIVE SINCE ${(_cycleStart.isEmpty ? "CURRENT CYCLE" : _cycleStart).toUpperCase()}', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+          Text('DISTINCT USERS ACTIVE IN CURRENT BILLING CYCLE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
   }
 
-  Widget _buildStatsCard(bool isDark, double revenue) {
+  Widget _buildSummaryBanner(bool isDark, double revenue) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark).withOpacity(0.5),
+        color: PaceColors.getCard(isDark),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
+        boxShadow: isDark ? [] : [BoxShadow(color: PaceColors.purple.withOpacity(0.05), blurRadius: 30, offset: const Offset(0, 10))]
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statItem('CYCLE USERS', _users.length.toString(), isDark),
-          _statItem('CYCLE REVENUE', 'KES ${NumberFormat("#,###").format(revenue)}', isDark),
-          _statItem('BILLING WINDOW', _cycleStart.isEmpty ? 'ACTIVE' : _cycleStart.split(' ')[0], isDark),
+          _statItem('CYCLE USERS', _users.length.toString(), LucideIcons.users, isDark, PaceColors.purple),
+          _statItem('CYCLE REVENUE', 'KES ${NumberFormat("#,###").format(revenue)}', LucideIcons.creditCard, isDark, PaceColors.emerald),
+          _statItem('BILLING START', _formatDateShort(_cycleStart), LucideIcons.calendar, isDark, Colors.blueAccent),
         ],
       ),
     );
   }
 
-  Widget _statItem(String label, String value, bool isDark) {
+  Widget _statItem(String label, String value, IconData icon, bool isDark, Color color) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
-        const SizedBox(height: 6),
-        Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+        Icon(icon, size: 14, color: color.withOpacity(0.7)),
+        const SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
+        const SizedBox(height: 4),
+        Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
       ],
     );
   }
@@ -153,7 +176,7 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('PHONE NUMBER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('PHONE / SESSION', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
           Expanded(flex: 2, child: Text('CYCLE PAID', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
           Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
         ],
@@ -162,10 +185,14 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
   }
 
   Widget _buildUserRow(dynamic u, bool isDark) {
-    final bool isActive = u['is_active'] == true || u['is_active'] == 1;
+    final bool isActive = (u['is_active'] == true || u['is_active'] == 1 || u['is_active'] == '1');
+    final String lastBought = u['last_bought']?.toString().split(' ')[0] ?? 'N/A';
+    final String phone = u['phone']?.toString() ?? 'PRIVATE';
 
     return InkWell(
-      onTap: () => _showUserDrawer(u, isDark),
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: phone)));
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
@@ -175,22 +202,36 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(u['phone']?.toString() ?? 'PRIVATE', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+                  Text(phone, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
                   const SizedBox(height: 4),
-                  Text('FIRST EVER: ${u['first_bought']?.toString().split(' ')[0] ?? 'N/A'}', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
+                  Row(
+                    children: [
+                      Text('LATEST: ', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                      Text(lastBought.toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.purple, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ],
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text('KES ${u['total_amount']}', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.emerald)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('KES ${NumberFormat("#,###").format(u['total_amount'] ?? 0)}', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
+                  Text('CYCLE TOTAL', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
             Expanded(
               flex: 2,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  PaceBadge(label: isActive ? 'ONLINE' : 'EXPIRED', variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
+                  PaceBadge(
+                    label: isActive ? 'ONLINE' : 'EXPIRED', 
+                    variant: isActive ? BadgeVariant.success : BadgeVariant.secondary
+                  ),
                 ],
               ),
             ),
@@ -200,81 +241,13 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
     );
   }
 
-  void _showUserDrawer(dynamic u, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32)), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 24),
-            Icon(LucideIcons.user, color: PaceColors.purple, size: 32),
-            const SizedBox(height: 12),
-            Text('BILLING SUMMARY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1.5)),
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  _buildDrawerItem('CUSTOMER PHONE', u['phone']?.toString() ?? 'N/A', isDark),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: _buildDrawerItem('FIRST BOUGHT', u['first_bought']?.toString().split(' ')[0] ?? 'N/A', isDark)),
-                      Expanded(child: _buildDrawerItem('LAST SEEN', u['last_bought']?.toString().split(' ')[0] ?? 'N/A', isDark)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: _buildDrawerItem('CYCLE REVENUE', 'KES ${u['total_amount'] ?? '0'}', isDark, valueColor: PaceColors.emerald)),
-                      Expanded(child: _buildDrawerItem('STATUS', (u['is_active'] == 1 ? 'ONLINE' : 'EXPIRED'), isDark, valueColor: (u['is_active'] == 1 ? PaceColors.emerald : Colors.red))),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: u['phone'].toString())));
-                      },
-                      icon: const Icon(LucideIcons.history, size: 16),
-                      label: const Text('VIEW FULL HISTORY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: PaceColors.purple,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _formatDateShort(String? date) {
+    if (date == null || date.isEmpty) return 'CURRENT';
+    try {
+      final d = DateTime.parse(date);
+      return DateFormat('dd MMM').format(d).toUpperCase();
+    } catch (_) {
+      return date.split(' ')[0].toUpperCase();
+    }
   }
-
-  Widget _buildDrawerItem(String label, String value, bool isDark, {Color? valueColor}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-        const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? PaceColors.getPrimaryText(isDark))),
-      ],
-    );
-  }
-
 }
-
