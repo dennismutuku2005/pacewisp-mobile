@@ -133,23 +133,32 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
     final status = (l['status'] ?? '').toString().toLowerCase();
     final bool isFailed = status == 'failed' || status == 'error';
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Row(children: [
-            Text(l['user']?.toString().toUpperCase() ?? 'SYSTEM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.getBorder(isDark))),
+      child: Row(
+        children: [
+          Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(color: isFailed ? Colors.red.withOpacity(0.1) : PaceColors.emerald.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(isFailed ? LucideIcons.alertCircle : LucideIcons.checkCircle2, color: isFailed ? Colors.red : PaceColors.emerald, size: 14),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text(l['user']?.toString().toUpperCase() ?? 'SYSTEM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+              const SizedBox(width: 8),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(4)), child: Text(l['action']?.toString().toUpperCase() ?? 'LOG', style: const TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.purple))),
+            ]),
+            const SizedBox(height: 4),
+            Text(l['description'] ?? '', style: TextStyle(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ])),
+          const SizedBox(width: 12),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(l['date']?.toString().split(' ')[0] ?? '', style: const TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.w600)),
+            Text(l['time'] ?? '', style: const TextStyle(fontSize: 8, color: Colors.grey)),
           ]),
-          PaceBadge(label: l['action']?.toString().toUpperCase() ?? 'LOG', variant: isFailed ? BadgeVariant.error : BadgeVariant.standard),
-        ]),
-        const SizedBox(height: 12),
-        Text(l['description'] ?? '', style: TextStyle(fontSize: 12, color: PaceColors.getDimText(isDark), height: 1.4)),
-        const SizedBox(height: 16),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(l['ip'] ?? 'INTERNAL', style: GoogleFonts.jetBrainsMono(fontSize: 8, color: Colors.grey)),
-          Text("${l['date']?.toString().split(' ')[0]} ${l['time']}", style: TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.w600)),
-        ]),
-      ]),
+        ],
+      ),
     );
   }
 }
