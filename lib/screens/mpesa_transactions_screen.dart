@@ -101,7 +101,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('TRANSACTION DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: -0.5)),
+                Text('TRANSACTION DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
                 IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(ctx)),
               ],
             ),
@@ -118,7 +118,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => Navigator.pop(ctx),
                 icon: const Icon(LucideIcons.checkCircle, size: 16),
-                label: const Text('CLOSE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                label: const Text('CLOSE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PaceColors.purple,
                   foregroundColor: Colors.white,
@@ -139,8 +139,8 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
         ],
       ),
     );
@@ -164,9 +164,9 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
             child: Row(
               children: [
-                Expanded(flex: 3, child: Text('RECEIPT / PHONE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-                Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-                Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+                Expanded(flex: 3, child: Text('RECEIPT / PHONE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+                Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+                Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
               ],
             ),
           ),
@@ -180,7 +180,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
                     ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Icon(LucideIcons.creditCard, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.1)),
                         const SizedBox(height: 16),
-                        Text('NO TRANSACTIONS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+                        Text('NO TRANSACTIONS FOUND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                       ]))
                     : ListView.separated(
                         controller: _scrollController,
@@ -215,8 +215,8 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('M-PESA TRANSACTIONS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-              Text('AUTOMATED AUDIT LOGS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              Text('M-PESA TRANSACTIONS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+              Text('AUTOMATED AUDIT LOGS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
             ],
           ),
           IconButton(onPressed: () {}, icon: const Icon(LucideIcons.download, color: PaceColors.purple, size: 20)),
@@ -261,7 +261,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(txn['mpesa_receipt_number'] ?? 'N/A', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                  Text(txn['mpesa_receipt_number'] ?? 'N/A', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
                   const SizedBox(height: 2),
                   Text(txn['phone_number'] ?? 'N/A', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
                 ],
@@ -269,7 +269,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
             ),
             Expanded(
               flex: 2,
-              child: Text('KES ${txn['amount']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+              child: Text('KES ${txn['amount']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
             ),
             Expanded(
               flex: 2,
@@ -278,7 +278,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                    child: Text(status.toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: statusColor)),
+                    child: Text(status.toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: statusColor)),
                   ),
                   const Spacer(),
                   Icon(Icons.more_vert, size: 16, color: PaceColors.getDimText(isDark)),
