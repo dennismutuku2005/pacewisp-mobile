@@ -45,29 +45,32 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
   }
 
   Future<void> _fetchCachedThenLive() async {
-    // 1. SILENT CACHE LOAD
-    final cached = await _apiService.getMpesaTransactions(page: 1, search: _search, forceRefresh: false);
-    if (mounted && cached != null && _transactions.isEmpty) {
-      setState(() {
-        _transactions = cached['data'] ?? [];
-        _total = cached['pagination']?['total'] ?? 0;
-        _hasMore = cached['pagination']?['has_more'] ?? false;
-        _isLoading = false;
-      });
-    }
+    try {
+      // 1. SILENT CACHE LOAD
+      final cached = await _apiService.getMpesaTransactions(page: 1, search: _search, forceRefresh: false);
+      if (mounted && cached != null && _transactions.isEmpty) {
+        setState(() {
+          _transactions = cached['data'] ?? [];
+          _total = cached['pagination']?['total'] ?? 0;
+          _hasMore = cached['pagination']?['has_more'] ?? false;
+          _isLoading = false;
+        });
+      }
 
-    // 2. LIVE REFRESH
-    final live = await _apiService.getMpesaTransactions(page: 1, search: _search, forceRefresh: true);
-    if (mounted && live != null) {
-      setState(() {
-        _transactions = live['data'] ?? [];
-        _total = live['pagination']?['total'] ?? 0;
-        _hasMore = live['pagination']?['has_more'] ?? false;
-        _page = 1;
-        _isLoading = false;
-      });
-    } else if (mounted) {
-      setState(() => _isLoading = false);
+      // 2. LIVE REFRESH
+      final live = await _apiService.getMpesaTransactions(page: 1, search: _search, forceRefresh: true);
+      if (mounted && live != null) {
+        setState(() {
+          _transactions = live['data'] ?? [];
+          _total = live['pagination']?['total'] ?? 0;
+          _hasMore = live['pagination']?['has_more'] ?? false;
+          _page = 1;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -181,6 +184,7 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
                     ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchCachedThenLive(), isDark: isDark))
                     : ListView.separated(
                         controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(bottom: 120),
                         itemCount: _transactions.length + (_isLoadingMore ? 1 : 0),
                         separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
