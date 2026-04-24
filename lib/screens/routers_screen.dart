@@ -33,14 +33,20 @@ class _RoutersScreenState extends State<RoutersScreen> {
 
   Future<void> _fetchRouters() async {
     if (_cache.isNotEmpty) {
-      setState(() { _routers = List.from(_cache); _isLoading = false; });
+      setState(() { 
+        _routers = _cache.map((item) => { ...item, 'isPinging': true }).toList(); 
+        _isLoading = false; 
+      });
       _startAutoPing();
     }
     final res = await _apiService.getRouters(forceRefresh: true);
     if (mounted) {
       final fresh = res?['data'] ?? [];
       _cache = fresh;
-      setState(() { _routers = List.from(fresh); _isLoading = false; });
+      setState(() { 
+        _routers = fresh.map((item) => { ...item, 'isPinging': true }).toList(); 
+        _isLoading = false; 
+      });
       _startAutoPing();
     }
   }
@@ -60,10 +66,21 @@ class _RoutersScreenState extends State<RoutersScreen> {
       final bool isOnline = stats?['status'] == 'online' || stats?['cpu'] != null;
       if (mounted && index < _routers.length) {
         setState(() {
-          _routers[index] = { ..._routers[index], 'stats': isOnline ? stats : null, 'status': isOnline ? 'active' : 'inactive' };
+          _routers[index] = { 
+            ..._routers[index], 
+            'stats': isOnline ? stats : null, 
+            'status': isOnline ? 'active' : 'inactive',
+            'isPinging': false
+          };
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted && index < _routers.length) {
+        setState(() {
+          _routers[index] = { ..._routers[index], 'isPinging': false, 'status': 'inactive' };
+        });
+      }
+    }
   }
 
   @override
@@ -132,8 +149,19 @@ class _RoutersScreenState extends State<RoutersScreen> {
         children: [
           Container(
             width: 36, height: 36,
-            decoration: BoxDecoration(color: isOnline ? PaceColors.emerald.withOpacity(0.1) : Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-            child: Icon(LucideIcons.router, color: isOnline ? PaceColors.emerald : Colors.red, size: 18),
+            decoration: BoxDecoration(
+              color: r['isPinging'] == true 
+                ? Colors.grey.withOpacity(0.1)
+                : (isOnline ? PaceColors.emerald.withOpacity(0.1) : Colors.red.withOpacity(0.1)), 
+              borderRadius: BorderRadius.circular(10)
+            ),
+            child: Icon(
+              LucideIcons.router, 
+              color: r['isPinging'] == true
+                ? Colors.grey
+                : (isOnline ? PaceColors.emerald : Colors.red), 
+              size: 18
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -149,7 +177,10 @@ class _RoutersScreenState extends State<RoutersScreen> {
                         style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.2)
                       ),
                     ),
-                    if (isOnline) ...[
+                    if (r['isPinging'] == true) ...[
+                      const SizedBox(width: 8),
+                      const PaceSkeleton(width: 20, height: 8, borderRadius: 4),
+                    ] else if (isOnline) ...[
                       const SizedBox(width: 4),
                       Container(width: 5, height: 5, decoration: const BoxDecoration(color: PaceColors.emerald, shape: BoxShape.circle)),
                     ],
@@ -163,8 +194,14 @@ class _RoutersScreenState extends State<RoutersScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end, 
             children: [
-              Text(stats?['cpu'] ?? '0%', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-              Text(stats?['uptime']?.toString().toUpperCase() ?? 'OFFLINE', style: const TextStyle(fontSize: 7.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+              if (r['isPinging'] == true) ...[
+                const PaceSkeleton(width: 30, height: 10),
+                const SizedBox(height: 4),
+                const PaceSkeleton(width: 40, height: 8),
+              ] else ...[
+                Text(stats?['cpu'] ?? '0%', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+                Text(stats?['uptime']?.toString().toUpperCase() ?? 'OFFLINE', style: const TextStyle(fontSize: 7.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+              ],
             ]
           ),
           const SizedBox(width: 10),
