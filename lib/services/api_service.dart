@@ -404,4 +404,26 @@ class ApiService {
       'invoice_id': invoiceId ?? '',
     });
 
+  // Themes & Marketplace
+  Future<Map<String, dynamic>?> getMarketplaceThemes({int page = 1, int limit = 10}) async {
+    final url = 'https://api.pacewisp.co.ke/endpoints/admin/themes.php?page=$page&limit=$limit';
+    try {
+      final response = await _dio.get(url).timeout(const Duration(seconds: 15));
+      if (response.data is Map) return response.data as Map<String, dynamic>;
+      if (response.data is String) return jsonDecode(response.data);
+    } catch (e) {
+      debugPrint('Marketplace API Error: $e');
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> getActiveThemes({bool forceRefresh = false}) async => 
+    fetchData(slug: 'active_themes', forceRefresh: forceRefresh);
+
+  Future<Map<String, dynamic>?> activateTheme(String themeId, String routerId) async => 
+    fetchData(slug: 'activate_theme', method: 'POST', body: {
+      'action': 'activate',
+      'theme_id': themeId,
+      'router_id': routerId,
+    });
 }
