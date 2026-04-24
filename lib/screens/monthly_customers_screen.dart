@@ -125,7 +125,7 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('MONTHLY CUSTOMERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-          Text('RECURRING CUSTOMERS WITH OVER 5 PURCHASES THIS CYCLE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+          Text('RECURRING CUSTOMERS WITH OVER 3 PURCHASES THIS CYCLE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
