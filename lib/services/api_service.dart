@@ -104,7 +104,7 @@ class ApiService {
       print('API: Probing URL: $url');
       final response = await _dio.request(
         url,
-        data: data,
+        data: data != null ? jsonEncode(data) : null,
         queryParameters: queryParameters,
         options: Options(
           method: method,
