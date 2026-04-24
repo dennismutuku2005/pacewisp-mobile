@@ -210,7 +210,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
       onTap: () => _showRouterModal(isDark),
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
           color: PaceColors.getCard(isDark), 
           borderRadius: BorderRadius.circular(20), 
@@ -218,14 +218,62 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
           boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]
         ),
         child: Row(children: [
-          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(12)), child: const Icon(LucideIcons.settings2, size: 18, color: PaceColors.purple)),
+          Container(
+            padding: const EdgeInsets.all(8), 
+            decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), borderRadius: BorderRadius.circular(10)), 
+            child: const Icon(LucideIcons.settings2, size: 16, color: PaceColors.purple)
+          ),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('TARGET NODE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w800, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-            Text(activeOne['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+            Text('TARGET NODE', style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w800, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+            Text(activeOne['router_name']?.toUpperCase() ?? 'SELECT ROUTER', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
           ])),
-          Icon(LucideIcons.chevronDown, size: 16, color: PaceColors.getDimText(isDark)),
+          Icon(LucideIcons.chevronDown, size: 14, color: PaceColors.getDimText(isDark)),
         ]),
+      ),
+    );
+  }
+
+  void _showRouterModal(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 24),
+            Text('SELECT TARGET NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 2)),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 24),
+                itemCount: _routers.length,
+                itemBuilder: (context, index) {
+                  final r = _routers[index];
+                  final bool isSelected = r['id'].toString() == _activeRouterId;
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+                    leading: Icon(LucideIcons.router, size: 18, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                    title: Text(r['router_name']?.toUpperCase() ?? '', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+                    trailing: isSelected ? const Icon(LucideIcons.checkCircle2, color: PaceColors.purple, size: 18) : null,
+                    onTap: () {
+                      setState(() => _activeRouterId = r['id'].toString());
+                      Navigator.pop(ctx);
+                      _loadConfig();
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -341,30 +389,4 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
     ]);
   }
 
-  void _showRouterModal(bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('SELECT TARGET NODE', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 2)),
-          const SizedBox(height: 24),
-          ..._routers.map((r) => ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 32),
-            leading: Icon(LucideIcons.router, color: r['id'].toString() == _activeRouterId ? PaceColors.purple : PaceColors.getDimText(isDark)),
-            title: Text(r['router_name']?.toUpperCase() ?? '', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
-            trailing: r['id'].toString() == _activeRouterId ? const Icon(LucideIcons.checkCircle2, color: PaceColors.purple, size: 20) : null,
-            onTap: () {
-              setState(() => _activeRouterId = r['id'].toString());
-              Navigator.pop(ctx);
-              _loadConfig();
-            },
-          )).toList(),
-          const SizedBox(height: 24),
-        ]),
-      ),
-    );
-  }
 }
