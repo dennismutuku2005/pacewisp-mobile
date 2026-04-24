@@ -360,8 +360,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   PaceBadge(label: status.toUpperCase(), variant: isActive ? BadgeVariant.success : BadgeVariant.secondary),
-                  const SizedBox(height: 4),
-                  Text('SESSIONS: ${c['sessions'] ?? 0}', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                 ],
               ),
             ),
@@ -409,7 +407,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   Row(
                     children: [
                       Expanded(child: _buildDrawerInfo('TOTAL SPENT', 'KES ${c['totalSpent'] ?? 0}', isDark)),
-                      Expanded(child: _buildDrawerInfo('SESSIONS', '${c['sessions'] ?? 0}', isDark)),
                     ],
                   ),
                   const SizedBox(height: 20),
