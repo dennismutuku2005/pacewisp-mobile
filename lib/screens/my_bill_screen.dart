@@ -211,7 +211,7 @@ class _MyBillScreenState extends State<MyBillScreen> {
 
   Widget _buildSidebarStats(bool isDark, dynamic billing, dynamic sub) {
     return Column(children: [
-        _buildSmallStatCard('CLIENT DENSITY', '${billing?['user_count'] ?? 0} ACTIVE NODES', LucideIcons.users, isDark, PaceColors.purple),
+        _buildSmallStatCard('CLIENT DENSITY', '${billing?['user_count'] ?? 0} RECURRING NODES', LucideIcons.users, isDark, PaceColors.purple),
         const SizedBox(height: 12),
         _buildSmallStatCard('BILLING POLICY', 'KSH 1,499 BASE TIER', LucideIcons.shieldCheck, isDark, Colors.blueAccent),
         const SizedBox(height: 12),
