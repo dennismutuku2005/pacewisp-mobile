@@ -274,7 +274,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                     if (settings.hasPolicy('manage_users'))
                       _buildDrawerItem(10, 'Staff Accounts', LucideIcons.badgeCheck, isDark),
                     if (settings.hasPolicy('system_config'))
-                      _buildDrawerItem(16, 'System Setup', LucideIcons.sliders, isDark),
+                      _buildDrawerItem(16, 'Hotspot Config', LucideIcons.sliders, isDark),
                     if (settings.hasPolicy('manage_themes'))
                       _buildDrawerItem(20, 'Design Library', LucideIcons.palette, isDark),
                     if (settings.hasPolicy('view_logs'))
