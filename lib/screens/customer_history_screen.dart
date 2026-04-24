@@ -152,10 +152,11 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
         border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _statItem('TOTAL SPENT', 'KES ${_summary?['total_spent'] ?? _summary?['total_amount'] ?? 0}', isDark),
           _statItem('ENTRIES', '${_summary?['sessions'] ?? _summary?['total_visits'] ?? 0}', isDark),
+          _statItem('JOIN DATE', _summary?['first_seen']?.toString().split(',')[0] ?? 'N/A', isDark),
           _statItem('LAST SEEN', _summary?['last_seen']?.toString().split(',')[0] ?? 'N/A', isDark),
         ],
       ),
