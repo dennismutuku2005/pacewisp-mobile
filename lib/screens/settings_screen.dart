@@ -188,7 +188,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                       const SizedBox(height: 32),
                       _buildSecurityHeader(isDark),
-                      _buildToggleItem('App Lock (Biometrics)', 'Require fingerprint or PIN to open app', settings.isAppLockEnabled, (v) => settings.toggleAppLock(v), LucideIcons.lock, isDark),
+                      _buildToggleItem(
+                        'App Lock (Biometrics)', 
+                        'Require fingerprint or PIN to open app', 
+                        settings.isAppLockEnabled, 
+                        (v) async {
+                          final bool didAuth = await _apiService.authenticateBiometric(
+                            reason: 'Verify identity to ${v ? 'enable' : 'disable'} App Lock'
+                          );
+                          if (didAuth) {
+                            settings.toggleAppLock(v);
+                          }
+                        }, 
+                        LucideIcons.lock, 
+                        isDark
+                      ),
                       _buildActionItem('Change Password', 'Update your account login credentials', LucideIcons.key, () => _showPasswordModal(isDark), isDark),
                       const SizedBox(height: 32),
                       _buildAccountSwitcherHeader(isDark, settings),
