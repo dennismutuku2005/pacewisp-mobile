@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'cache_service.dart';
+import 'lock_service.dart';
 
 class ApiService {
+  final LockService _lockService = LockService();
   final Dio _dio = Dio();
   final CacheService _cache = CacheService();
   String? _subdomain;
@@ -208,6 +210,10 @@ class ApiService {
       }
     }
     return data;
+  }
+
+  Future<bool> authenticateBiometric({String reason = 'Please authenticate to continue'}) async {
+    return await _lockService.authenticate(customReason: reason);
   }
 
   // --- ACTIONS ---
