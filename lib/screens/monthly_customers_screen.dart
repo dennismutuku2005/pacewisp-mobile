@@ -80,7 +80,7 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: _isLoading && _users.isEmpty
-              ? const CustomerRowSkeleton(count: 6)
+              ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 6))
               : RefreshIndicator(
                   onRefresh: _fetchData,
                   color: PaceColors.purple,
@@ -108,8 +108,8 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
                               itemBuilder: (context, index) => _buildUserRow(filtered[index], isDark),
                             ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
           ),
         ],
