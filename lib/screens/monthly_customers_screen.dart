@@ -144,19 +144,17 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statItem('CYCLE USERS', _users.length.toString(), LucideIcons.users, isDark, PaceColors.purple),
-          _statItem('CYCLE REVENUE', 'KES ${NumberFormat("#,###").format(revenue)}', LucideIcons.creditCard, isDark, PaceColors.emerald),
-          _statItem('BILLING START', _formatDateShort(_cycleStart), LucideIcons.calendar, isDark, Colors.blueAccent),
+          _statItem('CYCLE USERS', _users.length.toString(), isDark, PaceColors.purple),
+          _statItem('CYCLE REVENUE', 'KES ${NumberFormat("#,###").format(revenue)}', isDark, PaceColors.emerald),
+          _statItem('BILLING START', _formatDateShort(_cycleStart), isDark, Colors.blueAccent),
         ],
       ),
     );
   }
 
-  Widget _statItem(String label, String value, IconData icon, bool isDark, Color color) {
+  Widget _statItem(String label, String value, bool isDark, Color color) {
     return Column(
       children: [
-        Icon(icon, size: 14, color: color.withOpacity(0.7)),
-        const SizedBox(height: 8),
         Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
         const SizedBox(height: 4),
         Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
