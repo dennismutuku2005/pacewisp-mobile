@@ -125,7 +125,7 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('MONTHLY CUSTOMERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-          Text('DISTINCT USERS ACTIVE IN CURRENT BILLING CYCLE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+          Text('RECURRING CUSTOMERS WITH OVER 5 PURCHASES THIS CYCLE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
         ],
       ),
     );
@@ -204,8 +204,14 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                        child: Text('${u['purchase_count'] ?? 0} PURCHASES', style: TextStyle(fontSize: 7, color: PaceColors.purple, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 8),
                       Text('LATEST: ', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                      Text(lastBought.toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.purple, fontWeight: FontWeight.bold)),
+                      Text(lastBought.toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
