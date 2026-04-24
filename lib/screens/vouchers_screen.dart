@@ -61,27 +61,44 @@ class _VouchersScreenState extends State<VouchersScreen> {
     setState(() => _isLoading = true);
     try {
       final res = await _apiService.getRouters(forceRefresh: true);
-      final sys = await _apiService.fetchData(slug: 'system_settings'); // Get forced sale settings
       
-      if (sys?['status'] == 'success') {
-         _isVouchersAsSaleForced = (sys?['data']?['vouchers_as_sale']?.toString() == '1');
+      // Get forced sale settings - use a separate try-catch to not block vouchers
+      try {
+        final sys = await _apiService.getGlobalSettings();
+        if (sys?['status'] == 'success') {
+           setState(() {
+             _isVouchersAsSaleForced = (sys?['data']?['vouchers_as_sale']?.toString() == '1');
+           });
+        }
+      } catch (e) {
+        debugPrint("Error loading global settings: $e");
       }
 
       if (res != null) {
-        _routers = res['data'] ?? [];
+        setState(() {
+          _routers = res['data'] ?? [];
+        });
         await _fetchVouchers(pageNum: 1);
       }
+    } catch (e) {
+      debugPrint("Error loading initial data: $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _fetchVouchers({required int pageNum}) async {
+    String routerName = 'all';
+    if (_activeRouterId != 'all') {
+      final r = _routers.firstWhere((x) => x['id'].toString() == _activeRouterId, orElse: () => null);
+      if (r != null) routerName = r['router_name'] ?? 'all';
+    }
+
     final res = await _apiService.fetchData(slug: 'prepaid_vouchers', params: {
       'page': pageNum,
       'limit': 15,
       'search': _search,
-      'router_id': _activeRouterId
+      'router_name': routerName
     });
 
     if (mounted && res?['status'] == 'success') {
