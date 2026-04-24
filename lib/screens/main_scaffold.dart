@@ -97,8 +97,6 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
       return;
     }
 
-    // Logic: If already authenticating or if we've just successfully unlocked 
-    // within the last 10 seconds (grace period), skip.
     if (_isAuthenticating) return;
 
     if (_lastUnlockTime != null) {
@@ -106,13 +104,8 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
       if (diff < 10) return;
     }
 
-    // If the app is NOT already locked, we only force a lock if it's been away for long.
-    // However, for immediate security, if the app resumes and lock is enabled, we prompt.
-    // If successful, _isLocked remains false and _lastUnlockTime is updated.
-    // If failed/cancelled, we show the LockScreen (isLocked = true).
-
-    final bool success = await _authenticate();
-    if (!success && mounted) {
+    // Force lock screen immediately
+    if (mounted) {
       setState(() => _isLocked = true);
     }
   }
