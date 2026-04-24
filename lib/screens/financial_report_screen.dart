@@ -72,7 +72,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
           _buildMonthNavigator(isDark),
           const SizedBox(height: 32),
           if (_isLoading && _report == null)
-            const SkeletonGrid(count: 3)
+            const GridSkeleton(count: 3)
           else ...[
             _buildMetrics(isDark),
             const SizedBox(height: 32),
