@@ -33,10 +33,10 @@ class LockService {
     await prefs.setBool(_lockKey, enabled);
   }
 
-  Future<bool> authenticate() async {
+  Future<bool> authenticate({String? customReason}) async {
     try {
       final bool didAuthenticate = await auth.authenticate(
-        localizedReason: 'Please authenticate to access PaceWISP',
+        localizedReason: customReason ?? 'Please authenticate to access PaceWISP',
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: false,
