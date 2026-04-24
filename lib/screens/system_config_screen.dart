@@ -56,41 +56,77 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    final res = await _apiService.getRouters();
-    if (mounted && res?['status'] == 'success') {
-      _routers = res?['data'] ?? [];
-      if (_routers.isNotEmpty) {
-        _activeRouterId = _routers[0]['id'].toString();
-        _loadConfig();
+    try {
+      final res = await _apiService.getRouters();
+      if (mounted && res != null) {
+        final List<dynamic> data = res['data'] ?? [];
+        if (data.isNotEmpty) {
+          setState(() {
+            _routers = data;
+            _activeRouterId = _routers[0]['id'].toString();
+          });
+          // Ensure state is updated before loading config
+          await Future.delayed(const Duration(milliseconds: 100));
+          await _loadConfig();
+        } else {
+          setState(() => _isLoading = false);
+        }
+      } else if (mounted) {
+        setState(() => _isLoading = false);
       }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _loadConfig() async {
-    if (_activeRouterId == null) return;
+    if (_activeRouterId == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+    
     setState(() => _isLoading = true);
-    final res = await _apiService.getSystemConfig(_activeRouterId!);
-    if (mounted && res?['status'] == 'success') {
-      setState(() {
-        _metadata = res?['metadata'] ?? {};
-        _links = res?['links'] ?? {};
-        _wifiNameCtrl.text = _metadata['wifiname'] ?? '';
-        _supportCtrl.text = _metadata['customercare'] ?? '';
-        _routerIdCtrl.text = _links['router'] ?? '';
-        _lnmo1Ctrl.text = _links['lnmoapi'] ?? '';
-        _lnmo2Ctrl.text = _links['lnmoapi2'] ?? '';
-        _lnmo3Ctrl.text = _links['lnmoapi3'] ?? '';
-        _lnmo4Ctrl.text = _links['lnmoapi4'] ?? '';
-        _lnmo5Ctrl.text = _links['lnmoapi5'] ?? '';
-        _isLoading = false;
-      });
+    try {
+      final res = await _apiService.getSystemConfig(_activeRouterId!);
+      if (mounted && res != null) {
+        // Handle both root-level and nested 'data' responses
+        final configRoot = res['data'] ?? res;
+        final meta = configRoot['metadata'] ?? {};
+        final lnks = configRoot['links'] ?? {};
+
+        setState(() {
+          _metadata = meta;
+          _links = lnks;
+          
+          // Use direct assignment to ensure UI update
+          _wifiNameCtrl.text = _metadata['wifiname']?.toString() ?? '';
+          _supportCtrl.text = _metadata['customercare']?.toString() ?? '';
+          _routerIdCtrl.text = _links['router']?.toString() ?? '';
+          _lnmo1Ctrl.text = _links['lnmoapi']?.toString() ?? '';
+          _lnmo2Ctrl.text = _links['lnmoapi2']?.toString() ?? '';
+          _lnmo3Ctrl.text = _links['lnmoapi3']?.toString() ?? '';
+          _lnmo4Ctrl.text = _links['lnmoapi4']?.toString() ?? '';
+          _lnmo5Ctrl.text = _links['lnmoapi5']?.toString() ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint("Load Config Error: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _handleSave() async {
+    if (_activeRouterId == null) return;
     setState(() => _isSaving = true);
+    
     final data = {
-      'metadata': {'wifiname': _wifiNameCtrl.text, 'customercare': _supportCtrl.text},
+      'metadata': {
+        'wifiname': _wifiNameCtrl.text, 
+        'customercare': _supportCtrl.text
+      },
       'links': {
         'router': _routerIdCtrl.text,
         'lnmoapi': _lnmo1Ctrl.text,
@@ -119,7 +155,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
 
     return PaceOverlayLoader(
       isLoading: _isSaving,
-      message: 'Propagating Core Configuration...',
+      message: 'Propagating Hotspot Configuration...',
       child: Column(
         children: [
           _buildHeader(isDark),
@@ -154,7 +190,7 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('CORE CONFIGURATION', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+            Text('HOTSPOT CONFIGURATION', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
             Text('MANAGE INFRASTRUCTURE IDENTITY & LINKS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
           ]),
           IconButton(
