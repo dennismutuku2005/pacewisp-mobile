@@ -100,7 +100,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _showError(res?['message'] ?? 'Login failed. Invalid credentials.');
       }
     } catch (e) {
-      _showError('Login service unavailable');
+      if (e.toString().contains('MAX_ACCOUNTS_REACHED')) {
+        _showError('Account limit reached. Please remove an existing account first (Max: 2).');
+      } else {
+        _showError('Login service unavailable');
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
