@@ -63,33 +63,8 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    // If we already know the correct path, use it directly — no probing
-    if (_detectedPath != null) {
-      print('API: Using detected path: $_detectedPath');
-      final res = await _doRequest('https', host, _detectedPath!, endpoint, method, data, queryParameters, headers);
-      if (res != null) return res;
-      // Detected path failed — fall through to full discovery
-      print('API: Detected path failed, running full discovery...');
-      _detectedPath = null;
-    }
-
-    // Full discovery: prioritized paths
-    final pathsToTry = [
-      '/dashboard/v1',
-      '/dashboard',
-      '/',
-    ];
-
-    for (var path in pathsToTry) {
-      final res = await _doRequest('https', host, path, endpoint, method, data, queryParameters, headers);
-      if (res != null) {
-        _detectedPath = path;
-        print('API: Discovered working path: $path');
-        return res;
-      }
-    }
-
-    return null;
+    // Directly use the known API path to avoid slow probing
+    return await _doRequest('https', host, '/dashboard/v1', endpoint, method, data, queryParameters, headers);
   }
 
   Future<Map<String, dynamic>?> _doRequest(String protocol, String host, String path, String endpoint, String method, Map<String, dynamic>? data, Map<String, dynamic>? queryParameters, Map<String, String> headers) async {
