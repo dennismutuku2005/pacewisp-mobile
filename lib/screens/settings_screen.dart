@@ -48,15 +48,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
-    final profile = await _apiService.fetchData(slug: 'profile');
-    if (profile?['success'] == true) {
-      _user = profile?['data'] ?? {};
+    final profile = await _apiService.fetchData(slug: 'profile', forceRefresh: true);
+    if (profile != null && (profile['status'] == 'success' || profile['success'] == true)) {
+      _user = profile['data'] ?? profile; // fallback if it's not wrapped in data
       _nameCtrl.text = _user['name'] ?? '';
       _phoneCtrl.text = _user['phone'] ?? '';
       
-      if (['admin', 'superadmin'].contains(_user['type'])) {
-        final sys = await _apiService.fetchData(slug: 'system_settings');
-        if (sys?['status'] == 'success') _systemSettings = sys?['data'] ?? {};
+      final String userType = (_user['type'] ?? '').toString().toLowerCase();
+      if (['admin', 'superadmin'].contains(userType)) {
+        final sys = await _apiService.fetchData(slug: 'system_settings', forceRefresh: true);
+        if (sys != null && (sys['status'] == 'success' || sys['success'] == true)) {
+           _systemSettings = sys['data'] ?? sys;
+        }
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -145,16 +148,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  String? _activeToggle;
+
+  bool _parseBool(dynamic val) {
+    if (val == null) return false;
+    if (val is bool) return val;
+    if (val is int) return val == 1;
+    if (val is String) {
+      final s = val.toLowerCase();
+      return s == '1' || s == 'true' || s == 'yes' || s == 'on';
+    }
+    return false;
+  }
+
   Future<void> _updateSystem(String field, bool value) async {
-    setState(() => _isSaving = true);
+    setState(() => _activeToggle = field);
     final val = value ? 1 : 0;
     final res = await _apiService.fetchData(slug: 'system_settings', method: 'POST', body: {field: val});
     if (mounted) {
-      if (res?['status'] == 'success') {
+      if (res != null && (res['status'] == 'success' || res['success'] == true)) {
         setState(() => _systemSettings[field] = val);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Setting updated: ${field.replaceAll('_', ' ').toUpperCase()}'), backgroundColor: PaceColors.emerald));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Failed to update'), backgroundColor: Colors.redAccent));
       }
-      setState(() => _isSaving = false);
+      setState(() => _activeToggle = null);
     }
   }
 
@@ -180,11 +198,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       _buildProfileCard(isDark),
                       const SizedBox(height: 24),
-                      if (['admin', 'superadmin'].contains(_user['type'])) ...[
+                      if (_systemSettings.isNotEmpty) ...[
                         _buildSystemConfigHeader(isDark),
-                        _buildToggleItem('Double Payment Lock', 'Prevent STK push if active session exists', _systemSettings['doublepayment_lock'] == 1, (v) => _updateSystem('doublepayment_lock', v), LucideIcons.shield, isDark),
-                        _buildToggleItem('Receive Error Info', 'Log MikroTik connection errors to dashboard', _systemSettings['receive_error_info'] == 1, (v) => _updateSystem('receive_error_info', v), LucideIcons.activity, isDark),
-                        _buildToggleItem('Vouchers as Sale', 'Mark new vouchers as final sales instantly', _systemSettings['vouchers_as_sale'] == 1, (v) => _updateSystem('vouchers_as_sale', v), LucideIcons.tag, isDark),
+                        _buildToggleItem('Double Payment Lock', 'Prevent STK push if active session exists', _parseBool(_systemSettings['doublepayment_lock']), (v) => _updateSystem('doublepayment_lock', v), LucideIcons.shield, isDark, isLoading: _activeToggle == 'doublepayment_lock'),
+                        _buildToggleItem('Error Notifications', 'Receive and log MikroTik connection errors', _parseBool(_systemSettings['receive_error_info']), (v) => _updateSystem('receive_error_info', v), LucideIcons.activity, isDark, isLoading: _activeToggle == 'receive_error_info'),
+                        _buildToggleItem('Vouchers as Sales', 'Automatically mark new vouchers as final sales', _parseBool(_systemSettings['vouchers_as_sale']), (v) => _updateSystem('vouchers_as_sale', v), LucideIcons.tag, isDark, isLoading: _activeToggle == 'vouchers_as_sale'),
                       ],
                       const SizedBox(height: 32),
                       _buildSecurityHeader(isDark),
@@ -424,7 +442,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildToggleItem(String title, String sub, bool val, Function(bool) onChanged, IconData icon, bool isDark) {
+  Widget _buildToggleItem(String title, String sub, bool val, Function(bool) onChanged, IconData icon, bool isDark, {bool isLoading = false}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -437,12 +455,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(title, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
             Text(sub, style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
           ])),
-          Switch(
-            value: val, 
-            onChanged: _isSaving ? null : onChanged, 
-            activeColor: PaceColors.purple,
-            activeTrackColor: PaceColors.purple.withOpacity(0.2),
-          ),
+          isLoading
+            ? const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple)),
+              )
+            : Switch(
+                value: val, 
+                onChanged: _isSaving ? null : onChanged, 
+                activeColor: PaceColors.purple,
+                activeTrackColor: PaceColors.purple.withOpacity(0.2),
+              ),
         ],
       ),
     );
@@ -454,14 +477,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: PaceColors.getBackground(isDark),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         title: Text('CHANGE PASSWORD', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple, letterSpacing: 1)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildEditField('NEW PASSWORD', _passCtrl, LucideIcons.lock, isDark),
-            const SizedBox(height: 16),
-            _buildEditField('CONFIRM PASSWORD', _confirmPassCtrl, LucideIcons.lock, isDark),
-          ],
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildEditField('NEW PASSWORD', _passCtrl, LucideIcons.lock, isDark),
+              const SizedBox(height: 16),
+              _buildEditField('CONFIRM PASSWORD', _confirmPassCtrl, LucideIcons.lock, isDark),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('CANCEL', style: TextStyle(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w700))),
