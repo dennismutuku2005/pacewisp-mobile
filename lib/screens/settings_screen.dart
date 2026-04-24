@@ -66,6 +66,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _handleUpdateProfile({String? otpCode}) async {
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+    if (otpCode == null) {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: PaceColors.getBackground(isDark),
+          title: Text('UPDATE PROFILE', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple)),
+          content: const Text('Save these changes to your account?', style: TextStyle(fontSize: 13)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('SAVE')),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
     setState(() => _isSaving = true);
     
     final body = {
@@ -162,6 +179,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _updateSystem(String field, bool value) async {
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaceColors.getBackground(isDark),
+        title: Text('CHANGE SETTING', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple)),
+        content: Text('Update ${field.replaceAll('_', ' ').toUpperCase()} logic?', style: GoogleFonts.figtree(fontSize: 13)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('CONFIRM')),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     setState(() => _activeToggle = field);
     final val = value ? 1 : 0;
     final res = await _apiService.updateGlobalSetting(field, val);
@@ -173,6 +206,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Failed to update'), backgroundColor: Colors.redAccent));
       }
       setState(() => _activeToggle = null);
+    }
+  }
+
+  Future<void> _handleSwitchAccount(int index, SettingsProvider settings) async {
+    final acc = settings.accounts[index];
+    final isDark = settings.isDarkMode;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaceColors.getBackground(isDark),
+        title: Text('SWITCH ACCOUNT', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple)),
+        content: Text('Transition to ${acc.accountName.toUpperCase()} dashboard?', style: GoogleFonts.figtree(fontSize: 13)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('SWITCH')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      settings.switchAccount(index);
+    }
+  }
+
+  Future<void> _handleRemoveAccount(int index, SettingsProvider settings) async {
+    final acc = settings.accounts[index];
+    final isDark = settings.isDarkMode;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaceColors.getBackground(isDark),
+        title: const Text('REMOVE ACCOUNT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.red)),
+        content: Text('Permanently remove ${acc.accountName.toUpperCase()} from this device?', style: const TextStyle(fontSize: 13)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('KEEP')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('REMOVE', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      settings.removeAccount(index);
     }
   }
 
@@ -429,13 +502,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           child: ListTile(
             dense: true,
-            onTap: isActive ? null : () => settings.switchAccount(index),
+            onTap: isActive ? null : () => _handleSwitchAccount(index, settings),
             leading: Icon(LucideIcons.globe, size: 16, color: isActive ? PaceColors.purple : Colors.grey),
             title: Text(acc.accountName.toUpperCase(), style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w700, color: isActive ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
             subtitle: Text("${acc.subdomain}.${acc.domain}", style: GoogleFonts.figtree(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500)),
             trailing: isActive 
               ? const Icon(LucideIcons.checkCircle, color: PaceColors.purple, size: 16)
-              : IconButton(icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.redAccent), onPressed: () => settings.removeAccount(index)),
+              : IconButton(icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.redAccent), onPressed: () => _handleRemoveAccount(index, settings)),
           ),
         );
       }),
