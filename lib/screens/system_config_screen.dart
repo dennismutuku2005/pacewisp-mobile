@@ -120,6 +120,23 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
 
   Future<void> _handleSave() async {
     if (_activeRouterId == null) return;
+    
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaceColors.getBackground(isDark),
+        title: Text('APPLY CONFIGURATION', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple)),
+        content: const Text('Are you sure you want to update and sync these settings to the router? This may impact live connections.', style: TextStyle(fontSize: 13)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('CONFIRM')),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     setState(() => _isSaving = true);
     
     final data = {
