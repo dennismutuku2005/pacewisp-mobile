@@ -154,7 +154,8 @@ class ApiService {
     else if (slug == 'active_customers') phpFile = '/active_connections.php';
     else if (slug == 'themes') phpFile = '/themes.php';
     else if (slug == 'active_themes') phpFile = '/themes.php';
-    else if (slug == 'system_settings') phpFile = '/system_config.php';
+    else if (slug == 'system_settings') phpFile = '/system_data.php';
+    else if (slug == 'hotspot_config') phpFile = '/system_config.php';
     else if (slug == 'profile') phpFile = '/user_profile.php';
     else if (slug == 'prepaid_vouchers') phpFile = '/vouchers.php';
     else if (slug == 'prepaid_plans') phpFile = '/hotspot_plans.php';
@@ -379,12 +380,19 @@ class ApiService {
   Future<Map<String, dynamic>?> getFinancialReport({int? month, int? year, String? startDate, String? endDate, bool forceRefresh = false}) async => 
     fetchData(slug: 'report', params: {'month': month, 'year': year, 'startDate': startDate, 'endDate': endDate}, forceRefresh: forceRefresh);
 
-  // System Config
+  // System Config (Router Specific Hotspot Config)
   Future<Map<String, dynamic>?> getSystemConfig(String routerId) async => 
-    fetchData(slug: 'system_settings', params: {'router_id': routerId});
+    fetchData(slug: 'hotspot_config', params: {'router_id': routerId});
 
   Future<Map<String, dynamic>?> saveSystemConfig(String routerId, Map<String, dynamic> data) async => 
     _requestWithFallback('/system_config.php', method: 'POST', data: { ...data, 'router_id': routerId });
+
+  // System Settings (Global Infrastructure Logic)
+  Future<Map<String, dynamic>?> getGlobalSettings() async => 
+    fetchData(slug: 'system_settings', forceRefresh: true);
+
+  Future<Map<String, dynamic>?> updateGlobalSetting(String field, dynamic value) async => 
+    _requestWithFallback('/system_data.php', method: 'POST', data: {field: value});
 
   // M-Pesa Transactions
   Future<Map<String, dynamic>?> getMpesaTransactions({int page = 1, String search = '', bool forceRefresh = false}) async => 
