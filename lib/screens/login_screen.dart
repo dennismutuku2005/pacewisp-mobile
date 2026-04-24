@@ -26,8 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final List<String> _domains = [
     'pacewisp.co.ke', 
     'pace.com', 
-    'wispportal.online',
-    'internet-mtaani.pacewisp.co.ke', // Specifically added for the user
   ];
 
   Future<void> _handleVerifyInstance() async {
