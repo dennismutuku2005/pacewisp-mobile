@@ -56,6 +56,7 @@ class ApiService {
 
     Map<String, String> headers = {
       'Accept': 'application/json',
+      'Content-Type': 'application/json',
       'X-Client': 'WispApp',
     };
     if (token != null) {
@@ -178,8 +179,8 @@ class ApiService {
     else if (slug == 'active_customers') phpFile = '/active_connections.php';
     else if (slug == 'themes') phpFile = '/themes.php';
     else if (slug == 'active_themes') phpFile = '/themes.php';
-    else if (slug == 'system_settings') phpFile = '/system_config.php';
-    else if (slug == 'profile') phpFile = '/account.php';
+    else if (slug == 'system_settings') phpFile = '/system_data.php';
+    else if (slug == 'profile') phpFile = '/user_profile.php';
     else if (slug == 'prepaid_vouchers') phpFile = '/vouchers.php';
     else if (slug == 'prepaid_plans') phpFile = '/hotspot_plans.php';
     else if (slug == 'create_vouchers') phpFile = '/vouchers.php';
