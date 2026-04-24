@@ -56,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       
       final String userType = (_user['type'] ?? '').toString().toLowerCase();
       if (['admin', 'superadmin'].contains(userType)) {
-        final sys = await _apiService.fetchData(slug: 'system_settings', forceRefresh: true);
+        final sys = await _apiService.getGlobalSettings();
         if (sys != null && (sys['status'] == 'success' || sys['success'] == true)) {
            _systemSettings = sys['data'] ?? sys;
         }
@@ -164,7 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _updateSystem(String field, bool value) async {
     setState(() => _activeToggle = field);
     final val = value ? 1 : 0;
-    final res = await _apiService.fetchData(slug: 'system_settings', method: 'POST', body: {field: val});
+    final res = await _apiService.updateGlobalSetting(field, val);
     if (mounted) {
       if (res != null && (res['status'] == 'success' || res['success'] == true)) {
         setState(() => _systemSettings[field] = val);
