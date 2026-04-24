@@ -90,7 +90,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           _buildMonthNavigator(isDark),
           const SizedBox(height: 32),
           if (_isLoading && _metrics == null)
-            const SkeletonGrid(count: 4)
+            const GridSkeleton(count: 4)
           else if (_metrics == null && _expenses.isEmpty)
             PaceEmptyState(onRetry: _fetchCachedThenLive, isDark: isDark, title: 'NO EXPENSE DATA', subtitle: 'We couldn\'t find any operational costs for this period. Slide down to refresh or try another month.')
           else ...[
@@ -131,7 +131,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   Widget _buildMetricsGrid(bool isDark) {
-    if (_isLoading && _metrics == null) return const SkeletonGrid(count: 4);
+    if (_isLoading && _metrics == null) return const GridSkeleton(count: 4);
     
     final summary = _metrics?['summary'] ?? {};
     final total = _metrics?['total'] ?? 0;
