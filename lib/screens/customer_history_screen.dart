@@ -53,6 +53,12 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
   }
 
   Future<void> _toggleSecurity() async {
+    final bool didAuth = await _apiService.authenticateBiometric(
+      reason: 'Confirm identity to update customer security status'
+    );
+    
+    if (!didAuth) return;
+
     setState(() => _isProcessing = true);
     try {
       if (_isBlocked) {
