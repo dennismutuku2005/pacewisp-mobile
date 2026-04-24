@@ -135,7 +135,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(widget.phone, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-                Text('CUSTOMER USAGE & TRANSACTION LOGS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+                Text('CUSTOMER INFO', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
               ],
             ),
           ),
@@ -162,7 +162,6 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
         children: [
           _statItem('TOTAL SPENT', 'KES ${_summary?['total_spent'] ?? _summary?['total_amount'] ?? 0}', isDark),
           _statItem('ENTRIES', '${_summary?['sessions'] ?? _summary?['total_visits'] ?? 0}', isDark),
-          _statItem('JOIN DATE', _summary?['first_seen']?.toString().split(',')[0] ?? 'N/A', isDark),
           _statItem('LAST SEEN', _summary?['last_seen']?.toString().split(',')[0] ?? 'N/A', isDark),
         ],
       ),
