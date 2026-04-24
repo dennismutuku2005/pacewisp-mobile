@@ -183,18 +183,9 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(LucideIcons.arrowLeft, color: PaceColors.getPrimaryText(isDark), size: 20),
-            style: IconButton.styleFrom(
-              backgroundColor: PaceColors.getSurface(isDark),
-              padding: const EdgeInsets.all(12),
-            ),
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
