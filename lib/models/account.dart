@@ -39,6 +39,8 @@ class PaceAccount {
     type: json['type'] ?? 'admin',
     phone: json['phone'],
     policies: List<String>.from(json['policies'] ?? []),
+  );
+
   PaceAccount copyWith({
     String? subdomain,
     String? domain,
