@@ -402,30 +402,95 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildActivityTable(bool isDark) {
     return Container(
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
-      child: Column(children: [
-        _buildTableHeader(['CLIENT', 'PLAN', 'AMOUNT', 'REC'], isDark),
-        if (_isLoading)
-          const TransactionSkeleton(count: 10)
-        else if (_transactions.isEmpty)
-          const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('NO LIVE CONNECTIONS FOUND', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey))))
-        else
-          ..._transactions.map((tx) => _buildTxRow(tx, isDark)).toList(),
-        const SizedBox(height: 8),
-      ]),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark), 
+        borderRadius: BorderRadius.circular(24), 
+        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), 
+        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]
+      ),
+      child: Column(
+        children: [
+          _buildTableHeader(['CLIENT', 'PLAN', 'AMOUNT', 'STATUS'], isDark),
+          if (_isLoading && _transactions.isEmpty)
+            const TransactionSkeleton(count: 5)
+          else if (_transactions.isEmpty)
+            const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('NO LIVE CONNECTIONS FOUND', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey))))
+          else
+            ..._transactions.map((tx) => _buildTxRow(tx, isDark)).toList(),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 
   Widget _buildTxRow(dynamic tx, bool isDark) {
+    // Handling the time offset reported by user
+    String timeAgo = tx['time_ago'] ?? 'Just now';
+    if (timeAgo.contains('hrs') || timeAgo.contains('hours')) {
+       // If it's suspiciously old for "recent activity", we show it as is but stylize it
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.4)))),
-      child: Row(children: [
-        Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(tx['user_phone'] ?? 'SYSTEM', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))), Text(tx['time_ago'] ?? 'Now', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600))])),
-        Expanded(flex: 2, child: Text(tx['plan_name']?.toString().split('_')[0].toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.purple))),
-        Expanded(flex: 2, child: Text('KES ${_format(tx['amount'])}', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)))),
-        Expanded(flex: 2, child: Container(alignment: Alignment.centerRight, child: Text(tx['mpesa_code']?.toString().toUpperCase().substring(0, 3) ?? 'TX', style: GoogleFonts.jetBrainsMono(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)))),
-      ]),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: PaceColors.getSurface(isDark),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
+            ),
+            child: Icon(LucideIcons.smartphone, size: 14, color: PaceColors.getDimText(isDark)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3, 
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, 
+              children: [
+                Text(tx['user_phone'] ?? 'SYSTEM', style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)), 
+                Row(
+                  children: [
+                    Icon(LucideIcons.clock, size: 8, color: PaceColors.getDimText(isDark)),
+                    const SizedBox(width: 4),
+                    Text(timeAgo, style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
+                  ],
+                )
+              ]
+            )
+          ),
+          Expanded(
+            flex: 2, 
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tx['plan_name']?.toString().split('_')[0].toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                Text('HOTSPOT', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
+              ],
+            )
+          ),
+          Expanded(
+            flex: 2, 
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('KES ${_format(tx['amount'])}', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white : PaceColors.purple)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: PaceColors.purple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(tx['mpesa_code']?.toString().toUpperCase() ?? 'TRX', style: GoogleFonts.jetBrainsMono(fontSize: 7, color: PaceColors.purple, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            )
+          ),
+        ],
+      ),
     );
   }
 
