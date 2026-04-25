@@ -101,16 +101,22 @@ class _VouchersScreenState extends State<VouchersScreen> {
       'router_name': routerName
     });
 
-    if (mounted && res?['status'] == 'success') {
-      setState(() {
-        if (pageNum == 1) {
-          _vouchers = res?['data'] ?? [];
-        } else {
-          _vouchers.addAll(res?['data'] ?? []);
-        }
-        _hasMore = res?['pagination']?['has_more'] ?? false;
-        _page = pageNum;
-      });
+    if (mounted) {
+      if (res?['status'] == 'success') {
+        setState(() {
+          if (pageNum == 1) {
+            _vouchers = res?['data'] ?? [];
+          } else {
+            _vouchers.addAll(res?['data'] ?? []);
+          }
+          _hasMore = res?['pagination']?['has_more'] ?? false;
+          _page = pageNum;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res?['message'] ?? 'Failed to load vouchers'), backgroundColor: Colors.redAccent)
+        );
+      }
     }
   }
 
@@ -222,13 +228,25 @@ class _VouchersScreenState extends State<VouchersScreen> {
           'sale': isSale ? 1 : 0
         });
 
-        if (res?['status'] == 'success') {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$count vouchers generated successfully'), backgroundColor: PaceColors.emerald));
-          _fetchVouchers(pageNum: 1);
+          if (res?['status'] == 'success') {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$count vouchers generated successfully'), backgroundColor: PaceColors.emerald));
+            setState(() {
+              _activeRouterId = selectedRouterId!;
+              _search = '';
+            });
+            _fetchVouchers(pageNum: 1);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(res?['message'] ?? 'Failed to create vouchers'), backgroundColor: Colors.redAccent)
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.redAccent)
+          );
+        } finally {
+          if (mounted) setState(() => _isSaving = false);
         }
-      } finally {
-        if (mounted) setState(() => _isSaving = false);
-      }
     }
   }
 
@@ -252,8 +270,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     if (confirmed == true) {
       setState(() => _isSaving = true);
       try {
-        final res = await _apiService.fetchData(slug: 'delete_vouchers', method: 'POST', body: {
-          'voucher_ids': idsToDelete, // Map to portal's delete expectations
+        final res = await _apiService.fetchData(slug: 'delete_vouchers', method: 'DELETE', body: {
           'ids': idsToDelete
         });
 
