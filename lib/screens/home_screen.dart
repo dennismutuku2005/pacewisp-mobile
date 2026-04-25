@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   bool _isRevenueBlurred = true;
   final _currencyFormat = NumberFormat("#,###", "en_US");
+  Timer? _widgetTimer;
 
   @override
   void initState() {
@@ -47,7 +49,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadRouters();
     _fetchCachedThenLive();
     // Force sync on init
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshWidgetData());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshWidgetData();
+      _startWidgetTimer();
+    });
+  }
+
+  void _startWidgetTimer() {
+    _widgetTimer?.cancel();
+    _widgetTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
+      if (mounted) _fetchCachedThenLive();
+    });
   }
 
   void _loadSyncMemory() {
@@ -187,6 +199,13 @@ class _HomeScreenState extends State<HomeScreen> {
     
     if (isList && result is! List) return [];
     return result;
+  }
+
+  @override
+  void dispose() {
+    _widgetTimer?.cancel();
+    _chartPageController.dispose();
+    super.dispose();
   }
 
   @override
