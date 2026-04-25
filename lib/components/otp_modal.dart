@@ -128,7 +128,7 @@ class _OtpModalState extends State<OtpModal> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Verify your identity via WhatsApp code sent to ${widget.phoneNumber.replaceRange(4, 9, '****')}",
+            "Verify your identity via WhatsApp code sent to ${widget.phoneNumber.length >= 9 ? widget.phoneNumber.replaceRange(4, 9, '****') : widget.phoneNumber}",
             textAlign: TextAlign.center,
             style: GoogleFonts.figtree(
               fontSize: 10,
