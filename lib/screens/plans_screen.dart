@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
@@ -8,6 +9,7 @@ import '../theme/colors.dart';
 import '../components/skeleton.dart';
 import '../components/empty_state.dart';
 import '../components/overlay_loader.dart';
+import '../components/badge.dart';
 
 class PlansScreen extends StatefulWidget {
   const PlansScreen({super.key});
@@ -48,9 +50,9 @@ class _PlansScreenState extends State<PlansScreen> {
     }
   }
 
-  Future<void> _loadPlans() async {
+  Future<void> _loadPlans({bool forceRefresh = false}) async {
     if (_activeRouterId == null) return;
-    final res = await _apiService.fetchData(slug: 'prepaid_plans', params: {'router_id': _activeRouterId});
+    final res = await _apiService.fetchData(slug: 'plans', params: {'router_id': _activeRouterId}, forceRefresh: forceRefresh);
     if (mounted && res?['status'] == 'success') {
       setState(() {
         _plans = _sortPlans(res?['plans'] ?? []);
@@ -121,6 +123,8 @@ class _PlansScreenState extends State<PlansScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
+                _buildField('PLAN NAME', nameController, TextInputType.text, isDark, hint: 'e.g. 1 Hour Unlimited'),
+                const SizedBox(height: 16),
                 _buildField('PRICE (KES)', priceController, TextInputType.number, isDark),
                 const SizedBox(height: 16),
                 _buildField('DURATION', durationController, TextInputType.text, isDark, hint: 'e.g. 1 hour, 30 minutes'),
@@ -159,6 +163,7 @@ class _PlansScreenState extends State<PlansScreen> {
       setState(() => _isSaving = true);
       try {
         final planData = {
+          'name': nameController.text,
           'price': priceController.text,
           'duration': durationController.text,
           'speed': speedController.text,
@@ -172,7 +177,7 @@ class _PlansScreenState extends State<PlansScreen> {
            updatedPlans.add(planData);
         }
 
-        final res = await _apiService.fetchData(slug: 'save_plans', method: 'POST', body: {
+        final res = await _apiService.fetchData(slug: 'plans', method: 'POST', body: {
           'router_id': _activeRouterId,
           'plans': updatedPlans,
           'changed_plan': planData,
@@ -181,7 +186,7 @@ class _PlansScreenState extends State<PlansScreen> {
 
         if (res?['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plans synced successfully'), backgroundColor: PaceColors.emerald));
-          _loadPlans();
+          _loadPlans(forceRefresh: true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Failed to sync'), backgroundColor: Colors.red));
         }
@@ -211,14 +216,14 @@ class _PlansScreenState extends State<PlansScreen> {
        try {
          final planToDelete = _plans[index];
          final updatedPlans = List.from(_plans)..removeAt(index);
-         final res = await _apiService.fetchData(slug: 'save_plans', method: 'POST', body: {
+         final res = await _apiService.fetchData(slug: 'plans', method: 'POST', body: {
             'router_id': _activeRouterId,
             'plans': updatedPlans,
             'action': 'delete',
             'deleted_plan_name': planToDelete['name']
          });
          if (res?['status'] == 'success') {
-           _loadPlans();
+           _loadPlans(forceRefresh: true);
          }
        } finally {
          if (mounted) setState(() => _isSaving = false);
@@ -323,31 +328,17 @@ class _PlansScreenState extends State<PlansScreen> {
         children: [
           _buildHeader(isDark),
           _buildRouterSelector(isDark),
-        // Table header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
-          child: Row(
-            children: [
-              Expanded(flex: 3, child: Text('PLAN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-              Expanded(flex: 2, child: Text('PRICE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-              Expanded(flex: 2, child: Text('SPEED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-              const SizedBox(width: 24),
-            ],
-          ),
-        ),
         Expanded(
           child: _isLoading 
-            ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 8))
+            ? const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: SkeletonList(count: 8))
             : RefreshIndicator(
-                onRefresh: _loadPlans,
+                onRefresh: () => _loadPlans(forceRefresh: true),
                 color: PaceColors.purple,
                 child: _plans.isEmpty
-                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _loadPlans, isDark: isDark))
-                  : ListView.separated(
-                    padding: const EdgeInsets.only(bottom: 120),
+                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _loadPlans(forceRefresh: true), isDark: isDark))
+                  : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
                     itemCount: _plans.length,
-                    separatorBuilder: (_, __) => Divider(height: 1, color: PaceColors.getBorder(isDark)),
                     itemBuilder: (context, index) => _buildPlanRow(_plans[index], index, isDark),
                   ),
               ),
@@ -434,7 +425,7 @@ class _PlansScreenState extends State<PlansScreen> {
               onTap: () {
                  setState(() => _activeRouterId = r['id'].toString());
                  Navigator.pop(context);
-                 _loadPlans();
+                 _loadPlans(forceRefresh: true);
               },
             )).toList(),
           ],
@@ -444,33 +435,55 @@ class _PlansScreenState extends State<PlansScreen> {
   }
 
   Widget _buildPlanRow(dynamic plan, int index, bool isDark) {
-    return InkWell(
-      onTap: () => _showPlanDrawer(plan, index, isDark),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    final name = plan['name']?.toString().toUpperCase() ?? 'PLAN';
+    final price = plan['price']?.toString() ?? '0';
+    final duration = plan['duration']?.toString() ?? plan['time']?.toString() ?? '-';
+    final rateLimit = plan['rate_limit']?.toString() ?? '6M/6M';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () => _showPlanDrawer(plan, index, isDark),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: PaceColors.getCard(isDark),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: PaceColors.getBorder(isDark)),
+          ),
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  Text(plan['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-                  const SizedBox(height: 2),
-                  Text(plan['duration']?.toString() ?? plan['time']?.toString() ?? '-', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(LucideIcons.package, size: 18, color: PaceColors.purple),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
+                        Text(duration.toUpperCase(), style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
+                      ],
+                    ),
+                  ),
+                  Text('KES $price', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
                 ],
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text('KES ${plan['price'] ?? '0'}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.emerald)),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(plan['rate_limit']?.toString() ?? '6M/6M', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
-            ),
-            Icon(Icons.more_vert, size: 18, color: PaceColors.getDimText(isDark)),
-          ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  PaceBadge(label: rateLimit, variant: BadgeVariant.secondary),
+                  const Spacer(),
+                  const Icon(LucideIcons.chevronRight, size: 14, color: Colors.grey),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
