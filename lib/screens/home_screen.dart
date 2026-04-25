@@ -61,8 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (wMem != null || cMem != null || tMem != null || rMem != null) {
       _widgets = _extractData(wMem, 'widgets');
       _charts = cMem?['data']?['charts']?['revenue_over_time'] ?? cMem?['charts']?['revenue_over_time'] ?? cMem?['data']?['revenue_over_time'] ?? [];
-      _transactions = _extractData(tMem, 'recent_transactions') ?? [];
-      _routerStatus = _extractData(rMem, 'router_status') ?? [];
+      _transactions = _extractData(tMem, 'recent_transactions', isList: true) ?? [];
+      _routerStatus = _extractData(rMem, 'router_status', isList: true) ?? [];
       _isLoading = false; // Instant data available
       _refreshWidgetData();
     }
@@ -124,8 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _widgets = _extractData(cached[0], 'widgets');
         _charts = cached[1]?['data']?['charts']?['revenue_over_time'] ?? cached[1]?['charts']?['revenue_over_time'] ?? cached[1]?['data']?['revenue_over_time'] ?? [];
-        _transactions = _extractData(cached[2], 'recent_transactions') ?? [];
-        _routerStatus = _extractData(cached[3], 'router_status') ?? [];
+        _transactions = _extractData(cached[2], 'recent_transactions', isList: true) ?? [];
+        _routerStatus = _extractData(cached[3], 'router_status', isList: true) ?? [];
         if (hasData) _isLoading = false;
       });
       _refreshWidgetData();
@@ -143,8 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _widgets = _extractData(live[0], 'widgets');
         _charts = live[1]?['data']?['charts']?['revenue_over_time'] ?? live[1]?['charts']?['revenue_over_time'] ?? live[1]?['data']?['revenue_over_time'] ?? [];
-        _transactions = _extractData(live[2], 'recent_transactions') ?? [];
-        _routerStatus = _extractData(live[3], 'router_status') ?? [];
+        _transactions = _extractData(live[2], 'recent_transactions', isList: true) ?? [];
+        _routerStatus = _extractData(live[3], 'router_status', isList: true) ?? [];
         _isLoading = false;
       });
       _refreshWidgetData();
@@ -172,11 +172,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  dynamic _extractData(Map<String, dynamic>? res, String key) {
-    if (res == null) return null;
+  dynamic _extractData(Map<String, dynamic>? res, String key, {bool isList = false}) {
+    if (res == null || res['status'] == 'error') return isList ? [] : null;
     final dynamic data = res['data'];
-    if (data is Map) return data[key] ?? data;
-    return res[key] ?? data;
+    dynamic result;
+    if (data is Map) result = data[key] ?? data;
+    else result = res[key] ?? data;
+    
+    if (isList && result is! List) return [];
+    return result;
   }
 
   @override
