@@ -161,7 +161,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                               style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
                             ),
                             const Text(
-                              'PaceWISP v1.0',
+                              'Powered by Pace Systems',
                               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
                             ),
                           ],
