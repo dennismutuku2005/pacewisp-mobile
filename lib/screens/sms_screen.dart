@@ -43,7 +43,12 @@ class _SmsScreenState extends State<SmsScreen> {
       final res = await _api.getSmsConfig();
       if (res != null && res['status'] == 'success') {
         setState(() {
-          _config = Map<String, dynamic>.from(res['data'] ?? {});
+          final data = res['data'] ?? {};
+          _config = {
+            'apikey': data['apikey']?.toString() ?? '',
+            'partner_id': data['partner_id']?.toString() ?? '',
+            'shortcode': data['shortcode']?.toString() ?? '',
+          };
         });
       }
     } catch (e) {
@@ -282,6 +287,7 @@ class _SmsScreenState extends State<SmsScreen> {
   }
 
   Widget _buildConfigInput(String label, String? value, Function(String) onChanged, bool obscure, bool isDark) {
+    final String safeValue = value ?? '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -290,7 +296,7 @@ class _SmsScreenState extends State<SmsScreen> {
         TextField(
           onChanged: onChanged,
           obscureText: obscure,
-          controller: TextEditingController(text: value)..selection = TextSelection.fromPosition(TextPosition(offset: (value ?? '').length)),
+          controller: TextEditingController(text: safeValue)..selection = TextSelection.fromPosition(TextPosition(offset: safeValue.length)),
           style: GoogleFonts.figtree(color: PaceColors.getPrimaryText(isDark), fontSize: 13, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             isDense: true,
@@ -346,7 +352,7 @@ class _SmsScreenState extends State<SmsScreen> {
           ),
           const SizedBox(height: 32),
           Row(
-            mainAxisAlignment: MainAxisAlignment.between,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('MESSAGE BODY', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
               Text('${_messageController.text.length}/160', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
