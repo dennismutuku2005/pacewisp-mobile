@@ -32,13 +32,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
   }
 
   Future<void> _fetchRouters() async {
-    if (_cache.isNotEmpty) {
-      setState(() { 
-        _routers = _cache.map((item) => { ...item, 'isPinging': true }).toList(); 
-        _isLoading = false; 
-      });
-      _startAutoPing();
-    }
+    setState(() => _isLoading = true);
     final res = await _apiService.getRouters(forceRefresh: true);
     if (mounted) {
       final fresh = res?['data'] ?? [];
