@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -58,6 +59,11 @@ class _SmsScreenState extends State<SmsScreen> {
     }
   }
 
+  bool get _isConfigured => 
+    (_config['apikey']?.toString().isNotEmpty ?? false) && 
+    (_config['partner_id']?.toString().isNotEmpty ?? false) && 
+    (_config['shortcode']?.toString().isNotEmpty ?? false);
+
   Future<void> _fetchTargetCustomers() async {
     setState(() => _isFetchingCustomers = true);
     try {
@@ -113,6 +119,7 @@ class _SmsScreenState extends State<SmsScreen> {
       if (res != null && res['status'] == 'success') {
         _showSuccess('Gateway config saved');
         setState(() => _showConfig = false);
+        _fetchInitialData();
       }
     } catch (e) {
       _showError('Failed to save config');
@@ -156,12 +163,83 @@ class _SmsScreenState extends State<SmsScreen> {
                   ],
                   const SizedBox(height: 32),
                   _buildSectionHeader('BROADCAST COMPOSER', 'NEW TRANSMISSION SEQUENCE', isDark),
-                  _buildComposer(isDark, settings),
+                  _buildComposerWithLock(isDark, settings),
                   const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
+    );
+  }
+
+  Widget _buildComposerWithLock(bool isDark, SettingsProvider settings) {
+    if (_isConfigured) {
+      return _buildComposer(isDark, settings);
+    }
+
+    return Stack(
+      children: [
+        Opacity(
+          opacity: 0.4,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: AbsorbPointer(
+              absorbing: true,
+              child: _buildComposer(isDark, settings),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                color: PaceColors.getCard(isDark),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: PaceColors.purple.withOpacity(0.3), width: 1.2),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 40, spreadRadius: -10)
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle),
+                    child: const Icon(LucideIcons.shieldAlert, color: PaceColors.purple, size: 24),
+                  ),
+                  const SizedBox(height: 20),
+                  Text('SETUP REQUIRED', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your SMS gateway is not yet configured. Please set your credentials to enable broadcasting.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), height: 1.5),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () => setState(() => _showConfig = true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: PaceColors.purple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: const Text('CONFIGURE NOW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -195,7 +273,7 @@ class _SmsScreenState extends State<SmsScreen> {
       childAspectRatio: 1.5,
       children: [
         _buildStatCard('TARGET AUDIENCE', _targetPhones.length.toString(), LucideIcons.users, PaceColors.purple, isDark),
-        _buildStatCard('SMS SEGMENTS', ( (_messageController.text.length / 160).ceil() ).toString(), LucideIcons.zap, const Color(0xFFF59E0B), isDark),
+        _buildStatCard('GATEWAY STATUS', _isConfigured ? 'ACTIVE' : 'PENDING', LucideIcons.shieldCheck, _isConfigured ? PaceColors.emerald : Colors.redAccent, isDark),
       ],
     );
   }
@@ -239,7 +317,17 @@ class _SmsScreenState extends State<SmsScreen> {
         ),
         child: Row(
           children: [
-            Icon(LucideIcons.settings, size: 16, color: PaceColors.getDimText(isDark)),
+            Stack(
+              children: [
+                Icon(LucideIcons.settings, size: 16, color: PaceColors.getDimText(isDark)),
+                if (!_isConfigured)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle, border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 1)))),
+                  ),
+              ],
+            ),
             const SizedBox(width: 12),
             Text('GATEWAY CONFIGURATION', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
             const Spacer(),
