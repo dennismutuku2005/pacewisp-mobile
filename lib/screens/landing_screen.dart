@@ -156,10 +156,6 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Powered by ',
-                              style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
-                            ),
                             const Text(
                               'Powered by Pace Systems',
                               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
