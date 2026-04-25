@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
+import '../components/badge.dart';
+import '../components/skeleton.dart';
 import 'package:intl/intl.dart';
 
 class SmsLogsScreen extends StatefulWidget {
@@ -96,54 +99,77 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
 
     return Scaffold(
       backgroundColor: PaceColors.getBackground(isDark),
-      body: Column(
-        children: [
-          _buildHeader(isDark),
-          Expanded(
-            child: _isLoading 
-              ? _buildSkeleton()
-              : _logs.isEmpty 
-                  ? _buildEmptyState(isDark)
-                  : RefreshIndicator(
-                      onRefresh: _fetchLogs,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        itemCount: _logs.length + (_hasMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == _logs.length) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 32),
-                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            );
-                          }
-                          return _buildLogItem(_logs[index], isDark);
-                        },
-                      ),
-                    ),
-          ),
-        ],
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(isDark),
+            const SizedBox(height: 24),
+            _buildLogsContainer(isDark),
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('SMS LOGS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+            Text('TRANSMISSION HISTORY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2)),
+          ],
+        ),
+        IconButton(
+          icon: Icon(LucideIcons.refreshCw, size: 18, color: PaceColors.getDimText(isDark)),
+          onPressed: _fetchLogs,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogsContainer(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2),
+      ),
+      child: Column(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Transmission History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-              Text('REAL-TIME GATEWAY LOGS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
-            ],
-          ),
-          IconButton(
-            icon: Icon(LucideIcons.refreshCw, size: 18, color: PaceColors.getSecondaryText(isDark)),
-            onPressed: _fetchLogs,
-          ),
+          _buildTableHeader(['RECIPIENT', 'CONTENT', 'STATUS'], isDark),
+          if (_isLoading && _logs.isEmpty)
+             const TransactionSkeleton(count: 8)
+          else if (_logs.isEmpty)
+            const Padding(padding: EdgeInsets.all(60), child: Center(child: Text('NO TRANSMISSIONS FOUND', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey))))
+          else
+            ..._logs.map((log) => _buildLogItem(log, isDark)).toList(),
+          
+          if (_isMoreLoading)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple)),
+          
+          if (!_hasMore && _logs.isNotEmpty)
+             Padding(
+               padding: const EdgeInsets.symmetric(vertical: 24),
+               child: Center(
+                 child: Row(
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   children: [
+                     Container(width: 24, height: 1, color: PaceColors.getBorder(isDark)),
+                     const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Icon(LucideIcons.checkCircle2, size: 12, color: PaceColors.emerald)),
+                     Container(width: 24, height: 1, color: PaceColors.getBorder(isDark)),
+                   ],
+                 ),
+               ),
+             ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -153,40 +179,57 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
     bool isSuccess = log['status'] == 'success';
     DateTime date = DateTime.parse(log['created_at']);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
-      ),
-      child: ListTile(
-        onTap: () => _showLogDetail(log, isDark),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: (isSuccess ? Colors.emerald : Colors.red).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            isSuccess ? LucideIcons.checkCircle2 : LucideIcons.xCircle,
-            color: isSuccess ? Colors.emerald : Colors.redAccent,
-            size: 18,
-          ),
-        ),
-        title: Text(log['phone'] ?? 'Unknown', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-        subtitle: Text(log['message'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: PaceColors.getDimText(isDark))),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+    return InkWell(
+      onTap: () => _showLogDetail(log, isDark),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.4)))),
+        child: Row(
           children: [
-            Text(DateFormat('HH:mm').format(date), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getSecondaryText(isDark))),
-            Text(DateFormat('MMM dd').format(date).toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: PaceColors.getSurface(isDark),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
+              ),
+              child: Icon(LucideIcons.smartphone, size: 14, color: PaceColors.getDimText(isDark)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 3, 
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, 
+                children: [
+                  Text(log['phone'] ?? 'UNKNOWN', style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)), 
+                  Text(DateFormat('MMM dd, HH:mm').format(date).toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
+                ]
+              )
+            ),
+            Expanded(
+              flex: 4, 
+              child: Text(log['message'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: -0.2)),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 70,
+              child: PaceBadge(label: isSuccess ? 'SENT' : 'FAIL', variant: isSuccess ? BadgeVariant.success : BadgeVariant.error),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTableHeader(List<String> titles, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), 
+      decoration: BoxDecoration(color: PaceColors.getSurface(isDark).withOpacity(0.5), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))), 
+      child: Row(children: titles.asMap().entries.map((e) {
+        final bool last = e.key == titles.length - 1;
+        return Expanded(flex: e.key == 0 ? 3 : e.key == 1 ? 4 : 2, child: Text(e.value, textAlign: last ? TextAlign.right : TextAlign.left, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
+      }).toList())
     );
   }
 
@@ -212,21 +255,11 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(log['phone'], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-                  Text('RECIPIENT NUMBER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                  Text(log['phone'], style: GoogleFonts.figtree(fontSize: 20, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)),
+                  Text('RECIPIENT NUMBER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSuccess ? Colors.emerald : Colors.redAccent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  isSuccess ? 'DELIVERED' : 'FAILED',
-                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1),
-                ),
-              ),
+              PaceBadge(label: isSuccess ? 'DELIVERED' : 'FAILED', variant: isSuccess ? BadgeVariant.success : BadgeVariant.error),
             ],
           ),
           const SizedBox(height: 32),
@@ -236,47 +269,48 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
             decoration: BoxDecoration(
               color: PaceColors.getBackground(isDark),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: PaceColors.getBorder(isDark)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('MESSAGE CONTENT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                Text('MESSAGE CONTENT', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
                 const SizedBox(height: 12),
-                Text(log['message'] ?? '', style: TextStyle(fontSize: 14, color: PaceColors.getPrimaryText(isDark), height: 1.5)),
+                Text(log['message'] ?? '', style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getPrimaryText(isDark), height: 1.6, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildInfoBox('DATE', DateFormat('MMMM dd, yyyy').format(date), LucideIcons.calendar, isDark),
+              _buildInfoBox('DATE', DateFormat('MMMM dd, yyyy').format(date).toUpperCase(), LucideIcons.calendar, isDark),
               const SizedBox(width: 12),
-              _buildInfoBox('TIME', DateFormat('hh:mm a').format(date), LucideIcons.clock, isDark),
+              _buildInfoBox('TIME', DateFormat('hh:mm a').format(date).toUpperCase(), LucideIcons.clock, isDark),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildInfoBox('RESPONSE', log['response_code']?.toString() ?? 'N/A', LucideIcons.server, isDark),
+              _buildInfoBox('GATEWAY', log['response_code']?.toString() ?? 'N/A', LucideIcons.server, isDark),
               const SizedBox(width: 12),
               _buildInfoBox('REF ID', (log['message_id?'] ?? 'INTERNAL').toString(), LucideIcons.shieldCheck, isDark),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 40),
           SizedBox(
             width: double.infinity,
+            height: 54,
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.slate[900],
+                backgroundColor: PaceColors.purple,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('DISMISS REPORT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              child: const Text('DISMISS REPORT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -285,51 +319,26 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
   Widget _buildInfoBox(String label, String value, IconData icon, bool isDark) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+          border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: PaceColors.getSecondaryText(isDark)),
+            Icon(icon, size: 12, color: PaceColors.purple),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-                  Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis),
+                  Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                  Text(value, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.messageSquare, size: 48, color: PaceColors.getDimText(isDark).withOpacity(0.2)),
-          const SizedBox(height: 16),
-          Text('No transmission history found', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSkeleton() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: 10,
-      itemBuilder: (context, index) => Container(
-        height: 70,
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(color: Colors.black.withOpacity(0.03), borderRadius: BorderRadius.circular(20)),
       ),
     );
   }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
-import '../components/Badge.dart'; // Assuming a Badge component exists or I'll use a container
+import '../components/badge.dart';
+import '../components/skeleton.dart';
 import 'package:intl/intl.dart';
 
 class SmsScreen extends StatefulWidget {
@@ -117,7 +119,7 @@ class _SmsScreenState extends State<SmsScreen> {
   }
 
   void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.emerald));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: PaceColors.emerald));
   }
 
   @override
@@ -131,11 +133,12 @@ class _SmsScreenState extends State<SmsScreen> {
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
             onRefresh: _fetchInitialData,
+            color: PaceColors.purple,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeader(isDark),
                   const SizedBox(height: 24),
@@ -146,9 +149,10 @@ class _SmsScreenState extends State<SmsScreen> {
                     const SizedBox(height: 16),
                     _buildConfigForm(isDark),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('BROADCAST COMPOSER', 'NEW TRANSMISSION SEQUENCE', isDark),
                   _buildComposer(isDark, settings),
-                  const SizedBox(height: 100), // Space for bottom padding
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -156,59 +160,62 @@ class _SmsScreenState extends State<SmsScreen> {
     );
   }
 
+  Widget _buildSectionHeader(String title, String sub, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 13, fontWeight: FontWeight.normal, letterSpacing: -0.2)),
+        Text(sub, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
+      ]),
+    );
+  }
+
   Widget _buildHeader(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.slate[900],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(LucideIcons.send, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('SMS Command', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-                Text('TRANSMISSION CENTER', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
-              ],
-            ),
-          ],
-        ),
+        Text('SMS COMMAND', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+        Text('TRANSMISSION CENTER', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2)),
       ],
     );
   }
 
   Widget _buildStatsGrid(bool isDark) {
-    return Row(
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.5,
       children: [
-        Expanded(child: _buildStatCard('Audience', _targetPhones.length.toString(), LucideIcons.users, Colors.indigo, isDark)),
-        const SizedBox(width: 12),
-        Expanded(child: _buildStatCard('Segments', ( (_messageController.text.length / 160).ceil() ).toString(), LucideIcons.zap, Colors.amber, isDark)),
+        _buildStatCard('TARGET AUDIENCE', _targetPhones.length.toString(), LucideIcons.users, PaceColors.purple, isDark),
+        _buildStatCard('SMS SEGMENTS', ( (_messageController.text.length / 160).ceil() ).toString(), LucideIcons.zap, const Color(0xFFF59E0B), isDark),
       ],
     );
   }
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 12),
-          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-          Text(label.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const Spacer(),
+          Text(value, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)),
+          const SizedBox(height: 2),
+          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
         ],
       ),
     );
@@ -217,19 +224,19 @@ class _SmsScreenState extends State<SmsScreen> {
   Widget _buildConfigToggle(bool isDark) {
     return InkWell(
       onTap: () => setState(() => _showConfig = !_showConfig),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: PaceColors.getCard(isDark),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2),
         ),
         child: Row(
           children: [
-            Icon(LucideIcons.settings, size: 18, color: PaceColors.getSecondaryText(isDark)),
+            Icon(LucideIcons.settings, size: 16, color: PaceColors.getDimText(isDark)),
             const SizedBox(width: 12),
-            Text('Gateway Configuration', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+            Text('GATEWAY CONFIGURATION', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
             const Spacer(),
             Icon(_showConfig ? LucideIcons.chevronUp : LucideIcons.chevronDown, size: 16, color: PaceColors.getDimText(isDark)),
           ],
@@ -242,30 +249,31 @@ class _SmsScreenState extends State<SmsScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.slate[900],
+        color: PaceColors.getCard(isDark),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: PaceColors.purple.withOpacity(0.3), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildConfigInput('API KEY', _config['apikey'], (v) => _config['apikey'] = v, true),
+          _buildConfigInput('API KEY', _config['apikey'], (v) => _config['apikey'] = v, true, isDark),
           const SizedBox(height: 16),
-          _buildConfigInput('PARTNER ID', _config['partner_id'], (v) => _config['partner_id'] = v, false),
+          _buildConfigInput('PARTNER ID', _config['partner_id'], (v) => _config['partner_id'] = v, false, isDark),
           const SizedBox(height: 16),
-          _buildConfigInput('SENDER ID', _config['shortcode'], (v) => _config['shortcode'] = v, false),
-          const SizedBox(height: 20),
+          _buildConfigInput('SENDER ID', _config['shortcode'], (v) => _config['shortcode'] = v, false, isDark),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
+            height: 48,
             child: ElevatedButton(
               onPressed: _saveConfig,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
+                backgroundColor: PaceColors.purple,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text('Update Credentials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+              child: const Text('UPDATE CREDENTIALS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
             ),
           ),
         ],
@@ -273,23 +281,24 @@ class _SmsScreenState extends State<SmsScreen> {
     );
   }
 
-  Widget _buildConfigInput(String label, String value, Function(String) onChanged, bool obscure) {
+  Widget _buildConfigInput(String label, String? value, Function(String) onChanged, bool obscure, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
-        const SizedBox(height: 8),
+        Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+        const SizedBox(height: 4),
         TextField(
           onChanged: onChanged,
           obscureText: obscure,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
+          controller: TextEditingController(text: value)..selection = TextSelection.fromPosition(TextPosition(offset: (value ?? '').length)),
+          style: GoogleFonts.figtree(color: PaceColors.getPrimaryText(isDark), fontSize: 13, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             isDense: true,
             hintText: 'Required',
-            hintStyle: const TextStyle(color: Colors.white24),
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.indigo)),
+            hintStyle: TextStyle(color: PaceColors.getDimText(isDark).withOpacity(0.3)),
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: PaceColors.getBorder(isDark))),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: PaceColors.purple)),
           ),
         ),
       ],
@@ -298,16 +307,22 @@ class _SmsScreenState extends State<SmsScreen> {
 
   Widget _buildComposer(bool isDark, SettingsProvider settings) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('TARGET AUDIENCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('TARGET AUDIENCE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+              PaceBadge(label: '${_targetPhones.length} SELECTED', variant: BadgeVariant.secondary),
+            ],
+          ),
           const SizedBox(height: 16),
           _buildFilterChips(isDark),
           if (_filter == 'range') ...[
@@ -317,13 +332,15 @@ class _SmsScreenState extends State<SmsScreen> {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
+            height: 44,
             child: OutlinedButton.icon(
               onPressed: _isFetchingCustomers ? null : _fetchTargetCustomers,
-              icon: _isFetchingCustomers ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(LucideIcons.refreshCw, size: 14),
-              label: const Text('SYNC TARGETS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              icon: _isFetchingCustomers ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple)) : const Icon(LucideIcons.refreshCw, size: 14),
+              label: const Text('IDENTIFY & SYNC AUDIENCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1)),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                foregroundColor: PaceColors.purple,
+                side: BorderSide(color: PaceColors.purple.withOpacity(0.3), width: 1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
@@ -331,43 +348,70 @@ class _SmsScreenState extends State<SmsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.between,
             children: [
-              Text('MESSAGE BODY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-              Text('${_messageController.text.length}/160', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
+              Text('MESSAGE BODY', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
+              Text('${_messageController.text.length}/160', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
             ],
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _messageController,
-            maxLines: 6,
+            maxLines: 5,
             onChanged: (v) => setState(() {}),
-            style: TextStyle(color: PaceColors.getPrimaryText(isDark), fontSize: 14),
+            style: GoogleFonts.figtree(color: PaceColors.getPrimaryText(isDark), fontSize: 13, height: 1.5),
             decoration: InputDecoration(
               hintText: 'Type broadcast content...',
-              hintStyle: TextStyle(color: PaceColors.getDimText(isDark).withOpacity(0.5)),
+              hintStyle: TextStyle(color: PaceColors.getDimText(isDark).withOpacity(0.3)),
               filled: true,
               fillColor: PaceColors.getBackground(isDark).withOpacity(0.5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.all(16),
             ),
           ),
           const SizedBox(height: 32),
           if (settings.hasPolicy('send_bulk_sms'))
             SizedBox(
               width: double.infinity,
+              height: 54,
               child: ElevatedButton(
                 onPressed: _isSending || _targetPhones.isEmpty ? null : _sendBroadcast,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PaceColors.purple,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  elevation: 8,
-                  shadowColor: PaceColors.purple.withOpacity(0.4),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 4,
+                  shadowColor: PaceColors.purple.withOpacity(0.3),
                 ),
                 child: _isSending 
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text('Send to ${_targetPhones.length} Customers'.toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Text('EXECUTE SEND TO ${_targetPhones.length} CUSTOMERS', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
               ),
             ),
+          const SizedBox(height: 24),
+          _buildNotice(isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotice(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(LucideIcons.info, size: 16, color: PaceColors.purple),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('TRANSMISSION POLICY', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w700, color: PaceColors.purple, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text('Ensure credits are available on TextSMS. Multi-segment messages consume multiple credits per recipient.', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), height: 1.4)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -376,11 +420,11 @@ class _SmsScreenState extends State<SmsScreen> {
   Widget _buildFilterChips(bool isDark) {
     return Row(
       children: [
-        _buildChip('all', 'All', isDark),
+        _buildChip('all', 'ENTIRE BASE', isDark),
         const SizedBox(width: 8),
-        _buildChip('active', 'Active', isDark),
+        _buildChip('active', 'ACTIVE USERS', isDark),
         const SizedBox(width: 8),
-        _buildChip('range', 'Range', isDark),
+        _buildChip('range', 'DATE RANGE', isDark),
       ],
     );
   }
@@ -393,12 +437,12 @@ class _SmsScreenState extends State<SmsScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.indigo : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? Colors.indigo : PaceColors.getBorder(isDark)),
+            color: isSelected ? PaceColors.purple : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: isSelected ? PaceColors.purple : PaceColors.getBorder(isDark)),
           ),
           alignment: Alignment.center,
-          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : PaceColors.getSecondaryText(isDark))),
+          child: Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w700, color: isSelected ? Colors.white : PaceColors.getDimText(isDark), letterSpacing: 0.5)),
         ),
       ),
     );
@@ -415,8 +459,8 @@ class _SmsScreenState extends State<SmsScreen> {
             },
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: BorderRadius.circular(12)),
-              child: Text(_startDate == null ? 'Start Date' : DateFormat('MMM dd, yyyy').format(_startDate!), style: TextStyle(fontSize: 11, color: PaceColors.getPrimaryText(isDark))),
+              decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: BorderRadius.circular(10), border: Border.all(color: PaceColors.getBorder(isDark))),
+              child: Row(children: [Icon(LucideIcons.calendar, size: 12, color: PaceColors.getDimText(isDark)), const SizedBox(width: 8), Text(_startDate == null ? 'START DATE' : DateFormat('MMM dd, yyyy').format(_startDate!), style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)))]),
             ),
           ),
         ),
@@ -429,8 +473,8 @@ class _SmsScreenState extends State<SmsScreen> {
             },
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: BorderRadius.circular(12)),
-              child: Text(_endDate == null ? 'End Date' : DateFormat('MMM dd, yyyy').format(_endDate!), style: TextStyle(fontSize: 11, color: PaceColors.getPrimaryText(isDark))),
+              decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: BorderRadius.circular(10), border: Border.all(color: PaceColors.getBorder(isDark))),
+              child: Row(children: [Icon(LucideIcons.calendar, size: 12, color: PaceColors.getDimText(isDark)), const SizedBox(width: 8), Text(_endDate == null ? 'END DATE' : DateFormat('MMM dd, yyyy').format(_endDate!), style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)))]),
             ),
           ),
         ),
