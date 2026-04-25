@@ -66,22 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _handleUpdateProfile({String? otpCode}) async {
-    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
-    if (otpCode == null) {
-      final bool? confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: PaceColors.getBackground(isDark),
-          title: Text('UPDATE PROFILE', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple)),
-          content: const Text('Save these changes to your account?', style: TextStyle(fontSize: 13)),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('SAVE')),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-    }
 
     setState(() => _isSaving = true);
     
@@ -101,9 +85,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (res?['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully'), backgroundColor: PaceColors.emerald));
         setState(() => _isEditingProfile = false);
+        
+        // Sync with global provider so sidebar/drawer updates
+        final settings = Provider.of<SettingsProvider>(context, listen: false);
+        await settings.updateActiveAccountInfo(name: _nameCtrl.text, phone: _phoneCtrl.text);
+        
         _fetchData();
       } else if (res?['status'] == 'otp_required') {
-        _showOtpModal(otpCode == null); // Only show if we haven't already
+        _showOtpModal(isPassword: false);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Update failed'), backgroundColor: Colors.redAccent));
       }
@@ -135,10 +124,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (res?['status'] == 'success') {
         Navigator.pop(context); // Close password modal
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password changed successfully'), backgroundColor: PaceColors.emerald));
+        
+        // Sync with global provider so sidebar/drawer updates if name changed
+        final settings = Provider.of<SettingsProvider>(context, listen: false);
+        await settings.updateActiveAccountInfo(name: _nameCtrl.text, phone: _phoneCtrl.text);
+
         _passCtrl.clear();
         _confirmPassCtrl.clear();
       } else if (res?['status'] == 'otp_required') {
-        _showOtpModal(true, isPassword: true);
+        _showOtpModal(isPassword: true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Update failed'), backgroundColor: Colors.redAccent));
       }
@@ -146,7 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _showOtpModal(bool show, {bool isPassword = false}) {
+  void _showOtpModal({bool isPassword = false}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -179,22 +173,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _updateSystem(String field, bool value) async {
-    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: PaceColors.getBackground(isDark),
-        title: Text('CHANGE SETTING', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple)),
-        content: Text('Update ${field.replaceAll('_', ' ').toUpperCase()} logic?', style: GoogleFonts.figtree(fontSize: 13)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('CONFIRM')),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
     setState(() => _activeToggle = field);
     final val = value ? 1 : 0;
     final res = await _apiService.updateGlobalSetting(field, val);
@@ -545,32 +523,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showPasswordModal(bool isDark) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: PaceColors.getBackground(isDark),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        title: Text('CHANGE PASSWORD', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.purple, letterSpacing: 1)),
-        content: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildEditField('NEW PASSWORD', _passCtrl, LucideIcons.lock, isDark),
-              const SizedBox(height: 16),
-              _buildEditField('CONFIRM PASSWORD', _confirmPassCtrl, LucideIcons.lock, isDark),
-            ],
-          ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(
+          top: 32,
+          left: 24,
+          right: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 32,
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('CANCEL', style: TextStyle(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w700))),
-          ElevatedButton(
-            onPressed: () { Navigator.pop(ctx); _handleChangePassword(); },
-            style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: const Text('UPDATE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-          ),
-        ],
+        decoration: BoxDecoration(
+          color: PaceColors.getBackground(isDark),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text('SECURITY UPDATE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w800, color: PaceColors.purple, letterSpacing: 1.5)),
+            const SizedBox(height: 8),
+            Text('CHANGE ACCOUNT PASSWORD', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+            const SizedBox(height: 24),
+            _buildEditField('NEW PASSWORD', _passCtrl, LucideIcons.lock, isDark),
+            const SizedBox(height: 16),
+            _buildEditField('CONFIRM PASSWORD', _confirmPassCtrl, LucideIcons.lock, isDark),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: Text('CANCEL', style: TextStyle(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w700, fontSize: 11)))),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _handleChangePassword();
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: PaceColors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0, padding: const EdgeInsets.symmetric(vertical: 16)),
+                    child: const Text('UPDATE PASSWORD', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
