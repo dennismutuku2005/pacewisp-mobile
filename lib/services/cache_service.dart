@@ -58,4 +58,14 @@ class CacheService {
       }
     }
   }
+
+  Future<void> clearBySlug(String subdomain, String slug) async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+    for (final key in keys) {
+      if (key.startsWith('pace_cache_${subdomain}_$slug')) {
+        await prefs.remove(key);
+      }
+    }
+  }
 }
