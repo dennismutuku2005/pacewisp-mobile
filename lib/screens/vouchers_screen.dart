@@ -78,9 +78,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
       if (r != null) routerName = r['router_name'] ?? 'all';
     }
 
-    final res = await _apiService.fetchData(slug: 'prepaid_vouchers', forceRefresh: forceRefresh, params: {
+    final res = await _apiService.fetchData(slug: 'vouchers', forceRefresh: forceRefresh, params: {
       'page': pageNum,
-      'limit': 15,
+      'limit': 20,
       'search': _search,
       'router_name': routerName
     });
@@ -134,7 +134,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
     if (confirmed == true) {
       setState(() => _isSaving = true);
       try {
-        final res = await _apiService.fetchData(slug: 'delete_vouchers', method: 'DELETE', body: {
+        final res = await _apiService.fetchData(slug: 'vouchers', method: 'DELETE', body: {
           'ids': idsToDelete
         });
 
@@ -239,23 +239,25 @@ class _VouchersScreenState extends State<VouchersScreen> {
           _buildHeader(isDark),
           _buildFilterBar(isDark),
           if (_selectedVoucherIds.isNotEmpty) _buildBulkActionBar(isDark),
+          _buildTableHeader(isDark),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => _fetchVouchers(pageNum: 1, forceRefresh: true),
               color: PaceColors.purple,
               child: _isLoading 
-                ? const TransactionSkeleton(count: 10)
+                ? const TransactionSkeleton(count: 12)
                 : _vouchers.isEmpty 
                   ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchVouchers(pageNum: 1, forceRefresh: true), isDark: isDark))
-                  : ListView.builder(
+                  : ListView.separated(
                       controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 120),
                       itemCount: _vouchers.length + (_isMoreLoading ? 1 : 0),
+                      separatorBuilder: (_, __) => Divider(height: 1, color: PaceColors.getBorder(isDark)),
                       itemBuilder: (context, index) {
                         if (index == _vouchers.length) {
                           return const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
                         }
-                        return _buildVoucherCard(_vouchers[index], isDark);
+                        return _buildVoucherRow(_vouchers[index], isDark);
                       },
                     ),
             ),
@@ -367,68 +369,84 @@ class _VouchersScreenState extends State<VouchersScreen> {
     );
   }
 
-  Widget _buildVoucherCard(dynamic v, bool isDark) {
+  Widget _buildTableHeader(bool isDark) {
+    return Container(
+      color: PaceColors.getSurface(isDark),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(flex: 3, child: Text('PIN & PLAN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 2, child: Text('STATION NODE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVoucherRow(dynamic v, bool isDark) {
     final id = v['id'].toString();
     final isSelected = _selectedVoucherIds.contains(id);
     final isUsed = v['used']?.toString() == '1';
-    final isSale = v['sale']?.toString() == '1';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onLongPress: () => setState(() => _selectedVoucherIds.add(id)),
-        onTap: () {
-          if (_selectedVoucherIds.isNotEmpty) {
-            setState(() => isSelected ? _selectedVoucherIds.remove(id) : _selectedVoucherIds.add(id));
-          } else {
-             _showVoucherDrawer(v, isDark);
-          }
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isSelected ? PaceColors.purple.withOpacity(0.05) : PaceColors.getCard(isDark),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isSelected ? PaceColors.purple : PaceColors.getBorder(isDark), width: isSelected ? 2 : 1),
-          ),
-          child: Column(
-            children: [
-              Row(
+    
+    return InkWell(
+      onLongPress: () => setState(() => _selectedVoucherIds.add(id)),
+      onTap: () {
+        if (_selectedVoucherIds.isNotEmpty) {
+          setState(() => isSelected ? _selectedVoucherIds.remove(id) : _selectedVoucherIds.add(id));
+        } else {
+           _showVoucherDrawer(v, isDark);
+        }
+      },
+      child: Container(
+        color: isSelected ? PaceColors.purple.withOpacity(0.05) : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(LucideIcons.ticket, size: 18, color: PaceColors.purple),
+                  Row(
+                    children: [
+                      if (_selectedVoucherIds.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: Checkbox(
+                              value: isSelected, 
+                              onChanged: (val) => setState(() => val! ? _selectedVoucherIds.add(id) : _selectedVoucherIds.remove(id)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              activeColor: PaceColors.purple,
+                            ),
+                          ),
+                        ),
+                      Text(v['voucher_code']?.toString().toUpperCase() ?? 'CODE', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(v['voucher_code']?.toString().toUpperCase() ?? 'CODE', style: GoogleFonts.jetBrainsMono(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 2, color: PaceColors.getPrimaryText(isDark))),
-                      Text(v['plan']?.toString().toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
-                    ]),
-                  ),
-                  if (_selectedVoucherIds.isNotEmpty)
-                    Checkbox(
-                      value: isSelected, 
-                      onChanged: (val) => setState(() => val! ? _selectedVoucherIds.add(id) : _selectedVoucherIds.remove(id)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                      activeColor: PaceColors.purple,
-                    ),
+                  const SizedBox(height: 4),
+                  Text(v['plan']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                 ],
               ),
-              const SizedBox(height: 16),
-              Row(
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(v['router_name']?.toString().toUpperCase() ?? 'NODE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+            ),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   PaceBadge(label: isUsed ? 'USED' : 'AVAILABLE', variant: isUsed ? BadgeVariant.secondary : BadgeVariant.success),
-                  const SizedBox(width: 8),
-                  if (isSale) const PaceBadge(label: 'SALE', variant: BadgeVariant.success),
-                  const Spacer(),
-                  Text(v['created_at'] ?? '', style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 4),
+                  Text(v['created_at']?.split(' ')[0] ?? '', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500)),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -577,7 +595,7 @@ class _CreateVoucherBottomSheetState extends State<_CreateVoucherBottomSheet> {
     
     setState(() => _isLoading = true);
     try {
-      final res = await _apiService.fetchData(slug: 'create_vouchers', method: 'POST', body: {
+      final res = await _apiService.fetchData(slug: 'vouchers', method: 'POST', body: {
         'router_name': router['router_name'],
         'plan': _selectedPlan,
         'count': _count,
