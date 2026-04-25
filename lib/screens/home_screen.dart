@@ -51,22 +51,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadSyncMemory() {
-    final filters = _parseDateRange(_selectedDateRange);
-    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
-    
-    final wMem = _apiService.getMemoryCached('widgets', params: {'action': 'widgets', 'router': router, 'startDate': filters['startDate'], 'endDate': filters['endDate']});
-    final cMem = _apiService.getMemoryCached('charts', params: {'action': 'charts', 'router': router, 'startDate': filters['startDate'], 'endDate': filters['endDate']});
-    final tMem = _apiService.getMemoryCached('recent_transactions', params: {'action': 'recent_transactions', 'limit': 5, 'router': router, 'startDate': filters['startDate'], 'endDate': filters['endDate']});
-    final rMem = _apiService.getMemoryCached('widgets', params: {'action': 'router_status', 'limit': 5});
-
-    if (wMem != null || cMem != null || tMem != null || rMem != null) {
-      _widgets = _extractData(wMem, 'widgets');
-      _charts = cMem?['data']?['charts']?['revenue_over_time'] ?? cMem?['charts']?['revenue_over_time'] ?? cMem?['data']?['revenue_over_time'] ?? [];
-      _transactions = _extractData(tMem, 'recent_transactions', isList: true) ?? [];
-      _routerStatus = _extractData(rMem, 'router_status', isList: true) ?? [];
-      _isLoading = false; // Instant data available
-      _refreshWidgetData();
-    }
+    // Disabled all memory caching for dashboard to ensure real-time data
+    setState(() => _isLoading = true);
   }
   
   Future<void> _loadRouters() async {
@@ -112,25 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final filters = _parseDateRange(_selectedDateRange);
     final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
 
-    // SILENT CACHE LOAD
-    final cached = await Future.wait<Map<String, dynamic>?>([
-      _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: false),
-      _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: false),
-      _apiService.getRecentTransactions(router: router, startDate: filters['startDate'], endDate: filters['endDate'], limit: 5, forceRefresh: false),
-      _apiService.getRouterStatus(limit: 5, forceRefresh: false),
-    ]);
-
-    if (mounted) {
-      final hasData = cached.any((element) => element != null);
-      setState(() {
-        _widgets = _extractData(cached[0], 'widgets');
-        _charts = cached[1]?['data']?['charts']?['revenue_over_time'] ?? cached[1]?['charts']?['revenue_over_time'] ?? cached[1]?['data']?['revenue_over_time'] ?? [];
-        _transactions = _extractData(cached[2], 'recent_transactions', isList: true) ?? [];
-        _routerStatus = _extractData(cached[3], 'router_status', isList: true) ?? [];
-        if (hasData) _isLoading = false;
-      });
-      _refreshWidgetData();
-    }
+    // ONLY LIVE REFRESH - No cache check
 
     // LIVE REFRESH
     final live = await Future.wait<Map<String, dynamic>?>([
@@ -145,10 +113,47 @@ class _HomeScreenState extends State<HomeScreen> {
         _widgets = _extractData(live[0], 'widgets');
         _charts = live[1]?['data']?['charts']?['revenue_over_time'] ?? live[1]?['charts']?['revenue_over_time'] ?? live[1]?['data']?['revenue_over_time'] ?? [];
         _transactions = _extractData(live[2], 'recent_transactions', isList: true) ?? [];
-        _routerStatus = _extractData(live[3], 'router_status', isList: true) ?? [];
+        
+        // Initialize router status with pinging state
+        final fetchedRouters = _extractData(live[3], 'router_status', isList: true) ?? [];
+        _routerStatus = fetchedRouters.map((r) => { ...r, 'isPinging': true }).toList();
+        
         _isLoading = false;
       });
       _refreshWidgetData();
+      _startDashboardPings();
+    }
+  }
+
+  void _startDashboardPings() {
+    for (int i = 0; i < _routerStatus.length; i++) {
+      _pingDashboardRouter(i);
+    }
+  }
+
+  Future<void> _pingDashboardRouter(int index) async {
+    if (index >= _routerStatus.length) return;
+    final r = _routerStatus[index];
+    try {
+      final res = await _apiService.pingRouter(r['ip'] ?? '0.0.0.0', r['winbox_port'] ?? 8728);
+      final stats = res?['data'] ?? res;
+      final bool isOnline = stats?['status'] == 'online' || stats?['cpu'] != null;
+      if (mounted && index < _routerStatus.length) {
+        setState(() {
+          _routerStatus[index] = { 
+            ..._routerStatus[index], 
+            'uptime': isOnline ? (stats?['uptime'] ?? 'UP') : 'DOWN',
+            'status': isOnline ? 'Online' : 'Offline',
+            'isPinging': false
+          };
+        });
+      }
+    } catch (_) {
+      if (mounted && index < _routerStatus.length) {
+        setState(() {
+          _routerStatus[index] = { ..._routerStatus[index], 'isPinging': false, 'status': 'Offline' };
+        });
+      }
     }
   }
 
@@ -425,10 +430,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTxRow(dynamic tx, bool isDark) {
-    // Handling the time offset reported by user
+    // Handling the time offset (Server UTC vs Local EAT)
     String timeAgo = tx['time_ago'] ?? 'Just now';
-    if (timeAgo.contains('hrs') || timeAgo.contains('hours')) {
-       // If it's suspiciously old for "recent activity", we show it as is but stylize it
+    
+    // Normalize suspiciously old recent activities (2-3 hour offsets)
+    if (timeAgo.toLowerCase().contains('hr') || timeAgo.toLowerCase().contains('hour')) {
+      final String val = timeAgo.split(' ')[0];
+      final int? hrs = int.tryParse(val);
+      if (hrs != null && hrs <= 3) {
+        timeAgo = 'Just now';
+      } else if (hrs != null && hrs > 3) {
+        timeAgo = '${hrs - 3} hr ago';
+      }
     }
 
     return Container(
@@ -511,14 +524,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStationRow(dynamic r, bool isDark) {
-    bool isOnline = r['status']?.toString().toLowerCase() == 'up' || r['status']?.toString().toLowerCase() == 'online';
+    final bool isPinging = r['isPinging'] == true;
+    final bool isOnline = r['status']?.toString().toLowerCase() == 'up' || r['status']?.toString().toLowerCase() == 'online';
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.4)))),
       child: Row(children: [
-        Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(r['name']?.toUpperCase() ?? 'NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))), Text(r['uptime'] ?? '15d 4h', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark)))]).pOnly(left: 4)),
+        Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(r['name']?.toUpperCase() ?? 'NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))), 
+          isPinging 
+            ? const Padding(padding: EdgeInsets.only(top: 2), child: PaceSkeleton(width: 40, height: 6))
+            : Text(r['uptime'] ?? 'DOWN', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark)))
+        ]).pOnly(left: 4)),
         Expanded(flex: 3, child: Text(r['ip'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 8, color: PaceColors.getPrimaryText(isDark)))),
-        SizedBox(width: 80, child: PaceBadge(label: isOnline ? 'ONLINE' : 'OFFLINE', variant: isOnline ? BadgeVariant.success : BadgeVariant.error)),
+        SizedBox(
+          width: 80, 
+          child: isPinging 
+            ? const PaceSkeleton(width: 80, height: 20, borderRadius: 6)
+            : PaceBadge(label: isOnline ? 'ONLINE' : 'DOWN', variant: isOnline ? BadgeVariant.success : BadgeVariant.error)
+        ),
       ]),
     );
   }
