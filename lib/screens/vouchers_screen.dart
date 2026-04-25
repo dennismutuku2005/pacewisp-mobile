@@ -229,7 +229,9 @@ class _VouchersScreenState extends State<VouchersScreen> {
         });
 
           if (res?['status'] == 'success') {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$count vouchers generated successfully'), backgroundColor: PaceColors.emerald));
+            final List<dynamic> newVouchers = res?['data'] ?? [];
+            _showCreatedVouchersModal(newVouchers);
+            
             setState(() {
               _activeRouterId = selectedRouterId!;
               _search = '';
@@ -262,7 +264,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
         content: Text('Permanently remove ${idsToDelete.length} selected vouchers? This action cannot be undone.', style: GoogleFonts.figtree(fontSize: 12)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE ALL', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(idsToDelete.length > 1 ? 'DELETE ALL' : 'DELETE', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600))),
         ],
       ),
     );
@@ -673,6 +675,69 @@ class _VouchersScreenState extends State<VouchersScreen> {
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: valColor)),
       ],
+    );
+  }
+  
+  void _showCreatedVouchersModal(List<dynamic> newVouchers) {
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaceColors.getBackground(isDark),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Column(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: PaceColors.emerald, size: 48),
+            const SizedBox(height: 12),
+            Text('GENERATED CODES', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple)),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${newVouchers.length} new vouchers created successfully.', style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark))),
+              const SizedBox(height: 20),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: newVouchers.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final v = newVouchers[index];
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.getBorder(isDark))),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.confirmation_num_rounded, size: 16, color: PaceColors.purple),
+                          const SizedBox(width: 12),
+                          Text(v['voucher_code']?.toString().toUpperCase() ?? '', style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 16),
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: v['voucher_code']?.toString() ?? ''));
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied!'), duration: Duration(seconds: 1)));
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('DONE', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 }
