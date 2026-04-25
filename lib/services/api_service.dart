@@ -163,6 +163,7 @@ class ApiService {
     else if (slug == 'delete_vouchers') phpFile = '/vouchers.php';
     else if (slug == 'activate_theme') phpFile = '/themes.php';
     else if (slug == 'save_plans') phpFile = '/hotspot_plans.php';
+    else if (slug == 'sms') phpFile = '/sms.php';
 
     // Real-time slugs that should NEVER be cached
     final isRealTime = slug == 'recent_transactions' || slug == 'router_status' || slug == 'active_customers' || slug == 'routers';
@@ -440,10 +441,42 @@ class ApiService {
   Future<Map<String, dynamic>?> getActiveThemes({bool forceRefresh = false}) async => 
     fetchData(slug: 'active_themes', forceRefresh: forceRefresh);
 
-  Future<Map<String, dynamic>?> activateTheme(String themeId, String routerId) async => 
+  Future<Map<String, dynamic>?> activateTheme(String themeId, String routerId) async =>
     fetchData(slug: 'activate_theme', method: 'POST', body: {
       'action': 'activate',
       'theme_id': themeId,
       'router_id': routerId,
+    });
+
+  // --- SMS CENTER ---
+
+  Future<Map<String, dynamic>?> getSmsConfig() async =>
+    _requestWithFallback('/sms.php?action=config');
+
+  Future<Map<String, dynamic>?> saveSmsConfig(Map<String, dynamic> config) async =>
+    _requestWithFallback('/sms.php?action=config', method: 'POST', data: config);
+
+  Future<Map<String, dynamic>?> getSmsTargetCustomers({
+    String filter = 'all', 
+    String? start, 
+    String? end,
+  }) async {
+    final params = <String, dynamic>{'action': 'customers', 'filter': filter};
+    if (start != null && start.isNotEmpty) params['start'] = start;
+    if (end != null && end.isNotEmpty) params['end'] = end;
+    return _requestWithFallback('/sms.php', queryParameters: params);
+  }
+
+  Future<Map<String, dynamic>?> sendBulkSms(List<String> phones, String message) async =>
+    _requestWithFallback('/sms.php?action=send', method: 'POST', data: {
+      'phones': phones, 
+      'message': message,
+    });
+
+  Future<Map<String, dynamic>?> getSmsLogs({int page = 1, int limit = 20}) async =>
+    _requestWithFallback('/sms.php', queryParameters: {
+      'action': 'logs', 
+      'page': page, 
+      'limit': limit,
     });
 }

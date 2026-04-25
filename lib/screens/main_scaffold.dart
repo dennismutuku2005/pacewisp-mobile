@@ -31,6 +31,8 @@ import '../services/lock_service.dart';
 import 'block_stk_screen.dart';
 import 'themes_screen.dart';
 import 'login_screen.dart';
+import 'sms_screen.dart';
+import 'sms_logs_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -181,6 +183,8 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     const SettingsScreen(),
     const BlockStkScreen(),
     const ThemesScreen(),
+    const SmsScreen(),
+    const SmsLogsScreen(),
   ];
 
   @override
@@ -279,6 +283,12 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                       _buildDrawerItem(20, 'Design Library', LucideIcons.palette, isDark),
                     if (settings.hasPolicy('view_logs'))
                       _buildDrawerItem(17, 'System Logs', LucideIcons.terminal, isDark),
+
+                    _buildDrawerSection('COMMUNICATION', isDark),
+                    if (settings.hasPolicy('view_sms'))
+                      _buildDrawerItem(21, 'SMS Command', LucideIcons.smartphone, isDark),
+                    if (settings.hasPolicy('view_sms'))
+                      _buildDrawerItem(22, 'SMS History', LucideIcons.history, isDark),
 
                     _buildDrawerSection('YOUR BILLING', isDark),
                     if (settings.hasPolicy('view_bills'))
