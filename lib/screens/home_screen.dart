@@ -10,6 +10,7 @@ import '../components/dashboard_chart.dart';
 import '../components/skeleton.dart';
 import '../components/badge.dart';
 import '../components/empty_state.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../services/widget_service.dart';
 
 class HomeScreen extends StatefulWidget {
