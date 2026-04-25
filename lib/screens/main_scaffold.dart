@@ -284,11 +284,13 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
                     if (settings.hasPolicy('view_logs'))
                       _buildDrawerItem(17, 'System Logs', LucideIcons.terminal, isDark),
 
+                    /*
                     _buildDrawerSection('COMMUNICATION', isDark),
                     if (settings.hasPolicy('view_sms'))
-                      _buildDrawerItem(21, 'SMS Command', LucideIcons.smartphone, isDark),
+                      _buildDrawerItem(21, 'SMS Center', LucideIcons.smartphone, isDark),
                     if (settings.hasPolicy('view_sms'))
                       _buildDrawerItem(22, 'SMS History', LucideIcons.history, isDark),
+                    */
 
                     _buildDrawerSection('YOUR BILLING', isDark),
                     if (settings.hasPolicy('view_bills'))
