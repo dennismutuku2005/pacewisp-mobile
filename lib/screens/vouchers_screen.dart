@@ -575,7 +575,17 @@ class _CreateVoucherBottomSheetState extends State<_CreateVoucherBottomSheet> {
   void initState() {
     super.initState();
     _selectedRouterId = widget.initialRouterId == 'all' ? null : widget.initialRouterId;
+    _fetchSystemSettings();
     if (_selectedRouterId != null) _fetchPlans();
+  }
+
+  Future<void> _fetchSystemSettings() async {
+    final res = await _apiService.getSystemSettings();
+    if (mounted && res?['data'] != null) {
+      setState(() {
+        _isSale = res!['data']['vouchers_as_sale']?.toString() == '1';
+      });
+    }
   }
 
   Future<void> _fetchPlans() async {
