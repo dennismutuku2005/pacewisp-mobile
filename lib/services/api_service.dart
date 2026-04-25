@@ -260,6 +260,9 @@ class ApiService {
   Future<Map<String, dynamic>?> getHistory(String phone, {bool forceRefresh = false}) async => 
     getCustomerHistory(phone: phone, forceRefresh: forceRefresh);
 
+  Future<Map<String, dynamic>?> getSystemSettings({bool forceRefresh = false}) async => 
+    fetchData(slug: 'system_settings', forceRefresh: forceRefresh);
+
   Future<Map<String, dynamic>?> getMonthlyUsers({String? month, String? year, String? router, int limit = 500, bool forceRefresh = false}) async {
     final Map<String, dynamic> params = <String, dynamic>{'limit': limit};
     if (month != null) params['month'] = month;
