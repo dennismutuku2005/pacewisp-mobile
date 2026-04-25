@@ -449,19 +449,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTxRow(dynamic tx, bool isDark) {
-    // Handling the time offset (Server UTC vs Local EAT)
     String timeAgo = tx['time_ago'] ?? 'Just now';
-    
-    // Normalize suspiciously old recent activities (2-3 hour offsets)
-    if (timeAgo.toLowerCase().contains('hr') || timeAgo.toLowerCase().contains('hour')) {
-      final String val = timeAgo.split(' ')[0];
-      final int? hrs = int.tryParse(val);
-      if (hrs != null && hrs <= 3) {
-        timeAgo = 'Just now';
-      } else if (hrs != null && hrs > 3) {
-        timeAgo = '${hrs - 3} hr ago';
-      }
-    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
