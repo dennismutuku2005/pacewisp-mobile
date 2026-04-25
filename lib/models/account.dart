@@ -39,5 +39,23 @@ class PaceAccount {
     type: json['type'] ?? 'admin',
     phone: json['phone'],
     policies: List<String>.from(json['policies'] ?? []),
+  PaceAccount copyWith({
+    String? subdomain,
+    String? domain,
+    String? accountName,
+    String? token,
+    String? lastLogin,
+    String? type,
+    String? phone,
+    List<String>? policies,
+  }) => PaceAccount(
+    subdomain: subdomain ?? this.subdomain,
+    domain: domain ?? this.domain,
+    accountName: accountName ?? this.accountName,
+    token: token ?? this.token,
+    lastLogin: lastLogin ?? this.lastLogin,
+    type: type ?? this.type,
+    phone: phone ?? this.phone,
+    policies: policies ?? this.policies,
   );
 }
