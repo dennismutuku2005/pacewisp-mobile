@@ -25,6 +25,7 @@ class _SmsScreenState extends State<SmsScreen> {
   bool _isFetchingCustomers = false;
   bool _isSending = false;
   bool _showConfig = false;
+  bool _obscureApiKey = true;
 
   Map<String, dynamic> _config = {'apikey': '', 'partner_id': '', 'shortcode': ''};
   List<String> _targetPhones = [];
@@ -123,6 +124,32 @@ class _SmsScreenState extends State<SmsScreen> {
       }
     } catch (e) {
       _showError('Failed to save config');
+    }
+  }
+
+  Future<void> _clearConfig() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Clear Config?'),
+        content: const Text('Are you sure you want to delete the gateway configuration?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('CANCEL')),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('DELETE', style: TextStyle(color: Colors.redAccent))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final res = await _api.saveSmsConfig({'apikey': '', 'partner_id': '', 'shortcode': ''});
+      if (res != null && res['status'] == 'success') {
+        _showSuccess('Configuration deleted');
+        _fetchInitialData();
+      }
+    } catch (e) {
+      _showError('Failed to delete config');
     }
   }
 
@@ -349,11 +376,19 @@ class _SmsScreenState extends State<SmsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildConfigInput('API KEY', _config['apikey'], (v) => _config['apikey'] = v, true, isDark),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('API CREDENTIALS', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 1)),
+              IconButton(onPressed: _clearConfig, icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildConfigInput('API KEY', _config['apikey'], (v) => _config['apikey'] = v, _obscureApiKey, isDark, true),
           const SizedBox(height: 16),
-          _buildConfigInput('PARTNER ID', _config['partner_id'], (v) => _config['partner_id'] = v, false, isDark),
+          _buildConfigInput('PARTNER ID', _config['partner_id'], (v) => _config['partner_id'] = v, false, isDark, false),
           const SizedBox(height: 16),
-          _buildConfigInput('SENDER ID', _config['shortcode'], (v) => _config['shortcode'] = v, false, isDark),
+          _buildConfigInput('SENDER ID / SHORTCODE', _config['shortcode'], (v) => _config['shortcode'] = v, false, isDark, false),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -366,7 +401,7 @@ class _SmsScreenState extends State<SmsScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text('UPDATE CREDENTIALS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+              child: const Text('UPDATE CREDENTIALS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1)),
             ),
           ),
         ],
@@ -374,7 +409,7 @@ class _SmsScreenState extends State<SmsScreen> {
     );
   }
 
-  Widget _buildConfigInput(String label, String? value, Function(String) onChanged, bool obscure, bool isDark) {
+  Widget _buildConfigInput(String label, String? value, Function(String) onChanged, bool obscure, bool isDark, bool hasToggle) {
     final String safeValue = value ?? '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,15 +419,23 @@ class _SmsScreenState extends State<SmsScreen> {
         TextField(
           onChanged: onChanged,
           obscureText: obscure,
+          autocorrect: false,
+          enableSuggestions: false,
           controller: TextEditingController(text: safeValue)..selection = TextSelection.fromPosition(TextPosition(offset: safeValue.length)),
           style: GoogleFonts.figtree(color: PaceColors.getPrimaryText(isDark), fontSize: 13, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             isDense: true,
             hintText: 'Required',
             hintStyle: TextStyle(color: PaceColors.getDimText(isDark).withOpacity(0.3)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
             enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: PaceColors.getBorder(isDark))),
             focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: PaceColors.purple)),
+            suffixIcon: hasToggle ? IconButton(
+              icon: Icon(obscure ? LucideIcons.eye : LucideIcons.eyeOff, size: 16, color: PaceColors.getDimText(isDark)),
+              onPressed: () => setState(() => _obscureApiKey = !_obscureApiKey),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ) : null,
           ),
         ),
       ],
@@ -440,7 +483,7 @@ class _SmsScreenState extends State<SmsScreen> {
           ),
           const SizedBox(height: 32),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.between,
             children: [
               Text('MESSAGE BODY', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
               Text('${_messageController.text.length}/160', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
