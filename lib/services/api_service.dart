@@ -164,20 +164,31 @@ class ApiService {
     else if (slug == 'activate_theme') phpFile = '/themes.php';
     else if (slug == 'save_plans') phpFile = '/hotspot_plans.php';
 
+    // Real-time slugs that should NEVER be cached
+    final isRealTime = slug == 'recent_transactions' || slug == 'router_status' || slug == 'active_customers' || slug == 'routers';
+
     final cacheKey = "${subdomainKey}_${slug}_${params.toString()}";
-    if (!forceRefresh) {
+
+    if (!forceRefresh && !isRealTime) {
       final cached = await _cache.get(cacheKey, subdomain: subdomainKey, expiry: const Duration(minutes: 5));
       if (cached != null) return cached;
     }
 
-    final data = await _requestWithFallback(phpFile, method: method, data: body, queryParameters: params);
+    final data = await _requestWithFallback(
+      phpFile, 
+      method: method, 
+      data: body, 
+      queryParameters: (forceRefresh || isRealTime)
+        ? {...(params ?? {}), '_t': DateTime.now().millisecondsSinceEpoch.toString()} 
+        : params
+    );
     print('FETCH DATA [$slug] SUCCESS: ${data != null}');
     
     if (data != null && (data['status'] == 'success' || data['status'] == 200 || data['status'] == '200')) {
-      if (method == 'GET') {
+      if (method == 'GET' && !isRealTime) {
         _memoryCache[cacheKey] = data; // Update memory cache
         await _cache.save(cacheKey, data, subdomain: subdomainKey);
-      } else {
+      } else if (method != 'GET') {
         // Mutation occurred: Invalidate all related caches
         _memoryCache.removeWhere((key, value) => key.contains(slug));
         await _cache.clearBySlug(subdomainKey, slug);
