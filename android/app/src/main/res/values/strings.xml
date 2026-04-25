@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PaceWISP</string>
+    <string name="widget_sync_channel_id">widget_sync_channel</string>
+    <string name="widget_sync_channel_name">Widget Live Sync</string>
+    <string name="widget_sync_notification_title">PaceWISP Widget</string>
+    <string name="widget_sync_notification_text">Syncing dashboard data every 20 seconds</string>
+</resources>
