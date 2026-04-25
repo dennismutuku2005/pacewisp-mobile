@@ -128,15 +128,72 @@ class _SmsScreenState extends State<SmsScreen> {
   }
 
   Future<void> _clearConfig() async {
-    final confirm = await showDialog<bool>(
+    final bool isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+    
+    final confirm = await showGeneralDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Clear Config?'),
-        content: const Text('Are you sure you want to delete the gateway configuration?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('DELETE', style: TextStyle(color: Colors.redAccent))),
-        ],
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (c, a1, a2) => Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.85,
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: PaceColors.getCard(isDark),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56, height: 56,
+                  decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.08), shape: BoxShape.circle),
+                  child: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 24),
+                ),
+                const SizedBox(height: 24),
+                Text('DELETE CONFIG?', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.purple, letterSpacing: 0.5)),
+                const SizedBox(height: 12),
+                Text('This action will clear all SMS gateway credentials. You will need to re-configure to enable broadcasting.', 
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), height: 1.5, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => Navigator.pop(c, false),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          alignment: Alignment.center,
+                          child: Text('CANCEL', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => Navigator.pop(c, true),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.redAccent.withOpacity(0.2), blurRadius: 10, y: 4)]),
+                          alignment: Alignment.center,
+                          child: Text('DELETE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
 
