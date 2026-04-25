@@ -127,6 +127,17 @@ class SettingsProvider with ChangeNotifier {
     return activeAccount!.policies.contains(policy);
   }
 
+  Future<void> updateActiveAccountInfo({String? name, String? phone}) async {
+    if (activeAccount != null) {
+      _accounts[_activeAccountIndex] = activeAccount!.copyWith(
+        accountName: name,
+        phone: phone,
+      );
+      await _saveSettings();
+      notifyListeners();
+    }
+  }
+
   Future<void> switchAccount(int index) async {
     if (index >= 0 && index < _accounts.length) {
       _activeAccountIndex = index;
