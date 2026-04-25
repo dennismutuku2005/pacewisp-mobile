@@ -614,11 +614,11 @@ class _SmsScreenState extends State<SmsScreen> {
   Widget _buildFilterChips(bool isDark) {
     return Row(
       children: [
-        _buildChip('all', 'ENTIRE BASE', isDark),
+        _buildChip('all', 'ALL', isDark),
         const SizedBox(width: 8),
-        _buildChip('active', 'ACTIVE USERS', isDark),
+        _buildChip('active', 'ACTIVE', isDark),
         const SizedBox(width: 8),
-        _buildChip('range', 'DATE RANGE', isDark),
+        _buildChip('range', 'RANGE', isDark),
       ],
     );
   }
