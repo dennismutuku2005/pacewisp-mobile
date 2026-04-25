@@ -8,35 +8,11 @@ import 'screens/login_screen.dart';
 import 'screens/main_scaffold.dart';
 import 'theme/app_theme.dart';
 import 'services/widget_service.dart';
-import 'package:workmanager/workmanager.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    await WidgetService.refreshDataFromApi();
-    return Future.value(true);
-  });
-}
-
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Workmanager
-  Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: false
-  );
-  
-  // Register periodic task (min 15 mins)
-  Workmanager().registerPeriodicTask(
-    "1",
-    "sync_widget_data",
-    frequency: const Duration(minutes: 15),
-    constraints: Constraints(networkType: NetworkType.connected),
-  );
-
   HomeWidget.registerBackgroundCallback(WidgetService.backgroundCallback);
   runApp(
     MultiProvider(
