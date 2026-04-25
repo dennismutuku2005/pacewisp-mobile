@@ -173,17 +173,15 @@ class ApiService {
     final data = await _requestWithFallback(phpFile, method: method, data: body, queryParameters: params);
     print('FETCH DATA [$slug] SUCCESS: ${data != null}');
     
-    if (data != null && data['status'] == 'error' && data['message'] != null) {
-      final msg = data['message'].toString().toLowerCase();
-      if (msg.contains('unauthorized') || msg.contains('token')) {
-         print('API: AUTH ERROR detected for $slug: $msg');
-      }
-    }
-
     if (data != null && (data['status'] == 'success' || data['status'] == 200 || data['status'] == '200')) {
       if (method == 'GET') {
         _memoryCache[cacheKey] = data; // Update memory cache
         await _cache.save(cacheKey, data, subdomain: subdomainKey);
+      } else {
+        // Mutation occurred: Invalidate all related caches
+        _memoryCache.removeWhere((key, value) => key.contains(slug));
+        await _cache.clearBySlug(subdomainKey, slug);
+        print('API: Mutation detected, cleared memory & disk cache for $slug');
       }
     }
     return data;
