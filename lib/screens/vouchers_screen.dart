@@ -87,14 +87,14 @@ class _VouchersScreenState extends State<VouchersScreen> {
     }
   }
 
-  Future<void> _fetchVouchers({required int pageNum}) async {
+  Future<void> _fetchVouchers({required int pageNum, bool forceRefresh = false}) async {
     String routerName = 'all';
     if (_activeRouterId != 'all') {
       final r = _routers.firstWhere((x) => x['id'].toString() == _activeRouterId, orElse: () => null);
       if (r != null) routerName = r['router_name'] ?? 'all';
     }
 
-    final res = await _apiService.fetchData(slug: 'prepaid_vouchers', params: {
+    final res = await _apiService.fetchData(slug: 'prepaid_vouchers', forceRefresh: forceRefresh, params: {
       'page': pageNum,
       'limit': 15,
       'search': _search,
@@ -234,7 +234,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
               _activeRouterId = selectedRouterId!;
               _search = '';
             });
-            _fetchVouchers(pageNum: 1);
+            _fetchVouchers(pageNum: 1, forceRefresh: true);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(res?['message'] ?? 'Failed to create vouchers'), backgroundColor: Colors.redAccent)
@@ -277,7 +277,7 @@ class _VouchersScreenState extends State<VouchersScreen> {
         if (res?['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vouchers deleted successfully'), backgroundColor: Colors.black));
           _selectedVoucherIds.clear();
-          _fetchVouchers(pageNum: 1);
+          _fetchVouchers(pageNum: 1, forceRefresh: true);
         }
       } finally {
         if (mounted) setState(() => _isSaving = false);
@@ -396,10 +396,10 @@ class _VouchersScreenState extends State<VouchersScreen> {
                     _buildTableHeader(isDark),
                     Expanded(
                       child: RefreshIndicator(
-                        onRefresh: () => _fetchVouchers(pageNum: 1),
+                        onRefresh: () => _fetchVouchers(pageNum: 1, forceRefresh: true),
                         color: PaceColors.purple,
                         child: _vouchers.isEmpty 
-                          ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchVouchers(pageNum: 1), isDark: isDark))
+                          ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchVouchers(pageNum: 1, forceRefresh: true), isDark: isDark))
                           : ListView.separated(
                               controller: _scrollController,
                               padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
