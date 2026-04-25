@@ -341,8 +341,8 @@ class _SmsScreenState extends State<SmsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('SMS COMMAND', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-        Text('TRANSMISSION CENTER', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2)),
+        Text('SMS CENTER', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
+        Text('TRANSMISSION HUB', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2)),
       ],
     );
   }
@@ -357,7 +357,7 @@ class _SmsScreenState extends State<SmsScreen> {
       childAspectRatio: 1.5,
       children: [
         _buildStatCard('TARGET AUDIENCE', _targetPhones.length.toString(), LucideIcons.users, PaceColors.purple, isDark),
-        _buildStatCard('GATEWAY STATUS', _isConfigured ? 'ACTIVE' : 'PENDING', LucideIcons.shieldCheck, _isConfigured ? PaceColors.emerald : Colors.redAccent, isDark),
+        _buildStatCard('SENT CAMPAIGNS', 'ACTIVE', LucideIcons.shieldCheck, _isConfigured ? PaceColors.emerald : Colors.redAccent, isDark),
       ],
     );
   }
