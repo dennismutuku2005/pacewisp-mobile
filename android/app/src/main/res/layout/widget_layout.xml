@@ -22,23 +22,45 @@
             android:textStyle="bold"
             android:textAllCaps="true" />
 
-        <TextView
-            android:id="@+id/tv_income"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="KSH ***"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="2dp" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            
+            <LinearLayout
+                android:id="@+id/data_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_entries"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="*** Entries"
-            android:textColor="#22C55E"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tv_income"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="KSH ***"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="2dp" />
+
+                <TextView
+                    android:id="@+id/tv_entries"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="*** Entries"
+                    android:textColor="#22C55E"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/pb_loading"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="start|center_vertical"
+                android:visibility="gone"
+                android:indeterminate="true"
+                android:indeterminateTint="#BB99FF" />
+        </FrameLayout>
     </LinearLayout>
 </FrameLayout>
