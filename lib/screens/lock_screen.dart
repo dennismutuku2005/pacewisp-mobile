@@ -78,25 +78,14 @@ class _LockScreenState extends State<LockScreen> {
             children: [
               const Spacer(),
               
-              // Profile Logo Container
-              Container(
-                width: 120, height: 120,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(color: PaceColors.purple.withOpacity(0.15), blurRadius: 40, spreadRadius: 10),
-                  ],
-                ),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.security_rounded,
-                    size: 56,
-                    color: Colors.white,
-                  ),
+              // Profile Logo
+              Image.asset(
+                'assets/images/logo.png',
+                height: 80,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.security_rounded,
+                  size: 64,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 32),
