@@ -27,6 +27,7 @@ class AppWidgetProvider : HomeWidgetProvider() {
 
                 // Trigger live sync when unblurring
                 if (current == true) { 
+                    prefs.edit().putBoolean("is_loading", true).apply()
                     try {
                         val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
                             context, Uri.parse("pacewisp://sync_data")
@@ -50,18 +51,27 @@ class AppWidgetProvider : HomeWidgetProvider() {
                 val views = RemoteViews(context.packageName, R.layout.widget_layout)
                 
                 val isBlurred = widgetData.getBoolean("is_blurred", true)
+                val isLoading = widgetData.getBoolean("is_loading", false)
                 val income = widgetData.getString("income", "0") ?: "0"
                 val entries = widgetData.getString("entries", "0") ?: "0"
                 val accountName = widgetData.getString("account_name", "PaceWisp Admin") ?: "PaceWisp Admin"
 
                 views.setTextViewText(R.id.tv_title, accountName)
                 
-                if (isBlurred) {
-                    views.setTextViewText(R.id.tv_income, "KSH ***")
-                    views.setTextViewText(R.id.tv_entries, "*** Entries")
+                if (isLoading) {
+                    views.setViewVisibility(R.id.pb_loading, android.view.View.VISIBLE)
+                    views.setViewVisibility(R.id.data_container, android.view.View.GONE)
                 } else {
-                    views.setTextViewText(R.id.tv_income, if (income.contains("KSH")) income else "KSH $income")
-                    views.setTextViewText(R.id.tv_entries, if (entries.contains("Entries")) entries else "$entries Entries")
+                    views.setViewVisibility(R.id.pb_loading, android.view.View.GONE)
+                    views.setViewVisibility(R.id.data_container, android.view.View.VISIBLE)
+                    
+                    if (isBlurred) {
+                        views.setTextViewText(R.id.tv_income, "KSH ***")
+                        views.setTextViewText(R.id.tv_entries, "*** Entries")
+                    } else {
+                        views.setTextViewText(R.id.tv_income, if (income.contains("KSH")) income else "KSH $income")
+                        views.setTextViewText(R.id.tv_entries, if (entries.contains("Entries")) entries else "$entries Entries")
+                    }
                 }
 
                 val intent = Intent(context, AppWidgetProvider::class.java).apply {
