@@ -206,9 +206,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 const SizedBox(height: 40),
                 Center(
-                  child: Text(
-                    'Powered by Pace Systems',
-                    style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w600, letterSpacing: 1),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Powered by Pace Systems',
+                        style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w600, letterSpacing: 1),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Version ${settings.appVersion}',
+                        style: TextStyle(color: PaceColors.getDimText(isDark).withOpacity(0.5), fontSize: 7, fontWeight: FontWeight.w500),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -222,20 +231,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildLogo(bool isDark) {
     return Center(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? PaceColors.purple.withOpacity(0.1) : PaceColors.purple.withOpacity(0.05),
-          shape: BoxShape.circle,
-        ),
-        child: Image.asset(
-          'assets/images/logo.png', // Switched to logo.png for better compatibility
-          height: 40,
-          errorBuilder: (_, __, ___) => Image.asset(
-            'assets/images/logoc.png', // Fallback to logoc.png
-            height: 40,
-            errorBuilder: (ctx, _, __) => const Icon(Icons.wifi, color: PaceColors.purple, size: 32),
-          ),
+      child: Image.asset(
+        'assets/images/logo.png', // Switched to logo.png for better compatibility
+        height: 60,
+        errorBuilder: (_, __, ___) => Image.asset(
+          'assets/images/logoc.png', // Fallback to logoc.png
+          height: 60,
+          errorBuilder: (ctx, _, __) => const Icon(Icons.wifi, color: PaceColors.purple, size: 40),
         ),
       ),
     );
