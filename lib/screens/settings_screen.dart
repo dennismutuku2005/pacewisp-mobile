@@ -84,19 +84,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       if (res?['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully'), backgroundColor: PaceColors.emerald));
-        setState(() => _isEditingProfile = false);
+        setState(() {
+          _isEditingProfile = false;
+          _isSaving = false;
+        });
         
         // Sync with global provider so sidebar/drawer updates
         final settings = Provider.of<SettingsProvider>(context, listen: false);
         await settings.updateActiveAccountInfo(name: _nameCtrl.text, phone: _phoneCtrl.text);
         
+        // Update widget as well
+        await settings.setWidgetLoading(true);
         _fetchData();
+        await settings.setWidgetLoading(false);
       } else if (res?['status'] == 'otp_required') {
+        setState(() => _isSaving = false);
         _showOtpModal(isPassword: false);
       } else {
+        setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Update failed'), backgroundColor: Colors.redAccent));
       }
-      setState(() => _isSaving = false);
     }
   }
 
@@ -122,21 +129,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (mounted) {
       if (res?['status'] == 'success') {
-        Navigator.pop(context); // Close password modal
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password changed successfully'), backgroundColor: PaceColors.emerald));
         
-        // Sync with global provider so sidebar/drawer updates if name changed
+        // Sync with global provider
         final settings = Provider.of<SettingsProvider>(context, listen: false);
         await settings.updateActiveAccountInfo(name: _nameCtrl.text, phone: _phoneCtrl.text);
 
         _passCtrl.clear();
         _confirmPassCtrl.clear();
+        setState(() => _isSaving = false);
       } else if (res?['status'] == 'otp_required') {
+        setState(() => _isSaving = false);
         _showOtpModal(isPassword: true);
       } else {
+        setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Update failed'), backgroundColor: Colors.redAccent));
       }
-      setState(() => _isSaving = false);
     }
   }
 
@@ -147,6 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => OtpModal(
         phoneNumber: _phoneCtrl.text,
+        actionType: isPassword ? 'password_change' : 'phone_change',
         onVerify: (code) {
           Navigator.pop(context);
           if (isPassword) {
@@ -276,6 +285,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 32),
                       _buildAccountSwitcherHeader(isDark, settings),
                       _buildAccountList(settings, isDark),
+                      const SizedBox(height: 48),
+                      Center(
+                        child: Column(
+                          children: [
+                            Text('PaceWISP Administrator', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
+                            const SizedBox(height: 4),
+                            Text('v${settings.appVersion}', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark).withOpacity(0.5))),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
