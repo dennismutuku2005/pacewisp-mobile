@@ -13,6 +13,7 @@ class WidgetService {
     required dynamic income,
     required dynamic entries,
     bool isBlurred = true,
+    bool isLoading = false,
   }) async {
     final currencyFormat = NumberFormat("#,###", "en_US");
     
@@ -28,6 +29,7 @@ class WidgetService {
     await HomeWidget.saveWidgetData<String>('income', formattedIncome);
     await HomeWidget.saveWidgetData<String>('entries', entries.toString());
     await HomeWidget.saveWidgetData<bool>('is_blurred', isBlurred);
+    await HomeWidget.saveWidgetData<bool>('is_loading', isLoading);
     
     await HomeWidget.updateWidget(
       name: _androidWidgetName,
@@ -53,6 +55,9 @@ class WidgetService {
 
   static Future<void> refreshDataFromApi() async {
     try {
+      await HomeWidget.saveWidgetData<bool>('is_loading', true);
+      await HomeWidget.updateWidget(name: _androidWidgetName, androidName: _androidClassName);
+
       final api = ApiService();
       await api.init();
       
@@ -71,10 +76,16 @@ class WidgetService {
           income: income,
           entries: entries,
           isBlurred: isBlurred,
+          isLoading: false,
         );
+      } else {
+        await HomeWidget.saveWidgetData<bool>('is_loading', false);
+        await HomeWidget.updateWidget(name: _androidWidgetName, androidName: _androidClassName);
       }
     } catch (e) {
       print("Widget Background Sync Error: $e");
+      await HomeWidget.saveWidgetData<bool>('is_loading', false);
+      await HomeWidget.updateWidget(name: _androidWidgetName, androidName: _androidClassName);
     }
   }
 }
