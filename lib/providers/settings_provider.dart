@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/account.dart';
 import '../services/api_service.dart';
@@ -13,6 +14,7 @@ class SettingsProvider with ChangeNotifier {
   bool _isAppLockEnabled = false;
   int _widgetAccountIndex = -1;
   bool _isWidgetBlurred = true;
+  String _appVersion = '';
 
   List<PaceAccount> get accounts => _accounts;
   PaceAccount? get activeAccount => _activeAccountIndex != -1 && _activeAccountIndex < _accounts.length ? _accounts[_activeAccountIndex] : null;
@@ -22,6 +24,7 @@ class SettingsProvider with ChangeNotifier {
   bool get isAppLockEnabled => _isAppLockEnabled;
   int get widgetAccountIndex => _widgetAccountIndex;
   bool get isWidgetBlurred => _isWidgetBlurred;
+  String get appVersion => _appVersion;
   PaceAccount? get widgetAccount => _widgetAccountIndex != -1 && _widgetAccountIndex < _accounts.length ? _accounts[_widgetAccountIndex] : activeAccount;
 
   // Legacy getters for backward compatibility
@@ -51,6 +54,9 @@ class SettingsProvider with ChangeNotifier {
     if (activeAccount != null) {
       await ApiService().init();
     }
+
+    final packageInfo = await PackageInfo.fromPlatform();
+    _appVersion = packageInfo.version;
 
     _isLoading = false;
     notifyListeners();
@@ -173,6 +179,11 @@ class SettingsProvider with ChangeNotifier {
     }
     await _saveSettings();
     notifyListeners();
+  }
+
+  Future<void> setWidgetLoading(bool loading) async {
+    await HomeWidget.saveWidgetData<bool>('is_loading', loading);
+    await HomeWidget.updateWidget(name: 'AppWidgetProvider', androidName: 'AppWidgetProvider');
   }
 
   void toggleWidgetBlur() async {
