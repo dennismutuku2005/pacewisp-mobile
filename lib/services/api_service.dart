@@ -479,4 +479,8 @@ class ApiService {
       'page': page, 
       'limit': limit,
     });
+
+  Future<Map<String, dynamic>?> resendOtp(String actionType) async {
+    return await _requestWithFallback('/otp_resend.php', method: 'POST', data: {'action_type': actionType});
+  }
 }
