@@ -72,8 +72,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final body = {
       'name': _nameCtrl.text,
       'phone': _phoneCtrl.text,
+      if (otpCode != null) 'otp_code': otpCode,
     };
-    if (otpCode != null) body['otp_code'] = otpCode;
 
     final res = await _apiService.fetchData(
       slug: 'profile',
@@ -102,7 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _showOtpModal(isPassword: false);
       } else {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Update failed'), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Update failed'), backgroundColor: Colors.red));
       }
     }
   }
@@ -116,10 +116,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isSaving = true);
     final body = {
       'password': _passCtrl.text,
-      'name': _nameCtrl.text,
-      'phone': _phoneCtrl.text,
+      if (otpCode != null) 'otp_code': otpCode,
     };
-    if (otpCode != null) body['otp_code'] = otpCode;
 
     final res = await _apiService.fetchData(
       slug: 'profile',
@@ -143,7 +141,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _showOtpModal(isPassword: true);
       } else {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['message'] ?? 'Update failed'), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(res?['message'] ?? 'Update failed'), 
+          backgroundColor: Colors.red,
+        ));
       }
     }
   }
