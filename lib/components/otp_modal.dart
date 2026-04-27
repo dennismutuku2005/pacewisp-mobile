@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../theme/colors.dart';
+import '../services/api_service.dart';
 
 class OtpModal extends StatefulWidget {
   final String phoneNumber;
@@ -147,7 +148,11 @@ class _OtpModalState extends State<OtpModal> {
             const CircularProgressIndicator(color: PaceColors.purple)
           else ...[
             TextButton(
-              onPressed: _timer > 0 ? null : () {
+              onPressed: (_timer > 0 || widget.isLoading) ? null : () async {
+                if (widget.actionType != null) {
+                   final api = ApiService();
+                   await api.resendOtp(widget.actionType!);
+                }
                 _startTimer();
                 widget.onResend?.call();
               },
@@ -156,7 +161,7 @@ class _OtpModalState extends State<OtpModal> {
                 style: GoogleFonts.figtree(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: _timer > 0 ? PaceColors.getDimText(isDark) : PaceColors.purple,
+                  color: (_timer > 0 || widget.isLoading) ? PaceColors.getDimText(isDark) : PaceColors.purple,
                   letterSpacing: 1,
                 ),
               ),
