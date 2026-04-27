@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -309,9 +310,73 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
               ListTile(
                 leading: const Icon(LucideIcons.logOut, color: Colors.blueGrey, size: 20),
                 title: Text('Sign Out Session', style: TextStyle(color: PaceColors.getSecondaryText(isDark), fontSize: 13, fontWeight: FontWeight.w600)),
-                onTap: () {
-                  settings.logout();
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LandingScreen()));
+                onTap: () async {
+                  int countdown = 4;
+                  bool canLogout = false;
+                  
+                  await showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (ctx) => StatefulBuilder(
+                      builder: (context, setDialogState) {
+                        Timer? timer;
+                        if (timer == null && countdown > 0) {
+                          timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                            if (countdown > 0) {
+                              setDialogState(() => countdown--);
+                            } else {
+                              setDialogState(() => canLogout = true);
+                              t.cancel();
+                            }
+                          });
+                        }
+                        
+                        return AlertDialog(
+                          backgroundColor: PaceColors.getBackground(isDark),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          title: Row(
+                            children: [
+                              const Icon(LucideIcons.shieldAlert, color: Colors.orange, size: 20),
+                              const SizedBox(width: 12),
+                              Text('SECURITY LOGOUT', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+                            ],
+                          ),
+                          content: Text(
+                            'Are you sure you want to end your active session and return to the landing screen?',
+                            style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getSecondaryText(isDark)),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                timer?.cancel();
+                                Navigator.pop(ctx);
+                              },
+                              child: Text('CANCEL', style: TextStyle(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w700)),
+                            ),
+                            ElevatedButton(
+                              onPressed: !canLogout ? null : () {
+                                timer?.cancel();
+                                Navigator.pop(ctx);
+                                settings.logout();
+                                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LandingScreen()));
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey.withOpacity(0.1),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                canLogout ? 'CONFIRM LOGOUT' : 'LOGOUT IN ${countdown}s',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 16),
