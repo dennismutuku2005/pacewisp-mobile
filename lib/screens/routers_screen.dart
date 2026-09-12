@@ -36,7 +36,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
     if (mounted) {
       final fresh = res?['data'] ?? [];
       setState(() {
-        _routers = fresh.map((item) => {...item, 'isPinging': true}).toList();
+        _routers = fresh.map((item) => {...item, 'isPinging': false}).toList();
         _isLoading = false;
       });
       _startAutoPing();
@@ -52,8 +52,24 @@ class _RoutersScreenState extends State<RoutersScreen> {
   Future<void> _pingSingleRouter(int index) async {
     if (index >= _routers.length) return;
     final r = _routers[index];
+    final ip = r['ip_address']?.toString().trim();
+    if (ip == null || ip.isEmpty || ip == '0.0.0.0') {
+      if (mounted && index < _routers.length) {
+        setState(() {
+          _routers[index] = {..._routers[index], 'isPinging': false, 'status': 'inactive'};
+        });
+      }
+      return;
+    }
+
+    if (mounted && index < _routers.length) {
+      setState(() {
+        _routers[index] = {..._routers[index], 'isPinging': true};
+      });
+    }
+
     try {
-      final res = await _apiService.pingRouter(r['ip_address'], r['winbox_port'] ?? 8728);
+      final res = await _apiService.pingRouter(ip, r['winbox_port'] ?? 8728);
       final stats = res?['data'] ?? res;
       final bool isOnline = stats?['status'] == 'online' || stats?['cpu'] != null;
       if (mounted && index < _routers.length) {
