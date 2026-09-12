@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
@@ -37,10 +38,10 @@ class _IncomeScreenState extends State<IncomeScreen> {
     try {
       final res = await _apiService.getRouters(forceRefresh: true);
       if (res != null) {
-        _routers = res['data'] ?? [];
-        await _fetchIncome();
+        _routers = res['data'] ?? res['routers'] ?? [];
       }
-    } finally {
+      await _fetchIncome();
+    } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -70,20 +71,24 @@ class _IncomeScreenState extends State<IncomeScreen> {
     final dates = _getDateRange();
     final routerParam = _activeRouterId == 'all' ? '' : _activeRouterId;
 
-    final res = await _apiService.getIncome(
-      router: routerParam,
-      startDate: dates['startDate'],
-      endDate: dates['endDate'],
-      forceRefresh: true,
-    );
-    final success = res?['status'] == 'success' || res?['status'] == 200 || res?['status'] == '200' || res?['success'] == true;
-    if (mounted && success) {
-      setState(() {
-        _incomeData = res;
-        _isLoading = false;
-      });
-    } else if (mounted) {
-      setState(() => _isLoading = false);
+    try {
+      final res = await _apiService.getIncome(
+        router: routerParam,
+        startDate: dates['startDate'],
+        endDate: dates['endDate'],
+        forceRefresh: true,
+      );
+      final success = res?['status'] == 'success' || res?['status'] == 200 || res?['status'] == '200' || res?['success'] == true;
+      if (mounted && success) {
+        setState(() {
+          _incomeData = res;
+          _isLoading = false;
+        });
+      } else if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -92,30 +97,40 @@ class _IncomeScreenState extends State<IncomeScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return RefreshIndicator(
-      onRefresh: () => _fetchIncome(),
-      color: PaceColors.purple,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        children: [
-          _buildHeader(isDark),
-          const SizedBox(height: 24),
-          _buildFilters(isDark),
-          const SizedBox(height: 32),
-          if (_isLoading && _incomeData == null)
-            const GridSkeleton(count: 6)
-          else if (_incomeData == null)
-            PaceEmptyState(onRetry: _fetchIncome, isDark: isDark, title: 'REVENUE DATA UNAVAILABLE', subtitle: 'We couldn\'t load your financial reports. Please check your connection and retry.')
-          else ...[
-            _buildMetricsGrid(isDark),
-            const SizedBox(height: 32),
-            _buildTrendChart(isDark),
-            const SizedBox(height: 32),
-            _buildPlanDistribution(isDark),
-          ],
-          const SizedBox(height: 100),
-        ],
+    return Scaffold(
+      backgroundColor: PaceColors.getBackground(isDark),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => _fetchIncome(),
+          color: PaceColors.purple,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            children: [
+              _buildHeader(isDark),
+              const SizedBox(height: 16),
+              _buildFilters(isDark),
+              const SizedBox(height: 20),
+              if (_isLoading && _incomeData == null)
+                const GridSkeleton(count: 6)
+              else if (_incomeData == null)
+                PaceEmptyState(
+                  onRetry: _fetchIncome,
+                  isDark: isDark,
+                  title: 'Revenue Data Unavailable',
+                  subtitle: 'Could not load your financial analytics. Please check your connection and retry.',
+                )
+              else ...[
+                _buildMetricsGrid(isDark),
+                const SizedBox(height: 24),
+                _buildTrendChart(isDark),
+                const SizedBox(height: 24),
+                _buildPlanDistribution(isDark),
+              ],
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -124,13 +139,23 @@ class _IncomeScreenState extends State<IncomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('REVENUE ANALYTICS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-            Text('FINANCIAL PERFORMANCE & INSIGHTS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
-        ]),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Revenue Analytics',
+              style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Financial performance & data distribution',
+              style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
         IconButton(
-          onPressed: () {},
-          icon: const Icon(LucideIcons.download, color: PaceColors.purple, size: 20),
+          onPressed: () => _fetchIncome(),
+          icon: const Icon(LucideIcons.refreshCw, color: PaceColors.purple, size: 16),
         ),
       ],
     );
@@ -142,14 +167,20 @@ class _IncomeScreenState extends State<IncomeScreen> {
         Expanded(
           child: InkWell(
             onTap: () => _showTimelinePicker(isDark),
-            child: _buildFilterChip(_selectedTimeline.toUpperCase(), LucideIcons.calendar, isDark),
+            child: _buildFilterChip(_selectedTimeline, LucideIcons.calendar, isDark),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: InkWell(
             onTap: () => _showRouterPicker(isDark),
-            child: _buildFilterChip(_activeRouterId == 'all' ? 'ALL ROUTERS' : _routers.firstWhere((r)=>r['id'].toString()==_activeRouterId)['router_name'].toString().toUpperCase(), LucideIcons.router, isDark),
+            child: _buildFilterChip(
+              _activeRouterId == 'all'
+                  ? 'All Mikrotiks'
+                  : (_routers.firstWhere((r) => r['id'].toString() == _activeRouterId, orElse: () => {})['router_name'] ?? 'Selected'),
+              LucideIcons.router,
+              isDark,
+            ),
           ),
         ),
       ],
@@ -158,14 +189,26 @@ class _IncomeScreenState extends State<IncomeScreen> {
 
   Widget _buildFilterChip(String label, IconData icon, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-      child: Row(children: [
-        Icon(icon, size: 14, color: PaceColors.purple),
-        const SizedBox(width: 10),
-        Expanded(child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
-        const Icon(LucideIcons.chevronDown, size: 12, color: Colors.grey),
-      ]),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: PaceColors.getDimText(isDark)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const Icon(LucideIcons.chevronDown, size: 12, color: Colors.grey),
+        ],
+      ),
     );
   }
 
@@ -173,27 +216,29 @@ class _IncomeScreenState extends State<IncomeScreen> {
     final times = ['Today', 'Yesterday', 'This Week', 'This Month', 'All Time'];
     showModalBottomSheet(
       context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      backgroundColor: PaceColors.getCard(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('SELECT TIMELINE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
-                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
-              ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              child: Text('Select Timeline', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
             ),
-            const SizedBox(height: 16),
+            const Divider(),
             ...times.map((t) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-              trailing: _selectedTimeline == t ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
-              onTap: () { setState(() => _selectedTimeline = t); Navigator.pop(context); _fetchIncome(); },
+              dense: true,
+              leading: Icon(LucideIcons.calendar, size: 16, color: _selectedTimeline == t ? PaceColors.purple : PaceColors.getDimText(isDark)),
+              title: Text(t, style: GoogleFonts.figtree(fontSize: 13, fontWeight: _selectedTimeline == t ? FontWeight.w700 : FontWeight.w500, color: _selectedTimeline == t ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+              trailing: _selectedTimeline == t ? const Icon(LucideIcons.check, color: PaceColors.purple, size: 16) : null,
+              onTap: () {
+                setState(() => _selectedTimeline = t);
+                Navigator.pop(context);
+                _fetchIncome();
+              },
             )).toList(),
           ],
         ),
@@ -204,38 +249,49 @@ class _IncomeScreenState extends State<IncomeScreen> {
   void _showRouterPicker(bool isDark) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      backgroundColor: PaceColors.getCard(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('SELECT ROUTER', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
-                IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(context)),
-              ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              child: Text('Select Mikrotik Station', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
             ),
-            const SizedBox(height: 16),
-            Expanded(
+            const Divider(),
+            Flexible(
               child: ListView(
                 shrinkWrap: true,
                 children: [
                   ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('ALL ROUTERS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                    trailing: _activeRouterId == 'all' ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
-                    onTap: () { setState(() => _activeRouterId = 'all'); Navigator.pop(context); _fetchIncome(); },
+                    dense: true,
+                    leading: Icon(LucideIcons.router, size: 16, color: _activeRouterId == 'all' ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                    title: Text('All Mikrotiks', style: GoogleFonts.figtree(fontSize: 13, fontWeight: _activeRouterId == 'all' ? FontWeight.w700 : FontWeight.w500, color: _activeRouterId == 'all' ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+                    trailing: _activeRouterId == 'all' ? const Icon(LucideIcons.check, color: PaceColors.purple, size: 16) : null,
+                    onTap: () {
+                      setState(() => _activeRouterId = 'all');
+                      Navigator.pop(context);
+                      _fetchIncome();
+                    },
                   ),
-                  ..._routers.map((r) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(r['router_name'].toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                    trailing: _activeRouterId == r['id'].toString() ? const Icon(LucideIcons.check, color: PaceColors.purple) : null,
-                    onTap: () { setState(() => _activeRouterId = r['id'].toString()); Navigator.pop(context); _fetchIncome(); },
-                  )).toList(),
+                  ..._routers.map((r) {
+                    final id = r['id'].toString();
+                    final isSel = _activeRouterId == id;
+                    return ListTile(
+                      dense: true,
+                      leading: Icon(LucideIcons.router, size: 16, color: isSel ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                      title: Text(r['router_name'] ?? 'Node', style: GoogleFonts.figtree(fontSize: 13, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+                      trailing: isSel ? const Icon(LucideIcons.check, color: PaceColors.purple, size: 16) : null,
+                      onTap: () {
+                        setState(() => _activeRouterId = id);
+                        Navigator.pop(context);
+                        _fetchIncome();
+                      },
+                    );
+                  }).toList(),
                 ],
               ),
             ),
@@ -248,44 +304,93 @@ class _IncomeScreenState extends State<IncomeScreen> {
   Widget _buildMetricsGrid(bool isDark) {
     final m = _incomeData?['metrics'] ?? {};
     final cards = [
-      {'l': 'TODAY', 'v': m['today']?['value'] ?? 0, 't': m['today']?['trend'] ?? 0, 'i': LucideIcons.wallet},
-      {'l': 'THIS WEEK', 'v': m['week']?['value'] ?? 0, 't': m['week']?['trend'] ?? 0, 'i': LucideIcons.calendar},
-      {'l': 'THIS MONTH', 'v': m['month']?['value'] ?? 0, 't': m['month']?['trend'] ?? 0, 'i': LucideIcons.trendingUp},
-      {'l': 'YEAR TO DATE', 'v': m['year']?['value'] ?? 0, 't': m['year']?['trend'] ?? 0, 'i': LucideIcons.database},
-      {'l': 'DAILY AVG', 'v': m['avg_daily'] ?? 0, 't': 0, 'i': LucideIcons.barChart3},
-      {'l': 'MONTHLY AVG', 'v': m['avg_monthly'] ?? 0, 't': 0, 'i': LucideIcons.lineChart},
+      {'l': 'Today', 'v': m['today']?['value'] ?? 0, 't': m['today']?['trend'] ?? 0, 'i': LucideIcons.wallet},
+      {'l': 'This Week', 'v': m['week']?['value'] ?? 0, 't': m['week']?['trend'] ?? 0, 'i': LucideIcons.calendar},
+      {'l': 'This Month', 'v': m['month']?['value'] ?? 0, 't': m['month']?['trend'] ?? 0, 'i': LucideIcons.trendingUp},
+      {'l': 'Year to Date', 'v': m['year']?['value'] ?? 0, 't': m['year']?['trend'] ?? 0, 'i': LucideIcons.database},
+      {'l': 'Daily Average', 'v': m['avg_daily'] ?? 0, 't': 0, 'i': LucideIcons.barChart2},
+      {'l': 'Monthly Average', 'v': m['avg_monthly'] ?? 0, 't': 0, 'i': LucideIcons.activity},
     ];
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: cards.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.4),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.6,
+      ),
       itemBuilder: (context, index) {
         final c = cards[index];
         final num trend = num.tryParse(c['t']?.toString() ?? '0') ?? 0;
         final num value = num.tryParse(c['v']?.toString() ?? '0') ?? 0;
         final bool up = trend >= 0;
+
         return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Icon(c['i'] as IconData, size: 14, color: PaceColors.purple),
-              if (trend != 0) Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: (up ? PaceColors.emerald : Colors.red).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                child: Row(children: [
-                  Icon(up ? LucideIcons.trendingUp : LucideIcons.trendingDown, size: 8, color: up ? PaceColors.emerald : Colors.red),
-                  const SizedBox(width: 4),
-                  Text('${up ? '+' : ''}$trend%', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: up ? PaceColors.emerald : Colors.red)),
-                ]),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: PaceColors.getCard(isDark),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: PaceColors.getBorder(isDark)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: PaceColors.purple.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(c['i'] as IconData, size: 14, color: PaceColors.purple),
+                  ),
+                  if (trend != 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: (up ? PaceColors.green : PaceColors.red).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${up ? '+' : ''}$trend%',
+                        style: GoogleFonts.figtree(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: up ? PaceColors.green : PaceColors.red,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ]),
-            const Spacer(),
-            Text(c['l'] as String, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-            Text('KES ${_currencyFormat.format(value)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
-          ]),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'KES ${_currencyFormat.format(value)}',
+                    style: GoogleFonts.figtree(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: PaceColors.purple,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    c['l'] as String,
+                    style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -296,82 +401,51 @@ class _IncomeScreenState extends State<IncomeScreen> {
     if (history.isEmpty) return const SizedBox();
 
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('INCOME TREND', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-        Text('DAILY REVENUE FOR SELECTED PERIOD', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-        const SizedBox(height: 32),
-        SizedBox(
-          height: 200,
-          child: LineChart(LineChartData(
-             gridData: FlGridData(
-               show: true,
-               drawVerticalLine: false,
-               horizontalInterval: history.isNotEmpty ? (history.map((e) => double.parse(e['amount'].toString())).reduce((a, b) => a > b ? a : b) / 4).clamp(1.0, double.infinity) : 1000,
-               getDrawingHorizontalLine: (value) => FlLine(color: PaceColors.getBorder(isDark).withOpacity(0.5), strokeWidth: 1, dashArray: [4, 4]),
-             ),
-             titlesData: FlTitlesData(
-               show: true,
-               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-               topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-               bottomTitles: AxisTitles(
-                 sideTitles: SideTitles(
-                   showTitles: true,
-                   reservedSize: 24,
-                   interval: 1,
-                   getTitlesWidget: (value, meta) {
-                     if (value.toInt() >= 0 && value.toInt() < history.length) {
-                       final String dayStr = history[value.toInt()]['day']?.toString() ?? '';
-                       // Try to show only a few labels if there are many days
-                       if (history.length > 7 && value.toInt() % (history.length ~/ 5) != 0 && value.toInt() != history.length - 1) return const SizedBox();
-                       return Padding(
-                         padding: const EdgeInsets.only(top: 8.0),
-                         child: Text(dayStr, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600)),
-                       );
-                     }
-                     return const SizedBox();
-                   },
-                 ),
-               ),
-               leftTitles: AxisTitles(
-                 sideTitles: SideTitles(
-                   showTitles: true,
-                   reservedSize: 40,
-                   getTitlesWidget: (value, meta) {
-                     if (value == 0) return const SizedBox();
-                     final str = value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toStringAsFixed(0);
-                     return Text(str, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600));
-                   },
-                 ),
-               ),
-             ),
-             borderData: FlBorderData(show: false),
-             lineTouchData: LineTouchData(
-               touchTooltipData: LineTouchTooltipData(
-                 getTooltipColor: (touchedSpot) => PaceColors.getCard(isDark),
-                 getTooltipItems: (touchedSpots) {
-                   return touchedSpots.map((spot) {
-                     return LineTooltipItem(
-                       'KES ${_currencyFormat.format(spot.y)}',
-                       TextStyle(color: PaceColors.getPrimaryText(isDark), fontWeight: FontWeight.w600, fontSize: 12),
-                     );
-                   }).toList();
-                 },
-               ),
-             ),
-             lineBarsData: [LineChartBarData(
-               spots: history.map((e) => FlSpot(double.parse(history.indexOf(e).toString()), double.parse(e['amount'].toString()))).toList(),
-               isCurved: true,
-               color: PaceColors.purple,
-               barWidth: 4,
-               isStrokeCapRound: true,
-               dotData: const FlDotData(show: false),
-               belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [PaceColors.purple.withOpacity(0.15), PaceColors.purple.withOpacity(0)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
-             )],
-          )),
-        ),
-      ]),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Income Trend', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+          Text('Daily revenue cycle', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 180,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(color: PaceColors.getBorder(isDark).withOpacity(0.4), strokeWidth: 1, dashArray: [4, 4]),
+                ),
+                titlesData: const FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: history.map((e) => FlSpot(double.parse(history.indexOf(e).toString()), double.parse(e['amount'].toString()))).toList(),
+                    isCurved: true,
+                    color: PaceColors.purple,
+                    barWidth: 3,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [PaceColors.purple.withOpacity(0.18), PaceColors.purple.withOpacity(0)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -380,62 +454,43 @@ class _IncomeScreenState extends State<IncomeScreen> {
     if (distro.isEmpty) return const SizedBox();
 
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('PLAN DISTRIBUTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-        Text('REVENUE CONTRIBUTION BY DATA CATEGORY', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-        const SizedBox(height: 32),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              height: 200,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 4,
-                    centerSpaceRadius: 50,
-                    sections: distro.map((item) {
-                      final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
-                      final color = Color(int.parse(colorCode));
-                      final value = double.tryParse(item['value']?.toString() ?? '0') ?? 0;
-                      return PieChartSectionData(
-                        color: color,
-                        value: value,
-                        title: '${value.toStringAsFixed(0)}%',
-                        radius: 32,
-                        titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white),
-                        showTitle: value > 5,
-                      );
-                    }).toList(),
-                  ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Plan Distribution', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+          Text('Revenue contribution by data category', style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
+          const SizedBox(height: 16),
+          Column(
+            children: distro.map((item) {
+              final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
+              final color = Color(int.parse(colorCode));
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        item['name']?.toString() ?? 'Plan',
+                        style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text('${item['value']}%', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.purple)),
+                  ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: distro.map((item) {
-                final colorCode = item['color']?.toString().replaceAll('#', '0xFF') ?? '0xFF7C3AED';
-                final color = Color(int.parse(colorCode));
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(item['name']?.toString().toUpperCase() ?? 'PLAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)),
-                      Text('${item['value']}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-            ],
+              );
+            }).toList(),
           ),
-      ]),
+        ],
+      ),
     );
   }
 }
