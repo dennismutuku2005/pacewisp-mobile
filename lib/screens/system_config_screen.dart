@@ -220,36 +220,42 @@ class _SystemConfigScreenState extends State<SystemConfigScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Hotspot Config',
-                style: GoogleFonts.figtree(
-                  color: PaceColors.getPrimaryText(isDark),
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hotspot Config',
+                  style: GoogleFonts.figtree(
+                    color: PaceColors.purple,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'SSID identity, customer care, and payment endpoints',
-                style: GoogleFonts.figtree(
-                  color: PaceColors.getDimText(isDark),
-                  fontSize: 12,
+                const SizedBox(height: 2),
+                Text(
+                  'SSID identity & gateway settings',
+                  style: GoogleFonts.figtree(
+                    color: PaceColors.getDimText(isDark),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: (_isSaving || _isLoading) ? null : _handleSave,
-            icon: const Icon(LucideIcons.save, size: 16),
-            label: Text('Save', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600)),
+            icon: const Icon(LucideIcons.save, size: 15),
+            label: Text('Save', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
             style: ElevatedButton.styleFrom(
               backgroundColor: PaceColors.purple,
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
