@@ -135,12 +135,11 @@ class _HomeScreenState extends State<HomeScreen> {
           _transactions = _extractData(live[2], 'recent_transactions', isList: true) ?? [];
 
           final fetchedRouters = _extractData(live[3], 'router_status', isList: true) ?? [];
-          _routerStatus = fetchedRouters.map((r) => {...(r is Map ? r : {}), 'isPinging': true}).toList();
+          _routerStatus = fetchedRouters.map((r) => {...(r is Map ? r : {}), 'isPinging': false}).toList();
           _isLoading = false;
         });
 
         _refreshWidgetData();
-        _startDashboardPings();
       }
     } catch (e) {
       debugPrint("Error fetching dashboard data: $e");
@@ -148,17 +147,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _startDashboardPings() {
-    for (int i = 0; i < _routerStatus.length; i++) {
-      _pingDashboardRouter(i);
-    }
-  }
-
   Future<void> _pingDashboardRouter(int index) async {
     if (index >= _routerStatus.length) return;
     final r = _routerStatus[index];
+    final ip = r['ip']?.toString().trim();
+    if (ip == null || ip.isEmpty || ip == '0.0.0.0') {
+      if (mounted && index < _routerStatus.length) {
+        setState(() {
+          _routerStatus[index] = {
+            ..._routerStatus[index],
+            'isPinging': false,
+            'status': 'Offline',
+            'uptime': 'Disconnected',
+          };
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _routerStatus[index] = {
+        ..._routerStatus[index],
+        'isPinging': true,
+      };
+    });
+
     try {
-      final res = await _apiService.pingRouter(r['ip'] ?? '0.0.0.0', r['winbox_port'] ?? 8728);
+      final res = await _apiService.pingRouter(ip, r['winbox_port'] ?? 8728);
       final stats = res?['data'] ?? res;
       final bool isOnline = stats?['status'] == 'online' || stats?['cpu'] != null || stats?['success'] == true;
       if (mounted && index < _routerStatus.length) {
