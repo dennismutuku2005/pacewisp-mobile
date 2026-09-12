@@ -12,7 +12,7 @@ class PaceEmptyState extends StatelessWidget {
 
   const PaceEmptyState({
     super.key,
-    this.title = 'NO DATA FOUND',
+    this.title = 'No Records Found',
     this.subtitle = 'We couldn\'t find any records matching your request.',
     this.icon = LucideIcons.layers,
     required this.onRetry,
@@ -23,58 +23,56 @@ class PaceEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 80),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: PaceColors.purple.withOpacity(0.05),
+                color: PaceColors.purple.withOpacity(0.06),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 48, color: PaceColors.purple.withOpacity(0.2)),
+              child: Icon(icon, size: 36, color: PaceColors.purple.withOpacity(0.4)),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
               title,
               style: GoogleFonts.figtree(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
                 color: PaceColors.getPrimaryText(isDark),
-                letterSpacing: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               subtitle,
               style: GoogleFonts.figtree(
-                fontSize: 11,
+                fontSize: 12,
                 color: PaceColors.getDimText(isDark),
-                height: 1.5,
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             SizedBox(
-              height: 48,
+              height: 38,
               child: OutlinedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(LucideIcons.refreshCw, size: 14),
+                icon: const Icon(LucideIcons.refreshCw, size: 13),
                 label: Text(
-                  'RETRY AGAIN',
+                  'Refresh Data',
                   style: GoogleFonts.figtree(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: PaceColors.purple,
-                  side: BorderSide(color: PaceColors.purple.withOpacity(0.2)),
+                  side: BorderSide(color: PaceColors.purple.withOpacity(0.25)),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
