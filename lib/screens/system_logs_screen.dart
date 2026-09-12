@@ -26,7 +26,7 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
   int _page = 1;
   bool _hasMore = true;
   String _search = '';
-  String _statusFilter = 'all'; // all | success | failed
+  String _statusFilter = 'all';
 
   @override
   void initState() {
@@ -37,6 +37,12 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
         if (!_isLoadingMore && _hasMore) _fetchMore();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchLogs() async {
@@ -83,24 +89,40 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
         _buildHeader(isDark),
         _buildFilters(isDark),
         Expanded(
-          child: _isLoading 
-            ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList())
-            : RefreshIndicator(
-                onRefresh: _fetchLogs,
-                color: PaceColors.purple,
-                child: filtered.isEmpty
-                  ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchLogs, isDark: isDark))
-                  : ListView.separated(
-                      controller: _scrollCtrl,
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                      itemCount: filtered.length + (_isLoadingMore ? 1 : 0),
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (ctx, i) {
-                        if (i == filtered.length) return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
-                        return _buildLogCard(filtered[i], isDark);
-                      },
-                    ),
-              ),
+          child: _isLoading && _logs.isEmpty
+              ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 8))
+              : RefreshIndicator(
+                  onRefresh: _fetchLogs,
+                  color: PaceColors.purple,
+                  child: filtered.isEmpty
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: PaceEmptyState(
+                            title: 'No Audit Logs',
+                            subtitle: 'System activity records will automatically be logged here.',
+                            onRetry: _fetchLogs,
+                            isDark: isDark,
+                          ),
+                        )
+                      : ListView.separated(
+                          controller: _scrollCtrl,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                          itemCount: filtered.length + (_isLoadingMore ? 1 : 0),
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (ctx, i) {
+                            if (i == filtered.length) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2),
+                                ),
+                              );
+                            }
+                            return _buildLogCard(filtered[i], isDark);
+                          },
+                        ),
+                ),
         ),
       ],
     );
@@ -109,57 +131,141 @@ class _SystemLogsScreenState extends State<SystemLogsScreen> {
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('SYSTEM LOGS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-        Text('COMPREHENSIVE AUDIT TRAIL', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
-      ]),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'System Logs',
+            style: GoogleFonts.figtree(
+              color: PaceColors.getPrimaryText(isDark),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Audit trail of administrator actions and system operations',
+            style: GoogleFonts.figtree(
+              color: PaceColors.getDimText(isDark),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildFilters(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: Row(children: [
-        Expanded(child: PaceSearchBar(
-          hint: 'Search audit trail...',
-          isDark: isDark,
-          onChanged: (v) { _search = v; _fetchLogs(); },
-        )),
-        const SizedBox(width: 12),
-        Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: _statusFilter, dropdownColor: PaceColors.getCard(isDark), items: const [DropdownMenuItem(value: 'all', child: Text('ALL')), DropdownMenuItem(value: 'success', child: Text('OK')), DropdownMenuItem(value: 'failed', child: Text('FAIL'))], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple), onChanged: (v) => setState(() => _statusFilter = v!)))),
-      ]),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: PaceSearchBar(
+              hint: 'Search audit trail...',
+              isDark: isDark,
+              onChanged: (v) {
+                _search = v;
+                _fetchLogs();
+              },
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: PaceColors.getCard(isDark),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: PaceColors.getBorder(isDark)),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _statusFilter,
+                dropdownColor: PaceColors.getCard(isDark),
+                items: [
+                  DropdownMenuItem(value: 'all', child: Text('All Events', style: GoogleFonts.figtree(fontSize: 13))),
+                  DropdownMenuItem(value: 'success', child: Text('Success', style: GoogleFonts.figtree(fontSize: 13))),
+                  DropdownMenuItem(value: 'failed', child: Text('Errors', style: GoogleFonts.figtree(fontSize: 13))),
+                ],
+                style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.purple),
+                onChanged: (v) => setState(() => _statusFilter = v!),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildLogCard(dynamic l, bool isDark) {
     final status = (l['status'] ?? '').toString().toLowerCase();
     final bool isFailed = status == 'failed' || status == 'error';
+    final user = l['user']?.toString() ?? 'System';
+    final action = l['action']?.toString() ?? 'Event';
+    final description = l['description']?.toString() ?? '';
+    final date = l['date']?.toString() ?? l['created_at']?.toString() ?? '';
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(12), border: Border.all(color: PaceColors.getBorder(isDark))),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 32, height: 32,
-            decoration: BoxDecoration(color: isFailed ? Colors.red.withOpacity(0.1) : PaceColors.emerald.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(isFailed ? LucideIcons.alertCircle : LucideIcons.checkCircle2, color: isFailed ? Colors.red : PaceColors.emerald, size: 14),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isFailed ? Colors.red.withOpacity(0.1) : PaceColors.emerald.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isFailed ? LucideIcons.alertCircle : LucideIcons.checkCircle2,
+              color: isFailed ? Colors.red.shade600 : PaceColors.emerald,
+              size: 16,
+            ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Text(l['user']?.toString().toUpperCase() ?? 'SYSTEM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
-              const SizedBox(width: 8),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(4)), child: Text(l['action']?.toString().toUpperCase() ?? 'LOG', style: const TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: PaceColors.purple))),
-            ]),
-            const SizedBox(height: 4),
-            Text(l['description'] ?? '', style: TextStyle(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
-          ])),
-          const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(l['date']?.toString().split(' ')[0] ?? '', style: const TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.w600)),
-            Text(l['time'] ?? '', style: const TextStyle(fontSize: 8, color: Colors.grey)),
-          ]),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      user,
+                      style: GoogleFonts.figtree(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: PaceColors.getPrimaryText(isDark),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    PaceBadge(
+                      label: action.replaceAll('_', ' ').toUpperCase(),
+                      variant: isFailed ? BadgeVariant.danger : BadgeVariant.secondary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  date,
+                  style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark).withOpacity(0.7)),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
