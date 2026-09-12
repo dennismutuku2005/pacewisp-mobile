@@ -22,6 +22,8 @@ class MonthlyCustomersScreen extends StatefulWidget {
 
 class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
   final ApiService _apiService = ApiService();
+  final _currencyFormat = NumberFormat("#,###", "en_US");
+
   List<dynamic> _users = [];
   String _cycleStart = '';
   bool _isLoading = true;
@@ -60,177 +62,126 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
       final phone = (u['phone'] ?? '').toString().toLowerCase();
       return phone.contains(_search.toLowerCase());
     }).toList();
-    
-    final double totalRevenue = _users.fold(0, (sum, u) => sum + (double.tryParse(u['total_amount'].toString()) ?? 0));
 
-    return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
-      body: Column(
-        children: [
-          _buildHeader(isDark),
-          _buildSummaryBanner(isDark, totalRevenue),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: PaceSearchBar(
-              hint: 'FILTER BY PHONE...', 
-              isDark: isDark, 
-              onChanged: (val) => setState(() => _search = val)
-            ),
+    final double totalRevenue = _users.fold(0, (sum, u) => sum + (double.tryParse(u['total_amount']?.toString() ?? '0') ?? 0));
+
+    return Column(
+      children: [
+        _buildHeader(isDark),
+        _buildSummaryCards(isDark, totalRevenue),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+          child: PaceSearchBar(
+            hint: 'Search monthly customer by phone...',
+            isDark: isDark,
+            onChanged: (val) => setState(() => _search = val),
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _isLoading && _users.isEmpty
+        ),
+        Expanded(
+          child: _isLoading && _users.isEmpty
               ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 6))
               : RefreshIndicator(
                   onRefresh: _fetchData,
                   color: PaceColors.purple,
-                  child: Column(
-                    children: [
-                      _buildTableHeader(isDark),
-                      Expanded(
-                        child: filtered.isEmpty 
-                          ? SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(), 
-                              child: Container(
-                                height: MediaQuery.of(context).size.height * 0.6,
-                                child: PaceEmptyState(
-                                  onRetry: _fetchData, 
-                                  isDark: isDark,
-                                  title: 'NO CYCLE DATA FOUND',
-                                  subtitle: 'No synchronization found for this billing period.',
-                                ),
-                              )
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
-                              itemCount: filtered.length,
-                              separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
-                              itemBuilder: (context, index) => _buildUserRow(filtered[index], isDark),
-                            ),
-                      ),
-                    ],
-                  ),
+                  child: filtered.isEmpty
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: PaceEmptyState(
+                            title: 'No Monthly Customers',
+                            subtitle: 'Recurring customers for this billing cycle will appear here.',
+                            onRetry: _fetchData,
+                            isDark: isDark,
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) => _buildUserCard(filtered[index], isDark),
+                        ),
                 ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('MONTHLY CUSTOMERS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-          Text('RECURRING CUSTOMERS FOR THE CURRENT CYCLE', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+          Text(
+            'Monthly Customers',
+            style: GoogleFonts.figtree(
+              color: PaceColors.getPrimaryText(isDark),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Recurring hotspot subscriber analytics and cycle billing',
+            style: GoogleFonts.figtree(
+              color: PaceColors.getDimText(isDark),
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryBanner(bool isDark, double revenue) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
-        boxShadow: isDark ? [] : [BoxShadow(color: PaceColors.purple.withOpacity(0.05), blurRadius: 30, offset: const Offset(0, 10))]
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _statItem('CYCLE USERS', _users.length.toString(), isDark, PaceColors.purple),
-          _statItem('CYCLE REVENUE', 'KES ${NumberFormat("#,###").format(revenue)}', isDark, PaceColors.emerald),
-          _statItem('BILLING START', _formatDateShort(_cycleStart), isDark, Colors.blueAccent),
-        ],
-      ),
-    );
-  }
-
-  Widget _statItem(String label, String value, bool isDark, Color color) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
-        const SizedBox(height: 4),
-        Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-      ],
-    );
-  }
-
-  Widget _buildTableHeader(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark).withOpacity(0.3),
-        border: Border(
-          top: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
-          bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
-        ),
-      ),
+  Widget _buildSummaryCards(bool isDark, double revenue) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('PHONE / SESSION', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('CYCLE PAID', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          _statCard('Cycle Users', _users.length.toString(), LucideIcons.users, PaceColors.purple, isDark),
+          const SizedBox(width: 10),
+          _statCard('Cycle Revenue', 'KES ${_currencyFormat.format(revenue)}', LucideIcons.trendingUp, PaceColors.emerald, isDark),
         ],
       ),
     );
   }
 
-  Widget _buildUserRow(dynamic u, bool isDark) {
-    final bool isActive = (u['is_active'] == true || u['is_active'] == 1 || u['is_active'] == '1');
-    final String lastBought = u['last_bought']?.toString().split(' ')[0] ?? 'N/A';
-    final String phone = u['phone']?.toString() ?? 'PRIVATE';
-
-    return InkWell(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: phone)));
-      },
+  Widget _statCard(String label, String value, IconData icon, Color color, bool isDark) {
+    return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(phone, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text('LATEST: ', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                      Text(lastBought.toUpperCase(), style: TextStyle(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Icon(icon, color: color, size: 14),
+                ),
+              ],
             ),
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('KES ${NumberFormat("#,###").format(u['total_amount'] ?? 0)}', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.bold, color: PaceColors.emerald)),
-                  Text('CYCLE TOTAL', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  PaceBadge(
-                    label: isActive ? 'ONLINE' : 'EXPIRED', 
-                    variant: isActive ? BadgeVariant.success : BadgeVariant.secondary
-                  ),
-                ],
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: GoogleFonts.figtree(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: PaceColors.getPrimaryText(isDark),
               ),
             ),
           ],
@@ -239,13 +190,76 @@ class _MonthlyCustomersScreenState extends State<MonthlyCustomersScreen> {
     );
   }
 
-  String _formatDateShort(String? date) {
-    if (date == null || date.isEmpty) return 'CURRENT';
-    try {
-      final d = DateTime.parse(date);
-      return DateFormat('dd MMM').format(d).toUpperCase();
-    } catch (_) {
-      return date.split(' ')[0].toUpperCase();
-    }
+  Widget _buildUserCard(dynamic u, bool isDark) {
+    final phone = u['phone']?.toString() ?? 'Unknown';
+    final totalSpent = u['total_amount']?.toString() ?? '0';
+    final txnCount = u['total_transactions'] ?? u['payments_count'] ?? 1;
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: phone)),
+        );
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: PaceColors.purple.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.user, color: PaceColors.purple, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    phone,
+                    style: GoogleFonts.figtree(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: PaceColors.getPrimaryText(isDark),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$txnCount billing transactions',
+                    style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'KES $totalSpent',
+                  style: GoogleFonts.figtree(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: PaceColors.emerald,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Icon(LucideIcons.chevronRight, size: 14, color: Colors.grey),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
