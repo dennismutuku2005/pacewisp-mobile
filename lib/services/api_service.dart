@@ -170,7 +170,7 @@ class ApiService {
     else if (slug == 'sms') phpFile = '/sms.php';
 
     // Real-time slugs that should NEVER be cached
-    final isRealTime = slug == 'recent_transactions' || slug == 'router_status' || slug == 'active_customers' || slug == 'routers';
+    final isRealTime = slug == 'recent_transactions' || slug == 'router_status' || slug == 'active_customers' || slug == 'routers' || slug == 'entries' || slug == 'notifications';
 
     final cacheKey = "${subdomainKey}_${slug}_${params.toString()}";
 
@@ -336,9 +336,26 @@ class ApiService {
     return fetchData(slug: 'income', params: params, forceRefresh: forceRefresh);
   }
 
-  // Entries
-  Future<Map<String, dynamic>?> getEntries({String? search, String? router, String? startDate, String? endDate, int page = 1, bool forceRefresh = false}) async => 
-    fetchData(slug: 'entries', params: {'search': search, 'router': router, 'startDate': startDate, 'endDate': endDate, 'page': page}, forceRefresh: forceRefresh);
+  // Entries (Mirrors wispportal/src/services/entries.js)
+  Future<Map<String, dynamic>?> getEntries({
+    String? search, 
+    String? router, 
+    String? startDate, 
+    String? endDate, 
+    int page = 1, 
+    int limit = 12,
+    bool forceRefresh = false,
+  }) async {
+    final Map<String, dynamic> params = {'page': page, 'limit': limit};
+    if (search != null && search.trim().isNotEmpty) params['search'] = search.trim();
+    if (router != null && router.isNotEmpty && router != 'All Routers') params['router'] = router;
+    if (startDate != null && startDate.isNotEmpty) params['startDate'] = startDate;
+    if (endDate != null && endDate.isNotEmpty) params['endDate'] = endDate;
+    return fetchData(slug: 'entries', params: params, forceRefresh: forceRefresh);
+  }
+
+  Future<Map<String, dynamic>?> reinitializeEntry(dynamic id) async => 
+    _requestWithFallback('/entries.php', method: 'POST', data: {'id': id, 'action': 'reinitialize'});
 
   // System Logs
   Future<Map<String, dynamic>?> getLogs({String? search, int page = 1, bool forceRefresh = false}) async => fetchData(slug: 'logs', params: {'search': search, 'page': page}, forceRefresh: forceRefresh);
@@ -376,11 +393,11 @@ class ApiService {
   Future<Map<String, dynamic>?> deleteStaff(String id) async => 
     _requestWithFallback('/staff.php?id=$id', method: 'DELETE');
 
-  // Notifications
-  Future<Map<String, dynamic>?> getNotifications({int page = 1, bool forceRefresh = false}) async => 
-    fetchData(slug: 'notifications', params: {'page': page}, forceRefresh: forceRefresh);
+  // Notifications (Mirrors wispportal/src/services/system.js getNotifications)
+  Future<Map<String, dynamic>?> getNotifications({int page = 1, int limit = 20, bool forceRefresh = false}) async => 
+    fetchData(slug: 'notifications', params: {'page': page, 'limit': limit}, forceRefresh: forceRefresh);
 
-  Future<Map<String, dynamic>?> markNotificationRead(String? id) async => 
+  Future<Map<String, dynamic>?> markNotificationRead(dynamic id) async => 
     _requestWithFallback('/notifications.php', method: 'POST', data: {'action': 'mark_read', 'id': id});
 
   // WhatsApp Alerts
