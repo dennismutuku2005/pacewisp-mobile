@@ -409,18 +409,28 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
   Widget _buildDrawerHeader(SettingsProvider settings, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
-      decoration: BoxDecoration(
-        color: PaceColors.purple,
-        gradient: LinearGradient(
-          colors: [PaceColors.purple, PaceColors.purple.withOpacity(0.85)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/sidebar.png'),
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              PaceColors.purple.withOpacity(0.92),
+              PaceColors.purple.withOpacity(0.80),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
