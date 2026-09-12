@@ -510,29 +510,34 @@ class _PlansScreenState extends State<PlansScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Access Plans',
-                style: GoogleFonts.figtree(fontSize: 20, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Manage hotspot tariff packages and rate limits',
-                style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Access Plans',
+                  style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.purple),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Tariff packages & bandwidth limits',
+                  style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () => _handleSavePlan(),
-            icon: const Icon(LucideIcons.plus, size: 16),
-            label: Text('New Plan', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600)),
+            icon: const Icon(LucideIcons.plus, size: 15),
+            label: Text('New Plan', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
             style: ElevatedButton.styleFrom(
               backgroundColor: PaceColors.purple,
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
@@ -669,15 +674,6 @@ class _PlansScreenState extends State<PlansScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: PaceColors.purple.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(LucideIcons.zap, size: 18, color: PaceColors.purple),
-                  ),
-                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,6 +696,7 @@ class _PlansScreenState extends State<PlansScreen> {
                               style: GoogleFonts.figtree(
                                 fontSize: 12,
                                 color: PaceColors.getDimText(isDark),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
