@@ -10,19 +10,23 @@ class AppTheme {
       secondary: PaceColors.green,
       surface: PaceColors.background,
       onSurface: PaceColors.foreground,
+      error: PaceColors.red,
     ),
     scaffoldBackgroundColor: PaceColors.background,
     dividerColor: PaceColors.border,
-    textTheme: const TextTheme().apply(
-      bodyColor: PaceColors.adminValue,
-      displayColor: PaceColors.adminValue,
+    textTheme: GoogleFonts.figtreeTextTheme(
+      ThemeData.light().textTheme,
+    ).apply(
+      bodyColor: PaceColors.foreground,
+      displayColor: PaceColors.foreground,
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: PaceColors.background,
       foregroundColor: PaceColors.foreground,
       elevation: 0,
+      scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(
+      titleTextStyle: GoogleFonts.figtree(
         color: PaceColors.purple,
         fontSize: 18,
         fontWeight: FontWeight.w600,
@@ -30,12 +34,14 @@ class AppTheme {
     ),
     drawerTheme: const DrawerThemeData(
       backgroundColor: PaceColors.background,
+      elevation: 0,
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       selectedItemColor: PaceColors.purple,
       unselectedItemColor: PaceColors.adminDim,
-      backgroundColor: PaceColors.background,
+      backgroundColor: PaceColors.cardBg,
       type: BottomNavigationBarType.fixed,
+      elevation: 4,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -43,11 +49,16 @@ class AppTheme {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         elevation: 0,
+        textStyle: GoogleFonts.figtree(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     ),
     cardTheme: CardThemeData(
       color: PaceColors.cardBg,
       elevation: 0,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: PaceColors.border, width: 1),
@@ -56,7 +67,11 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: PaceColors.bgSubtle,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      hintStyle: GoogleFonts.figtree(
+        color: PaceColors.adminDim,
+        fontSize: 13,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: PaceColors.border),
@@ -79,19 +94,23 @@ class AppTheme {
       secondary: PaceColors.greenDark,
       surface: PaceColors.backgroundDark,
       onSurface: PaceColors.foregroundDark,
+      error: PaceColors.redDark,
     ),
     scaffoldBackgroundColor: PaceColors.backgroundDark,
     dividerColor: PaceColors.borderDark,
-    textTheme: const TextTheme().apply(
-      bodyColor: PaceColors.adminValueDark,
-      displayColor: PaceColors.adminValueDark,
+    textTheme: GoogleFonts.figtreeTextTheme(
+      ThemeData.dark().textTheme,
+    ).apply(
+      bodyColor: PaceColors.foregroundDark,
+      displayColor: PaceColors.foregroundDark,
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: PaceColors.backgroundDark,
       foregroundColor: PaceColors.foregroundDark,
       elevation: 0,
+      scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(
+      titleTextStyle: GoogleFonts.figtree(
         color: PaceColors.purpleDark,
         fontSize: 18,
         fontWeight: FontWeight.w600,
@@ -99,12 +118,14 @@ class AppTheme {
     ),
     drawerTheme: const DrawerThemeData(
       backgroundColor: PaceColors.backgroundDark,
+      elevation: 0,
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       selectedItemColor: PaceColors.purpleDark,
       unselectedItemColor: PaceColors.adminDimDark,
-      backgroundColor: PaceColors.backgroundDark,
+      backgroundColor: PaceColors.cardBgDark,
       type: BottomNavigationBarType.fixed,
+      elevation: 4,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -112,11 +133,16 @@ class AppTheme {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         elevation: 0,
+        textStyle: GoogleFonts.figtree(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     ),
     cardTheme: CardThemeData(
       color: PaceColors.cardBgDark,
       elevation: 0,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: PaceColors.borderDark, width: 1),
@@ -125,7 +151,11 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: PaceColors.bgSubtleDark,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      hintStyle: GoogleFonts.figtree(
+        color: PaceColors.adminDimDark,
+        fontSize: 13,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: PaceColors.borderDark),
