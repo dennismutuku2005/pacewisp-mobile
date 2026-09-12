@@ -98,17 +98,18 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           Text(
             'Invoices',
             style: GoogleFonts.figtree(
-              color: PaceColors.getPrimaryText(isDark),
-              fontSize: 20,
+              color: PaceColors.purple,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            'Statements and monthly service fees',
+            'Statements & monthly service fees',
             style: GoogleFonts.figtree(
               color: PaceColors.getDimText(isDark),
-              fontSize: 12,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -147,9 +148,9 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
             ],
           ),
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(LucideIcons.receipt, color: PaceColors.purple, size: 22),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.08), shape: BoxShape.circle),
+            child: const Icon(LucideIcons.receipt, color: PaceColors.purple, size: 20),
           ),
         ],
       ),
@@ -164,7 +165,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     final amount = inv['amount']?.toString() ?? '0';
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: PaceColors.getCard(isDark),
         borderRadius: BorderRadius.circular(14),
@@ -172,19 +173,6 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isPaid ? PaceColors.emerald.withOpacity(0.1) : Colors.amber.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              isPaid ? LucideIcons.checkCircle : LucideIcons.clock,
-              color: isPaid ? PaceColors.emerald : Colors.amber.shade700,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +197,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'Due: $dueDate',
-                  style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+                  style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -219,7 +207,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
             style: GoogleFonts.figtree(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: PaceColors.getPrimaryText(isDark),
+              color: isPaid ? PaceColors.emerald : Colors.red.shade600,
             ),
           ),
         ],
