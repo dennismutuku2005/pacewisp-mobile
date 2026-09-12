@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/colors.dart';
 
-enum BadgeVariant { success, error, secondary, info, standard, primary, warning }
+enum BadgeVariant { success, error, destructive, danger, secondary, info, standard, primary, warning }
 
 class PaceBadge extends StatelessWidget {
   final String label;
@@ -26,6 +26,8 @@ class PaceBadge extends StatelessWidget {
         textColor = PaceColors.getGreen(isDark);
         break;
       case BadgeVariant.error:
+      case BadgeVariant.destructive:
+      case BadgeVariant.danger:
         bgColor = PaceColors.getRedLight(isDark);
         textColor = PaceColors.getRed(isDark);
         break;
