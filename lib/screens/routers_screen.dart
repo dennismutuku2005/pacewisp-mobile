@@ -20,7 +20,6 @@ class RoutersScreen extends StatefulWidget {
 
 class _RoutersScreenState extends State<RoutersScreen> {
   final ApiService _apiService = ApiService();
-  static List<dynamic> _cache = [];
   List<dynamic> _routers = [];
   bool _isLoading = true;
   bool _isProcessing = false;
@@ -36,10 +35,9 @@ class _RoutersScreenState extends State<RoutersScreen> {
     final res = await _apiService.getRouters(forceRefresh: true);
     if (mounted) {
       final fresh = res?['data'] ?? [];
-      _cache = fresh;
-      setState(() { 
-        _routers = fresh.map((item) => { ...item, 'isPinging': true }).toList(); 
-        _isLoading = false; 
+      setState(() {
+        _routers = fresh.map((item) => {...item, 'isPinging': true}).toList();
+        _isLoading = false;
       });
       _startAutoPing();
     }
@@ -47,7 +45,7 @@ class _RoutersScreenState extends State<RoutersScreen> {
 
   void _startAutoPing() {
     for (var i = 0; i < _routers.length; i++) {
-       _pingSingleRouter(i);
+      _pingSingleRouter(i);
     }
   }
 
@@ -60,18 +58,18 @@ class _RoutersScreenState extends State<RoutersScreen> {
       final bool isOnline = stats?['status'] == 'online' || stats?['cpu'] != null;
       if (mounted && index < _routers.length) {
         setState(() {
-          _routers[index] = { 
-            ..._routers[index], 
-            'stats': isOnline ? stats : null, 
+          _routers[index] = {
+            ..._routers[index],
+            'stats': isOnline ? stats : null,
             'status': isOnline ? 'active' : 'inactive',
-            'isPinging': false
+            'isPinging': false,
           };
         });
       }
     } catch (_) {
       if (mounted && index < _routers.length) {
         setState(() {
-          _routers[index] = { ..._routers[index], 'isPinging': false, 'status': 'inactive' };
+          _routers[index] = {..._routers[index], 'isPinging': false, 'status': 'inactive'};
         });
       }
     }
@@ -84,43 +82,215 @@ class _RoutersScreenState extends State<RoutersScreen> {
 
     return PaceOverlayLoader(
       isLoading: _isProcessing,
-      message: 'Processing...',
+      message: 'Executing router command...',
       child: Column(
         children: [
-          _buildHeader(isDark, settings),
+          _buildHeader(isDark),
           Expanded(
             child: _isLoading && _routers.isEmpty
-              ? const RouterSkeleton(count: 3)
-              : RefreshIndicator(
-                  onRefresh: _fetchRouters,
-                  color: PaceColors.purple,
-                  child: _routers.isEmpty
-                    ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchRouters, isDark: isDark))
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                        itemCount: _routers.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (context, index) => _buildRouterCard(_routers[index], isDark, settings),
-                      ),
-                ),
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: RouterSkeleton(count: 4),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _fetchRouters,
+                    color: PaceColors.purple,
+                    child: _routers.isEmpty
+                        ? SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: PaceEmptyState(
+                              title: 'No Mikrotik Routers Found',
+                              subtitle: 'Ensure your Mikrotik node is registered and reachable via API or VPN tunnel.',
+                              onRetry: _fetchRouters,
+                              isDark: isDark,
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                            itemCount: _routers.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) => _buildRouterCard(_routers[index], index, isDark, settings),
+                          ),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(bool isDark, SettingsProvider settings) {
+  Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('YOUR MIKROTIKS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-              Text('CONTROL AND SYNCHRONIZATION STATUS', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+              Text(
+                'Mikrotik Routers',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getPrimaryText(isDark),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Node health, synchronization and remote control',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getDimText(isDark),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: () {
+              _startAutoPing();
+            },
+            icon: const Icon(LucideIcons.refreshCw, size: 18),
+            tooltip: 'Ping all nodes',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRouterCard(dynamic r, int index, bool isDark, SettingsProvider settings) {
+    final bool isOnline = r['status'] == 'active';
+    final bool isPinging = r['isPinging'] == true;
+    final stats = r['stats'];
+    final routerName = r['router_name']?.toString() ?? 'Mikrotik Node';
+    final ipAddress = r['ip_address']?.toString() ?? '0.0.0.0';
+    final port = r['winbox_port']?.toString() ?? '8728';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: isPinging
+                      ? Colors.grey.withOpacity(0.1)
+                      : (isOnline ? PaceColors.emerald.withOpacity(0.1) : Colors.red.withOpacity(0.1)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  LucideIcons.router,
+                  color: isPinging
+                      ? Colors.grey
+                      : (isOnline ? PaceColors.emerald : Colors.red),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            routerName,
+                            style: GoogleFonts.figtree(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: PaceColors.getPrimaryText(isDark),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (isPinging)
+                          const SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple),
+                          )
+                        else
+                          PaceBadge(
+                            label: isOnline ? 'Online' : 'Offline',
+                            variant: isOnline ? BadgeVariant.success : BadgeVariant.danger,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$ipAddress : $port',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 12,
+                        color: PaceColors.getDimText(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => _pingSingleRouter(index),
+                icon: const Icon(LucideIcons.activity, size: 16),
+                tooltip: 'Ping',
+                color: PaceColors.purple,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: PaceColors.getSurface(isDark),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                _buildStatItem('CPU Load', isPinging ? '...' : (stats?['cpu'] ?? (isOnline ? 'Active' : 'N/A')), isDark),
+                Container(width: 1, height: 24, color: PaceColors.getBorder(isDark)),
+                _buildStatItem('Uptime', isPinging ? '...' : (stats?['uptime'] ?? (isOnline ? 'Online' : 'Offline')), isDark),
+                Container(width: 1, height: 24, color: PaceColors.getBorder(isDark)),
+                _buildStatItem('Memory', isPinging ? '...' : (stats?['free_memory'] ?? 'OK'), isDark),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Winbox: $port',
+                style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+              ),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _handleRestart(r),
+                    icon: const Icon(LucideIcons.power, size: 14, color: Colors.red),
+                    label: Text(
+                      'Reboot',
+                      style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.red),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      side: BorderSide(color: Colors.red.shade300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -128,173 +298,103 @@ class _RoutersScreenState extends State<RoutersScreen> {
     );
   }
 
-  Widget _buildRouterCard(dynamic r, bool isDark, SettingsProvider settings) {
-    final bool isOnline = r['status'] == 'active';
-    final stats = r['stats'];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark), 
-        borderRadius: BorderRadius.circular(16), 
-        border: Border.all(color: PaceColors.getBorder(isDark))
-      ),
-      child: Row(
+  Widget _buildStatItem(String label, String value, bool isDark) {
+    return Expanded(
+      child: Column(
         children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              color: r['isPinging'] == true 
-                ? Colors.grey.withOpacity(0.1)
-                : (isOnline ? PaceColors.emerald.withOpacity(0.1) : Colors.red.withOpacity(0.1)), 
-              borderRadius: BorderRadius.circular(10)
-            ),
-            child: Icon(
-              LucideIcons.router, 
-              color: r['isPinging'] == true
-                ? Colors.grey
-                : (isOnline ? PaceColors.emerald : Colors.red), 
-              size: 18
-            ),
+          Text(
+            label,
+            style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w500),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, 
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        r['router_name']?.toString().toUpperCase() ?? 'NODE', 
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.2)
-                      ),
-                    ),
-                    if (r['isPinging'] == true) ...[
-                      const SizedBox(width: 8),
-                      const PaceSkeleton(width: 20, height: 8, borderRadius: 4),
-                    ] else if (isOnline) ...[
-                      const SizedBox(width: 4),
-                      Container(width: 5, height: 5, decoration: const BoxDecoration(color: PaceColors.emerald, shape: BoxShape.circle)),
-                    ],
-                  ]
-                ),
-                Text(r['ip_address'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 8.5, color: Colors.grey)),
-              ]
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: PaceColors.getPrimaryText(isDark),
             ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end, 
-            children: [
-              if (r['isPinging'] == true) ...[
-                const PaceSkeleton(width: 30, height: 10),
-                const SizedBox(height: 4),
-                const PaceSkeleton(width: 40, height: 8),
-              ] else ...[
-                Text(stats?['cpu'] ?? '0%', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: PaceColors.purple)),
-                Text(stats?['uptime']?.toString().toUpperCase() ?? 'OFFLINE', style: const TextStyle(fontSize: 7.5, color: Colors.grey, fontWeight: FontWeight.w600)),
-              ],
-            ]
-          ),
-          const SizedBox(width: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min, 
-            children: [
-              if (settings.hasPolicy('manage_routers'))
-                 IconButton(onPressed: () => _handleRestart(r), icon: const Icon(LucideIcons.refreshCw, color: PaceColors.purple, size: 14), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-              const SizedBox(width: 8),
-              IconButton(onPressed: () => _showControlPanel(r, isDark, settings), icon: const Icon(LucideIcons.moreVertical, size: 14, color: Colors.grey), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-            ]
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHealthMet(String label, String val, IconData icon, bool isDark) {
-    return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [Icon(icon, size: 10, color: Colors.grey), const SizedBox(width: 4), Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w600, color: Colors.grey, letterSpacing: 1))]),
-      const SizedBox(height: 4),
-      Text(val, style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600)),
-    ]));
-  }
+  void _handleRestart(dynamic r) async {
+    final isDark = Provider.of<SettingsProvider>(context, listen: false).isDarkMode;
+    final routerName = r['router_name'] ?? 'this router';
 
-  Widget _buildBillingBadge(dynamic r) {
-    final type = r['accountType']?.toString().toLowerCase() ?? 'kcb';
-    final String label = type == 'till' ? 'TILL' : type.toUpperCase();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(6)),
-      child: Text('$label: ${r['accountNumber'] ?? '---'}', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.purple)),
-    );
-  }
-
-  void _showControlPanel(dynamic r, bool isDark, SettingsProvider settings) {
-    showModalBottomSheet(
+    final bool? confirm = await showDialog<bool>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: PaceColors.getBackground(isDark), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('ROUTER CONTROL', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 1)),
-            const SizedBox(height: 24),
-            _buildActionItem('Restart Hardware', LucideIcons.power, Colors.red, () {
-              Navigator.pop(context);
-              _handleRestart(r);
-            }),
-            const SizedBox(height: 24),
-          ],
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PaceColors.getCard(isDark),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Reboot Router',
+          style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
         ),
+        content: Text(
+          'Are you sure you want to reboot "$routerName"? Connected customer sessions will temporarily drop until reboot completes.',
+          style: GoogleFonts.figtree(fontSize: 14, color: PaceColors.getDimText(isDark)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Reboot Now', style: GoogleFonts.figtree(fontWeight: FontWeight.w600)),
+          ),
+        ],
       ),
     );
-  }
 
-  Widget _buildActionItem(String label, IconData icon, Color color, VoidCallback onTap) {
-    return ListTile(
-      onTap: onTap,
-      leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 18)),
-      title: Text(label, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600)),
-      trailing: const Icon(LucideIcons.chevronRight, size: 14),
-    );
-  }
-
-
-  void _handleApiResponse(Map<String, dynamic>? res, VoidCallback retry) {
-    if (res?['status'] == 'otp_required') {
-      _showOtpModal((code) => retry());
-    } else if (res?['status'] == 'success') {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Command Executed'), backgroundColor: PaceColors.emerald));
+    if (confirm == true) {
+      setState(() => _isProcessing = true);
+      try {
+        final res = await _apiService.restartRouter(r['ip_address'], r['winbox_port'] ?? 8728);
+        if (res?['status'] == 'otp_required') {
+          _showOtpModal((code) => _handleRestart(r));
+        } else if (res?['status'] == 'success') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Reboot command dispatched', style: GoogleFonts.figtree()), backgroundColor: PaceColors.emerald),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(res?['message'] ?? 'Reboot command failed', style: GoogleFonts.figtree()), backgroundColor: Colors.red.shade700),
+            );
+          }
+        }
+      } finally {
+        if (mounted) setState(() => _isProcessing = false);
+      }
     }
   }
 
   void _showOtpModal(Function(String) onVerify) {
-    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => OtpModal(
-      phoneNumber: Provider.of<SettingsProvider>(context, listen: false).activeAccount?.phone ?? '',
-      onVerify: (code) { Navigator.pop(context); onVerify(code); },
-    ));
-  }
-
-  void _handleRestart(dynamic r) async {
-    final bool? confirm = await showDialog<bool>(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('RESTART ROUTER'),
-        content: Text('Reboot ${r['router_name']}? Current sessions will be lost.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('RESTART', style: TextStyle(color: Colors.red))),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => OtpModal(
+        phoneNumber: Provider.of<SettingsProvider>(context, listen: false).activeAccount?.phone ?? '',
+        onVerify: (code) {
+          Navigator.pop(context);
+          onVerify(code);
+        },
       ),
     );
-    if (confirm == true) {
-      final res = await _apiService.restartRouter(r['ip_address'], r['winbox_port'] ?? 8728);
-      _handleApiResponse(res, () => _handleRestart(r));
-    }
   }
 }
