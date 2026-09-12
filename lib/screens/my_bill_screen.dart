@@ -108,17 +108,18 @@ class _MyBillScreenState extends State<MyBillScreen> {
         Text(
           'Service Bill',
           style: GoogleFonts.figtree(
-            color: PaceColors.getPrimaryText(isDark),
-            fontSize: 20,
+            color: PaceColors.purple,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 2),
         Text(
-          'Platform usage estimation and recurring cycle period',
+          'Platform usage estimation & recurring cycle',
           style: GoogleFonts.figtree(
             color: PaceColors.getDimText(isDark),
-            fontSize: 12,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
