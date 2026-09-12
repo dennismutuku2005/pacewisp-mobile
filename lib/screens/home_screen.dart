@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
@@ -11,7 +12,6 @@ import '../components/dashboard_chart.dart';
 import '../components/skeleton.dart';
 import '../components/badge.dart';
 import '../components/empty_state.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../services/widget_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -45,28 +45,25 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSyncMemory();
     _loadRouters();
-    _fetchCachedThenLive();
-    // Force sync on init
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshWidgetData();
-      _startWidgetTimer();
-    });
+    _fetchLiveDashboard();
+    _startWidgetTimer();
   }
 
   void _startWidgetTimer() {
     _widgetTimer?.cancel();
-    _widgetTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
-      if (mounted) _fetchCachedThenLive();
+    _widgetTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) _fetchLiveDashboard(isSilent: true);
     });
   }
 
-  void _loadSyncMemory() {
-    // Disabled all memory caching for dashboard to ensure real-time data
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    _widgetTimer?.cancel();
+    _chartPageController.dispose();
+    super.dispose();
   }
-  
+
   Future<void> _loadRouters() async {
     try {
       final res = await _apiService.getRouters(forceRefresh: true);
@@ -92,48 +89,62 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       }
-    } catch (e) { debugPrint("API: Failed to load routers: $e"); }
+    } catch (e) {
+      debugPrint("API: Failed to load routers: $e");
+    }
   }
 
   Map<String, String> _parseDateRange(String range) {
     final now = DateTime.now();
     final formatter = DateFormat('yyyy-MM-dd');
     String start = formatter.format(now), end = formatter.format(now);
-    if (range == 'Yesterday') { final yest = now.subtract(const Duration(days: 1)); start = formatter.format(yest); end = formatter.format(yest); }
-    else if (range == 'This Week') { start = formatter.format(now.subtract(const Duration(days: 6))); }
-    else if (range == 'This Month') { start = formatter.format(DateTime(now.year, now.month, 1)); }
-    else if (range == 'All Time') { start = '2020-01-01'; }
+    if (range == 'Yesterday') {
+      final yest = now.subtract(const Duration(days: 1));
+      start = formatter.format(yest);
+      end = formatter.format(yest);
+    } else if (range == 'This Week') {
+      start = formatter.format(now.subtract(const Duration(days: 6)));
+    } else if (range == 'This Month') {
+      start = formatter.format(DateTime(now.year, now.month, 1));
+    } else if (range == 'All Time') {
+      start = '2020-01-01';
+    }
     return {'startDate': start, 'endDate': end};
   }
 
-  Future<void> _fetchCachedThenLive() async {
+  Future<void> _fetchLiveDashboard({bool isSilent = false}) async {
+    if (!isSilent) setState(() => _isLoading = true);
     final filters = _parseDateRange(_selectedDateRange);
     final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
 
-    // ONLY LIVE REFRESH - No cache check
+    try {
+      final live = await Future.wait<Map<String, dynamic>?>([
+        _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
+        _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
+        _apiService.getRecentTransactions(router: router, startDate: filters['startDate'], endDate: filters['endDate'], limit: 5, forceRefresh: true),
+        _apiService.getRouterStatus(limit: 5, forceRefresh: true),
+      ]);
 
-    // LIVE REFRESH
-    final live = await Future.wait<Map<String, dynamic>?>([
-      _apiService.getSummaryWidgets(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
-      _apiService.getSummaryCharts(router: router, startDate: filters['startDate'], endDate: filters['endDate'], forceRefresh: true),
-      _apiService.getRecentTransactions(router: router, startDate: filters['startDate'], endDate: filters['endDate'], limit: 5, forceRefresh: true),
-      _apiService.getRouterStatus(limit: 5, forceRefresh: true),
-    ]);
+      if (mounted) {
+        setState(() {
+          _widgets = _extractData(live[0], 'widgets');
+          _charts = live[1]?['data']?['charts']?['revenue_over_time'] ??
+              live[1]?['charts']?['revenue_over_time'] ??
+              live[1]?['data']?['revenue_over_time'] ??
+              [];
+          _transactions = _extractData(live[2], 'recent_transactions', isList: true) ?? [];
 
-    if (mounted) {
-      setState(() {
-        _widgets = _extractData(live[0], 'widgets');
-        _charts = live[1]?['data']?['charts']?['revenue_over_time'] ?? live[1]?['charts']?['revenue_over_time'] ?? live[1]?['data']?['revenue_over_time'] ?? [];
-        _transactions = _extractData(live[2], 'recent_transactions', isList: true) ?? [];
-        
-        // Initialize router status with pinging state
-        final fetchedRouters = _extractData(live[3], 'router_status', isList: true) ?? [];
-        _routerStatus = fetchedRouters.map((r) => { ...r, 'isPinging': true }).toList();
-        
-        _isLoading = false;
-      });
-      _refreshWidgetData();
-      _startDashboardPings();
+          final fetchedRouters = _extractData(live[3], 'router_status', isList: true) ?? [];
+          _routerStatus = fetchedRouters.map((r) => {...(r is Map ? r : {}), 'isPinging': true}).toList();
+          _isLoading = false;
+        });
+
+        _refreshWidgetData();
+        _startDashboardPings();
+      }
+    } catch (e) {
+      debugPrint("Error fetching dashboard data: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -149,12 +160,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final res = await _apiService.pingRouter(r['ip'] ?? '0.0.0.0', r['winbox_port'] ?? 8728);
       final stats = res?['data'] ?? res;
-      final bool isOnline = stats?['status'] == 'online' || stats?['cpu'] != null;
+      final bool isOnline = stats?['status'] == 'online' || stats?['cpu'] != null || stats?['success'] == true;
       if (mounted && index < _routerStatus.length) {
         setState(() {
-          _routerStatus[index] = { 
-            ..._routerStatus[index], 
-            'uptime': isOnline ? (stats?['uptime'] ?? 'UP') : 'DOWN',
+          _routerStatus[index] = {
+            ..._routerStatus[index],
+            'uptime': isOnline ? (stats?['uptime'] ?? 'Running') : 'Disconnected',
             'status': isOnline ? 'Online' : 'Offline',
             'isPinging': false
           };
@@ -163,7 +174,12 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       if (mounted && index < _routerStatus.length) {
         setState(() {
-          _routerStatus[index] = { ..._routerStatus[index], 'isPinging': false, 'status': 'Offline' };
+          _routerStatus[index] = {
+            ..._routerStatus[index],
+            'isPinging': false,
+            'status': 'Offline',
+            'uptime': 'Disconnected'
+          };
         });
       }
     }
@@ -173,20 +189,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     final wAcc = settings.widgetAccount;
     final aAcc = settings.activeAccount;
-    
-    // Auto-update if it's the same account
+
     if (wAcc?.subdomain == aAcc?.subdomain && _widgets != null) {
-       final income = _widgets!['todays_earnings']?['value'] ?? "0";
-       final entries = _widgets!['active_users']?['value'] ?? "0";
-       
-       debugPrint("[WIDGET] Refreshing Data: Income=$income, Entries=$entries");
-       
-       WidgetService.updateWidgetData(
-         accountName: aAcc?.accountName ?? "PaceWisp Admin",
-         income: income,
-         entries: entries,
-         isBlurred: settings.isWidgetBlurred,
-       );
+      final income = _widgets!['todays_earnings']?['value'] ?? "0";
+      final entries = _widgets!['active_users']?['value'] ?? "0";
+
+      WidgetService.updateWidgetData(
+        accountName: aAcc?.accountName ?? "PaceWISP Admin",
+        income: income.toString(),
+        entries: entries.toString(),
+        isBlurred: settings.isWidgetBlurred,
+      );
     }
   }
 
@@ -196,197 +209,549 @@ class _HomeScreenState extends State<HomeScreen> {
     dynamic result;
     if (data is Map) result = data[key] ?? data;
     else result = res[key] ?? data;
-    
+
     if (isList && result is! List) return [];
     return result;
-  }
-
-  @override
-  void dispose() {
-    _widgetTimer?.cancel();
-    _chartPageController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
+    final canSeeIncome = settings.hasPolicy('view_income');
 
     return RefreshIndicator(
-      onRefresh: () => _fetchCachedThenLive(),
+      onRefresh: () => _fetchLiveDashboard(),
       color: PaceColors.purple,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeader(isDark),
-            const SizedBox(height: 24),
+            _buildHeader(isDark, settings),
+            const SizedBox(height: 16),
             _buildGlobalFilters(isDark),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             if (_isLoading && _widgets == null)
               const GridSkeleton(count: 6)
             else if (_widgets != null) ...[
-              _buildMetricsGrid(isDark),
+              _buildMetricsGrid(isDark, canSeeIncome),
               const SizedBox(height: 24),
-              _buildCreateVoucherButton(isDark),
-              const SizedBox(height: 48),
               _buildQuickAccessGrid(isDark),
-              const SizedBox(height: 48),
-              _buildSectionHeader('ACTIVITY & GROWTH', 'NETWORK UTILIZATION TRENDS', isDark),
+              const SizedBox(height: 24),
+              _buildSectionHeader('Revenue & Activity Trends', isDark, isChart: true),
               _buildChartCard(isDark),
-              const SizedBox(height: 48),
-              _buildSectionHeader('RECENT ACTIVITY', 'LIVE CONNECTIONS', isDark),
+              const SizedBox(height: 24),
+              _buildSectionHeader('Recent Live Activity', isDark),
               _buildActivityTable(isDark),
-              const SizedBox(height: 48),
-              _buildSectionHeader('YOUR MIKROTIKS', 'ONLINE/OFFLINE', isDark),
+              const SizedBox(height: 24),
+              _buildSectionHeader('Your Mikrotik Nodes', isDark, isStation: true),
               _buildStationTable(isDark),
             ] else ...[
-               PaceEmptyState(
-                 onRetry: _fetchCachedThenLive,
-                 isDark: isDark,
-                 title: 'DASHBOARD UNAVAILABLE',
-                 subtitle: 'We couldn\'t load your summary metrics. Please check your connection and retry.',
-               ),
+              PaceEmptyState(
+                onRetry: () => _fetchLiveDashboard(),
+                isDark: isDark,
+                title: 'Dashboard Unavailable',
+                subtitle: 'Could not fetch dashboard metrics. Pull down to refresh.',
+              ),
             ],
-            const SizedBox(height: 100),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, String sub, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 13, fontWeight: FontWeight.normal, letterSpacing: -0.2)),
-            Text(sub, style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 8, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
-          ]),
-          if (title == 'ACTIVITY & GROWTH') ...[
-             const SizedBox(width: 12),
-             Row(children: [_buildLegend(PaceColors.purple, 'REVENUE'), const SizedBox(width: 12), _buildLegend(const Color(0xFF22C55E), 'ACTIVITY')]),
-          ] else if (title == 'YOUR MIKROTIKS') ...[
-             const Spacer(),
-             CustomPaint(
-               painter: DashedBorderPainter(color: PaceColors.purple.withOpacity(0.5), strokeWidth: 1.0, radius: 10),
-               child: InkWell(
-                 onTap: () => widget.onNavigateToRouters?.call(),
-                 borderRadius: BorderRadius.circular(10),
-                 child: Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                   child: Text('SEE IN MIKROTIKS PAGE', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1)),
-                 ),
-               ),
-             ),
-          ]
-        ],
-      ),
+  Widget _buildHeader(bool isDark, SettingsProvider settings) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Dashboard',
+              style: GoogleFonts.figtree(
+                color: PaceColors.purple,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Performance Summary',
+              style: GoogleFonts.figtree(
+                color: PaceColors.getDimText(isDark),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        if (settings.hasPolicy('create_voucher'))
+          ElevatedButton.icon(
+            onPressed: widget.onGenerateVoucher,
+            icon: const Icon(LucideIcons.plus, size: 14),
+            label: Text(
+              'New Voucher',
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w600, fontSize: 12),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PaceColors.purple,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+          ),
+      ],
     );
-  }
-
-  Widget _buildDot(int index) => Container(width: 6, height: 6, decoration: BoxDecoration(color: _currentChartIndex == index ? PaceColors.purple : PaceColors.getBorder(true), shape: BoxShape.circle));
-
-  Widget _buildHeader(bool isDark) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('DASHBOARD', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-      Text('PERFORMANCE SUMMARY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2)),
-    ]);
   }
 
   Widget _buildGlobalFilters(bool isDark) {
-    return Row(children: [
-      Expanded(child: _buildFilterButton(icon: Icons.router_rounded, label: _selectedRouter, onTap: () => _showRouterPicker(isDark), isDark: isDark)),
-      const SizedBox(width: 12),
-      Expanded(child: _buildFilterButton(icon: Icons.calendar_today_rounded, label: _selectedDateRange, onTap: () => _showDatePicker(isDark), isDark: isDark)),
-    ]);
-  }
-
-  Widget _buildFilterButton({required IconData icon, required String label, required VoidCallback onTap, required bool isDark}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))]),
-        child: Row(children: [Icon(icon, size: 16, color: PaceColors.getDimText(isDark)), const SizedBox(width: 10), Expanded(child: Text(label, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis)), Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: PaceColors.getDimText(isDark))]),
-      ),
+    return Row(
+      children: [
+        Expanded(
+          child: _buildFilterButton(
+            icon: LucideIcons.router,
+            label: _selectedRouter,
+            onTap: () => _showRouterPicker(isDark),
+            isDark: isDark,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildFilterButton(
+            icon: LucideIcons.calendar,
+            label: _selectedDateRange,
+            onTap: () => _showDatePicker(isDark),
+            isDark: isDark,
+          ),
+        ),
+      ],
     );
   }
 
-  void _showRouterPicker(bool isDark) {
-    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('SELECT STATION NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 2))), const SizedBox(height: 8), Flexible(child: ListView.builder(shrinkWrap: true, itemCount: _routerNames.length, itemBuilder: (context, index) { final r = _routerNames[index]; final isSelected = _selectedRouter == r; return ListActionTile(label: r, icon: Icons.router_outlined, isSelected: isSelected, onTap: () { setState(() => _selectedRouter = r); Navigator.pop(context); _fetchCachedThenLive(); }, isDark: isDark); }))])));
-  }
-
-  void _showDatePicker(bool isDark) {
-    final ranges = ['All Time', 'Today', 'Yesterday', 'This Week', 'This Month'];
-    showModalBottomSheet(context: context, backgroundColor: PaceColors.getCard(isDark), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))), builder: (context) => Container(padding: const EdgeInsets.symmetric(vertical: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Text('SELECT PERFORMANCE CYCLE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 2))), const SizedBox(height: 8), ...ranges.map((range) { final isSelected = _selectedDateRange == range; return ListActionTile(label: range, icon: Icons.access_time_rounded, isSelected: isSelected, onTap: () { setState(() => _selectedDateRange = range); Navigator.pop(context); _fetchCachedThenLive(); }, isDark: isDark); }).toList()])));
-  }
-
-  Widget _buildMetricsGrid(bool isDark) {
-    if (_widgets == null) return const GridSkeleton(count: 6);
-    final data = _widgets!;
-    final metrics = [
-      {'label': "TODAY'S EARNINGS", 'value': "KSH ${_format(data['todays_earnings']?['value'])}", 'icon': Icons.account_balance_wallet_rounded, 'color': PaceColors.purple, 'bg': PaceColors.purple.withOpacity(0.08)},
-      {'label': "MONTH REVENUE", 'value': "KSH ${_format(data['month_revenue']?['value'])}", 'icon': Icons.credit_card_rounded, 'color': const Color(0xFF3B82F6), 'bg': const Color(0xFF3B82F6).withOpacity(0.08)},
-      {'label': "ENTRIES", 'value': "${data['active_users']?['value'] ?? 0}", 'icon': Icons.bolt_rounded, 'color': const Color(0xFF22C55E), 'bg': const Color(0xFF22C55E).withOpacity(0.08)},
-      {'label': "MONTH CUSTOMERS", 'value': "${data['customers_month']?['value'] ?? 0}", 'icon': Icons.people_rounded, 'color': PaceColors.getDimText(isDark), 'bg': PaceColors.getSurface(isDark)},
-      {'label': "ONLINE USERS", 'value': "${data['online_customers']?['value'] ?? 0}", 'icon': Icons.wifi_rounded, 'color': const Color(0xFF10B981), 'bg': const Color(0xFF10B981).withOpacity(0.08)},
-      {'label': "SYSTEM HEALTH", 'value': "${data['system_health']?['value'] ?? '98%'}", 'icon': Icons.lan_rounded, 'color': const Color(0xFFF59E0B), 'bg': const Color(0xFFF59E0B).withOpacity(0.08)},
-    ];
-    return GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5), itemCount: metrics.length, itemBuilder: (context, index) {
-      final m = metrics[index];
-      final bool blurIt = m['label'] == "MONTH REVENUE" && _isRevenueBlurred;
-      return InkWell(onTap: m['label'] == "MONTH REVENUE" ? () => setState(() => _isRevenueBlurred = !_isRevenueBlurred) : null, child: Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(16), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: (m['color'] as Color).withOpacity(0.05), blurRadius: 20, spreadRadius: -5, offset: const Offset(0, 10))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: m['bg'] as Color, borderRadius: BorderRadius.circular(10)), child: Icon(m['icon'] as IconData, color: m['color'] as Color, size: 16)), const Spacer(), if (blurIt) ClipRect(child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), child: Text("KSH 88,888", style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)))) else Text(m['value'] as String, style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)), const SizedBox(height: 2), Text(m['label'] as String, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))])));
-    });
-  }
-
-  Widget _buildCreateVoucherButton(bool isDark) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: widget.onGenerateVoucher,
-        icon: const Icon(Icons.confirmation_num_rounded, size: 20),
-        label: const Text('CREATE VOUCHER', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: PaceColors.purple,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 4,
-          shadowColor: PaceColors.purple.withOpacity(0.4),
+  Widget _buildFilterButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 14, color: PaceColors.getDimText(isDark)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.figtree(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: PaceColors.getPrimaryText(isDark),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(LucideIcons.chevronDown, size: 14, color: PaceColors.getDimText(isDark)),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickAccessGrid(bool isDark) {
-    return GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 2.5, children: [
-        _buildActionItem(Icons.tag_rounded, 'ACTIVE PLANS', 'Bandwidth tiers', Colors.blue, isDark, () {}),
-        _buildActionItem(Icons.people_alt_rounded, 'CUSTOMERS', 'Manage accounts', PaceColors.emerald, isDark, () {}),
-        _buildActionItem(Icons.lan_rounded, 'YOUR MIKROTIKS', 'Mikrotik health', Colors.orange, isDark, () {}),
-        _buildActionItem(Icons.analytics_rounded, 'SMART LOGGER', 'Internal events', PaceColors.getDimText(isDark), isDark, () {}),
-    ]);
-  }
-
-  Widget _buildActionItem(IconData icon, String title, String sub, Color color, bool isDark, VoidCallback? onTap) {
-    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(20), child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: color.withOpacity(0.04), blurRadius: 40, spreadRadius: 0)]), child: Row(children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 18)), const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [Text(title, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.2)), Text(sub, style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600))]))])));
-  }
-
-  Widget _buildChartCard(bool isDark) {
-    if (_charts.isEmpty) return const PaceSkeleton(height: 240);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+  void _showRouterPicker(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaceColors.getCard(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              child: Text(
+                'Select Mikrotik Station',
+                style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark)),
+              ),
+            ),
+            const Divider(),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _routerNames.length,
+                itemBuilder: (context, index) {
+                  final r = _routerNames[index];
+                  final isSelected = _selectedRouter == r;
+                  return ListTile(
+                    dense: true,
+                    leading: Icon(LucideIcons.router, size: 16, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                    title: Text(
+                      r,
+                      style: GoogleFonts.figtree(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark),
+                      ),
+                    ),
+                    trailing: isSelected ? const Icon(LucideIcons.check, size: 16, color: PaceColors.purple) : null,
+                    onTap: () {
+                      setState(() => _selectedRouter = r);
+                      Navigator.pop(context);
+                      _fetchLiveDashboard();
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDatePicker(bool isDark) {
+    final ranges = ['Today', 'Yesterday', 'This Week', 'This Month', 'All Time'];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PaceColors.getCard(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              child: Text(
+                'Select Date Cycle',
+                style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark)),
+              ),
+            ),
+            const Divider(),
+            ...ranges.map((range) {
+              final isSelected = _selectedDateRange == range;
+              return ListTile(
+                dense: true,
+                leading: Icon(LucideIcons.calendar, size: 16, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)),
+                title: Text(
+                  range,
+                  style: GoogleFonts.figtree(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark),
+                  ),
+                ),
+                trailing: isSelected ? const Icon(LucideIcons.check, size: 16, color: PaceColors.purple) : null,
+                onTap: () {
+                  setState(() => _selectedDateRange = range);
+                  Navigator.pop(context);
+                  _fetchLiveDashboard();
+                },
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricsGrid(bool isDark, bool canSeeIncome) {
+    final data = _widgets ?? {};
+    final metrics = canSeeIncome
+        ? [
+            {
+              'label': "Today's Earnings",
+              'value': "KSH ${_format(data['todays_earnings']?['value'])}",
+              'note': 'Last 24 hours',
+              'icon': LucideIcons.wallet,
+              'color': PaceColors.purple,
+              'bg': PaceColors.purple.withOpacity(0.08)
+            },
+            {
+              'label': "Month Revenue",
+              'value': "KSH ${_format(data['month_revenue']?['value'])}",
+              'note': 'Current cycle',
+              'icon': LucideIcons.creditCard,
+              'color': const Color(0xFF3B82F6),
+              'bg': const Color(0xFF3B82F6).withOpacity(0.08)
+            },
+            {
+              'label': "Entries",
+              'value': "${data['active_users']?['value'] ?? 0}",
+              'note': 'Today entries',
+              'icon': LucideIcons.activity,
+              'color': PaceColors.green,
+              'bg': PaceColors.green.withOpacity(0.08)
+            },
+            {
+              'label': "Avg Entries",
+              'value': "${data['customers_month']?['value'] ?? 0}",
+              'note': 'Daily average',
+              'icon': LucideIcons.barChart2,
+              'color': PaceColors.getDimText(isDark),
+              'bg': PaceColors.getSurface(isDark)
+            },
+            {
+              'label': "Online Customers",
+              'value': "${data['online_customers']?['value'] ?? 0}",
+              'note': 'Live now',
+              'icon': LucideIcons.wifi,
+              'color': const Color(0xFF10B981),
+              'bg': const Color(0xFF10B981).withOpacity(0.08)
+            },
+            {
+              'label': "Total Users",
+              'value': "${data['monthly_users']?['value'] ?? 0}",
+              'note': 'Network scale',
+              'icon': LucideIcons.network,
+              'color': const Color(0xFFF59E0B),
+              'bg': const Color(0xFFF59E0B).withOpacity(0.08)
+            },
+          ]
+        : [
+            {
+              'label': "Live Entries",
+              'value': "${data['active_users']?['value'] ?? 0}",
+              'note': 'Today entries',
+              'icon': LucideIcons.activity,
+              'color': PaceColors.green,
+              'bg': PaceColors.green.withOpacity(0.08)
+            },
+            {
+              'label': "Online Customers",
+              'value': "${data['online_customers']?['value'] ?? 0}",
+              'note': 'Live now',
+              'icon': LucideIcons.wifi,
+              'color': const Color(0xFF10B981),
+              'bg': const Color(0xFF10B981).withOpacity(0.08)
+            },
+            {
+              'label': "Total Users",
+              'value': "${data['monthly_users']?['value'] ?? 0}",
+              'note': 'Network scale',
+              'icon': LucideIcons.network,
+              'color': const Color(0xFFF59E0B),
+              'bg': const Color(0xFFF59E0B).withOpacity(0.08)
+            },
+            {
+              'label': "Avg Entries",
+              'value': "${data['customers_month']?['value'] ?? 0}",
+              'note': 'Daily average',
+              'icon': LucideIcons.barChart2,
+              'color': PaceColors.getDimText(isDark),
+              'bg': PaceColors.getSurface(isDark)
+            },
+          ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.6,
+      ),
+      itemCount: metrics.length,
+      itemBuilder: (context, index) {
+        final m = metrics[index];
+        final bool isRevenue = m['label'] == "Month Revenue";
+        final bool blurIt = isRevenue && _isRevenueBlurred;
+
+        return InkWell(
+          onTap: isRevenue ? () => setState(() => _isRevenueBlurred = !_isRevenueBlurred) : null,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: PaceColors.getCard(isDark),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: PaceColors.getBorder(isDark)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: m['bg'] as Color,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(m['icon'] as IconData, color: m['color'] as Color, size: 14),
+                    ),
+                    if (isRevenue)
+                      Icon(
+                        _isRevenueBlurred ? LucideIcons.eyeOff : LucideIcons.eye,
+                        size: 14,
+                        color: PaceColors.getDimText(isDark),
+                      ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (blurIt)
+                      ClipRect(
+                        child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                          child: Text(
+                            "KSH 88,888",
+                            style: GoogleFonts.figtree(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: PaceColors.getPrimaryText(isDark),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Text(
+                        m['value'] as String,
+                        style: GoogleFonts.figtree(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: PaceColors.purple,
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      m['label'] as String,
+                      style: GoogleFonts.figtree(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: PaceColors.getDimText(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickAccessGrid(bool isDark) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildQuickActionItem(
+            icon: LucideIcons.ticket,
+            title: 'Vouchers',
+            subtitle: 'Prepaid codes',
+            color: PaceColors.purple,
+            isDark: isDark,
+            onTap: widget.onGenerateVoucher,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildQuickActionItem(
+            icon: LucideIcons.router,
+            title: 'Mikrotiks',
+            subtitle: 'Router health',
+            color: const Color(0xFFF59E0B),
+            isDark: isDark,
+            onTap: widget.onNavigateToRouters,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required bool isDark,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 16),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark)),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark)),
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.arrowUpRight, size: 14, color: PaceColors.getDimText(isDark)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, bool isDark, {bool isChart = false, bool isStation = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.figtree(
+              color: PaceColors.getPrimaryText(isDark),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (isChart)
             InkWell(
               onTap: () {
                 final next = (_currentChartIndex + 1) % 2;
@@ -394,121 +759,168 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: PaceColors.purple.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
                 child: Row(
                   children: [
-                    Icon(Icons.swap_horiz_rounded, size: 14, color: PaceColors.purple),
+                    const Icon(LucideIcons.repeat, size: 12, color: PaceColors.purple),
                     const SizedBox(width: 4),
-                    Text('SWAP VIEW', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 0.5)),
+                    Text(
+                      'Swap View',
+                      style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple),
+                    ),
                   ],
                 ),
               ),
+            )
+          else if (isStation)
+            InkWell(
+              onTap: widget.onNavigateToRouters,
+              child: Text(
+                'View All →',
+                style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.purple),
+              ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 240, 
-          child: PageView(
-            controller: _chartPageController,
-            onPageChanged: (idx) => setState(() => _currentChartIndex = idx),
-            children: [
-              DashboardChart(chartData: _charts, type: ChartType.line),
-              DashboardChart(chartData: _charts, type: ChartType.bar),
-            ],
-          )
-        ),
-        const SizedBox(height: 12),
-      ]),
+        ],
+      ),
     );
   }
 
-  Widget _buildLegend(Color color, String label) => Row(children: [Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w600, color: PaceColors.getDimText(true), letterSpacing: 1))]);
+  Widget _buildChartCard(bool isDark) {
+    if (_charts.isEmpty) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Center(
+          child: Text(
+            'No chart analytics available for this cycle',
+            style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark)),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: SizedBox(
+        height: 220,
+        child: PageView(
+          controller: _chartPageController,
+          onPageChanged: (idx) => setState(() => _currentChartIndex = idx),
+          children: [
+            DashboardChart(chartData: _charts, type: ChartType.line),
+            DashboardChart(chartData: _charts, type: ChartType.bar),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildActivityTable(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark), 
-        borderRadius: BorderRadius.circular(24), 
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), 
-        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
       ),
       child: Column(
         children: [
-          _buildTableHeader(['CLIENT', 'PLAN', 'AMOUNT', 'STATUS'], isDark),
+          _buildTableHeader(['Client', 'Plan', 'Amount', 'Status'], isDark),
           if (_isLoading && _transactions.isEmpty)
-            const TransactionSkeleton(count: 5)
+            const TransactionSkeleton(count: 4)
           else if (_transactions.isEmpty)
-            const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('NO LIVE CONNECTIONS FOUND', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey))))
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Text(
+                  'No recent activity recorded',
+                  style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark)),
+                ),
+              ),
+            )
           else
             ..._transactions.map((tx) => _buildTxRow(tx, isDark)).toList(),
-          const SizedBox(height: 8),
         ],
       ),
     );
   }
 
   Widget _buildTxRow(dynamic tx, bool isDark) {
-    String timeAgo = tx['time_ago'] ?? 'Just now';
+    final phone = tx['user_phone']?.toString() ?? 'Hotspot Client';
+    final plan = tx['plan_name']?.toString().split('_')[0] ?? 'Access';
+    final amount = tx['amount'] != null ? 'KES ${_format(tx['amount'])}' : '---';
+    final mpesa = tx['mpesa_code']?.toString().toUpperCase() ?? '';
+    final timeAgo = tx['time_ago'] ?? tx['created_at'] ?? '';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.4)))),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               color: PaceColors.getSurface(isDark),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(LucideIcons.smartphone, size: 14, color: PaceColors.getDimText(isDark)),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
-            flex: 3, 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, 
-              children: [
-                Text(tx['user_phone'] ?? 'SYSTEM', style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)), 
-                Row(
-                  children: [
-                    Icon(LucideIcons.clock, size: 8, color: PaceColors.getDimText(isDark)),
-                    const SizedBox(width: 4),
-                    Text(timeAgo, style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
-                  ],
-                )
-              ]
-            )
-          ),
-          Expanded(
-            flex: 2, 
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tx['plan_name']?.toString().split('_')[0].toUpperCase() ?? 'PLAN', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark))),
-                Text('HOTSPOT', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
+                Text(
+                  phone,
+                  style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.purple),
+                ),
+                Text(
+                  timeAgo,
+                  style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark)),
+                ),
               ],
-            )
+            ),
           ),
           Expanded(
-            flex: 2, 
+            flex: 2,
+            child: Text(
+              plan,
+              style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('KES ${_format(tx['amount'])}', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white : PaceColors.purple)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: PaceColors.purple.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(tx['mpesa_code']?.toString().toUpperCase() ?? 'TRX', style: GoogleFonts.jetBrainsMono(fontSize: 7, color: PaceColors.purple, fontWeight: FontWeight.bold)),
+                Text(
+                  amount,
+                  style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.purple),
                 ),
+                if (mpesa.isNotEmpty)
+                  Text(
+                    mpesa,
+                    style: GoogleFonts.jetBrainsMono(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600),
+                  ),
               ],
-            )
+            ),
           ),
         ],
       ),
@@ -516,109 +928,121 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStationTable(bool isDark) {
-    if (_routerStatus.isEmpty && _isLoading) return const TransactionSkeleton(count: 3);
     return Container(
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(24), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2), boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 40, spreadRadius: 0)]),
-      child: Column(children: [
-        _buildTableHeader(['NODE NAME', 'NETWORK IP', 'STATUS'], isDark),
-        if (_routerStatus.isEmpty)
-          const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('NO CHASSIS NODES DETECTED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey))))
-        else
-          ..._routerStatus.map((r) => _buildStationRow(r, isDark)).toList(),
-        const SizedBox(height: 8),
-      ]),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Column(
+        children: [
+          _buildTableHeader(['Mikrotik Node', 'IP Address', 'Status'], isDark),
+          if (_routerStatus.isEmpty && _isLoading)
+            const TransactionSkeleton(count: 3)
+          else if (_routerStatus.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Text(
+                  'No Mikrotik nodes configured',
+                  style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark)),
+                ),
+              ),
+            )
+          else
+            ..._routerStatus.map((r) => _buildStationRow(r, isDark)).toList(),
+        ],
+      ),
     );
   }
 
   Widget _buildStationRow(dynamic r, bool isDark) {
     final bool isPinging = r['isPinging'] == true;
-    final bool isOnline = r['status']?.toString().toLowerCase() == 'up' || r['status']?.toString().toLowerCase() == 'online';
-    
+    final bool isOnline = r['status']?.toString().toLowerCase() == 'online';
+    final name = r['name'] ?? r['router_name'] ?? 'Mikrotik';
+    final ip = r['ip'] ?? '0.0.0.0';
+    final uptime = r['uptime'] ?? (isOnline ? 'Running' : 'Offline');
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.4)))),
-      child: Row(children: [
-        Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(r['name']?.toUpperCase() ?? 'NODE', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))), 
-          isPinging 
-            ? const Padding(padding: EdgeInsets.only(top: 2), child: PaceSkeleton(width: 40, height: 6))
-            : Text(r['uptime'] ?? 'DOWN', style: GoogleFonts.figtree(fontSize: 7, color: PaceColors.getDimText(isDark)))
-        ]).pOnly(left: 4)),
-        Expanded(flex: 3, child: Text(r['ip'] ?? '0.0.0.0', style: GoogleFonts.jetBrainsMono(fontSize: 8, color: PaceColors.getPrimaryText(isDark)))),
-        SizedBox(
-          width: 80, 
-          child: isPinging 
-            ? const PaceSkeleton(width: 80, height: 20, borderRadius: 6)
-            : PaceBadge(label: isOnline ? 'ONLINE' : 'DOWN', variant: isOnline ? BadgeVariant.success : BadgeVariant.error)
-        ),
-      ]),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
+                ),
+                Text(
+                  uptime,
+                  style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark)),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              ip,
+              style: GoogleFonts.jetBrainsMono(fontSize: 11, color: PaceColors.getSecondaryText(isDark)),
+            ),
+          ),
+          SizedBox(
+            width: 75,
+            child: isPinging
+                ? const Center(child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5, color: PaceColors.purple)))
+                : PaceBadge(
+                    label: isOnline ? 'Online' : 'Offline',
+                    variant: isOnline ? BadgeVariant.success : BadgeVariant.error,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildTableHeader(List<String> titles, bool isDark) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(color: PaceColors.getSurface(isDark).withOpacity(0.5), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))), child: Row(children: titles.asMap().entries.map((e) {
-      final bool last = e.key == titles.length - 1;
-      return Expanded(flex: e.key == 0 ? 3 : 2, child: Text(e.value, textAlign: last ? TextAlign.right : TextAlign.left, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
-    }).toList()));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: PaceColors.getSurface(isDark),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
+      child: Row(
+        children: titles.asMap().entries.map((e) {
+          final bool last = e.key == titles.length - 1;
+          return Expanded(
+            flex: e.key == 0 ? 3 : 2,
+            child: Text(
+              e.value.toUpperCase(),
+              textAlign: last ? TextAlign.right : TextAlign.left,
+              style: GoogleFonts.figtree(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: PaceColors.getDimText(isDark),
+                letterSpacing: 0.5,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
-  String _format(dynamic val) { if (val == null) return "0"; try { final double n = double.parse(val.toString()); return _currencyFormat.format(n.toInt()); } catch (e) { return val.toString(); } }
-}
-
-extension PaddingExtension on Widget {
-  Widget pOnly({double left = 0, double right = 0, double top = 0, double bottom = 0}) => Padding(padding: EdgeInsets.only(left: left, right: right, top: top, bottom: bottom), child: this);
-}
-
-class ListActionTile extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isDark;
-  const ListActionTile({super.key, required this.label, required this.icon, required this.isSelected, required this.onTap, required this.isDark});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2), child: ListTile(onTap: onTap, dense: true, selected: isSelected, selectedTileColor: PaceColors.purple.withOpacity(0.08), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: Icon(icon, size: 18, color: isSelected ? PaceColors.purple : PaceColors.getDimText(isDark)), title: Text(label, style: GoogleFonts.figtree(fontSize: 13, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark))), trailing: isSelected ? const Icon(Icons.check_circle_rounded, size: 18, color: PaceColors.purple) : null));
-  }
-}
-
-class DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double radius;
-  final double dashWidth;
-  final double dashSpace;
-
-  DashedBorderPainter({
-    required this.color,
-    this.strokeWidth = 1.0,
-    this.radius = 12.0,
-    this.dashWidth = 4.0,
-    this.dashSpace = 4.0,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-      
-    final RRect rrect = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius));
-    final Path path = Path()..addRRect(rrect);
-    
-    Path dashPath = Path();
-    for (PathMetric measurePath in path.computeMetrics()) {
-      double distance = 0.0;
-      while (distance < measurePath.length) {
-        dashPath.addPath(measurePath.extractPath(distance, distance + dashWidth), Offset.zero);
-        distance += dashWidth + dashSpace;
-      }
+  String _format(dynamic val) {
+    if (val == null) return "0";
+    try {
+      final double n = double.parse(val.toString());
+      return _currencyFormat.format(n.toInt());
+    } catch (_) {
+      return val.toString();
     }
-    
-    canvas.drawPath(dashPath, paint);
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
