@@ -100,10 +100,6 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> login(String subdomain, String domain, String accountName, String token, {String type = 'admin', List<String> policies = const []}) async {
     int existingIndex = _accounts.indexWhere((a) => a.subdomain == subdomain && a.domain == domain && a.accountName == accountName);
-    
-    if (existingIndex == -1 && _accounts.length >= 2) {
-      throw Exception('MAX_ACCOUNTS_REACHED');
-    }
 
     final newAccount = PaceAccount(
       subdomain: subdomain,
@@ -123,6 +119,7 @@ class SettingsProvider with ChangeNotifier {
       _activeAccountIndex = _accounts.length - 1;
     }
 
+    ApiService().clearMemoryCache();
     await _saveSettings();
     notifyListeners();
   }
@@ -147,6 +144,7 @@ class SettingsProvider with ChangeNotifier {
   Future<void> switchAccount(int index) async {
     if (index >= 0 && index < _accounts.length) {
       _activeAccountIndex = index;
+      ApiService().clearMemoryCache();
       await _saveSettings();
       notifyListeners();
     }
@@ -160,6 +158,7 @@ class SettingsProvider with ChangeNotifier {
       } else if (_activeAccountIndex >= _accounts.length) {
         _activeAccountIndex = 0;
       }
+      ApiService().clearMemoryCache();
       await _saveSettings();
       notifyListeners();
     }
