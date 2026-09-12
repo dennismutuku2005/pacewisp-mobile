@@ -272,36 +272,42 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Expenses',
-              style: GoogleFonts.figtree(
-                color: PaceColors.getPrimaryText(isDark),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Expenses',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.purple,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Track and audit operational network overheads',
-              style: GoogleFonts.figtree(
-                color: PaceColors.getDimText(isDark),
-                fontSize: 12,
+              const SizedBox(height: 2),
+              Text(
+                'Operational & network overheads',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getDimText(isDark),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         ElevatedButton.icon(
           onPressed: _handleAddExpense,
-          icon: const Icon(LucideIcons.plus, size: 16),
-          label: Text('Record', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600)),
+          icon: const Icon(LucideIcons.plus, size: 15),
+          label: Text('Record', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
           style: ElevatedButton.styleFrom(
             backgroundColor: PaceColors.purple,
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
@@ -354,7 +360,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final cards = [
       {'label': 'Total Outflow', 'value': total, 'color': Colors.red.shade600, 'icon': LucideIcons.trendingDown},
       {'label': 'Fixed Bills', 'value': summary['bill'] ?? 0, 'color': Colors.blue.shade600, 'icon': LucideIcons.receipt},
-      {'label': 'Operational', 'value': summary['running expenses'] ?? 0, 'color': PaceColors.emerald, 'icon': LucideIcons.zap},
+      {'label': 'Operational', 'value': summary['running expenses'] ?? 0, 'color': PaceColors.emerald, 'icon': LucideIcons.activity},
       {'label': 'Infrastructure', 'value': summary['upgrade'] ?? 0, 'color': Colors.orange.shade600, 'icon': LucideIcons.layers},
     ];
 
