@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
+import '../components/badge.dart';
 import '../components/skeleton.dart';
 import '../components/empty_state.dart';
 import '../components/search_bar.dart';
@@ -19,21 +22,26 @@ class MpesaTransactionsScreen extends StatefulWidget {
 class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
   final ApiService _apiService = ApiService();
   final ScrollController _scrollController = ScrollController();
-  
+
   List<dynamic> _transactions = [];
   int _page = 1;
   int _total = 0;
   bool _isLoading = true;
   bool _isLoadingMore = false;
-  bool _isProcessing = false;
   bool _hasMore = true;
   String _search = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchCachedThenLive();
+    _fetchTransactions();
     _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _onScroll() {
@@ -44,33 +52,20 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
     }
   }
 
-  Future<void> _fetchCachedThenLive() async {
+  Future<void> _fetchTransactions({bool forceRefresh = true}) async {
     try {
-      // 1. SILENT CACHE LOAD
-      final cached = await _apiService.getMpesaTransactions(page: 1, search: _search, forceRefresh: false);
-      if (mounted && cached != null && _transactions.isEmpty) {
+      final res = await _apiService.getMpesaTransactions(page: 1, search: _search, forceRefresh: forceRefresh);
+      if (mounted && res != null) {
         setState(() {
-          _transactions = cached['data'] ?? [];
-          _total = cached['pagination']?['total'] ?? 0;
-          _hasMore = cached['pagination']?['has_more'] ?? false;
+          _transactions = res['data'] ?? [];
+          _total = res['pagination']?['total'] ?? 0;
+          _hasMore = res['pagination']?['has_more'] ?? false;
+          _page = 1;
           _isLoading = false;
         });
       }
-
-      // 2. LIVE REFRESH
-      final live = await _apiService.getMpesaTransactions(page: 1, search: _search, forceRefresh: true);
-      if (mounted && live != null) {
-        setState(() {
-          _transactions = live['data'] ?? [];
-          _total = live['pagination']?['total'] ?? 0;
-          _hasMore = live['pagination']?['has_more'] ?? false;
-          _page = 1;
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -92,10 +87,13 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
   }
 
   void _showTransactionDetails(dynamic txn, bool isDark) {
+    final receipt = txn['mpesa_receipt_number']?.toString() ?? 'N/A';
+    final status = txn['status']?.toString().toLowerCase() ?? 'completed';
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: PaceColors.getBackground(isDark),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: PaceColors.getCard(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -105,29 +103,48 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('TRANSACTION DETAILS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: -0.5)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Transaction Details',
+                      style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+                    ),
+                    Text(
+                      'KES ${txn['amount'] ?? '0'}',
+                      style: GoogleFonts.figtree(fontSize: 15, fontWeight: FontWeight.bold, color: PaceColors.emerald),
+                    ),
+                  ],
+                ),
                 IconButton(icon: const Icon(LucideIcons.x, size: 20), onPressed: () => Navigator.pop(ctx)),
               ],
             ),
             const SizedBox(height: 20),
-            _drawerRow('RECEIPT', txn['mpesa_receipt_number']?.toString() ?? 'N/A', isDark),
-            _drawerRow('PHONE', txn['phone_number']?.toString() ?? 'N/A', isDark),
-            _drawerRow('NAME', txn['full_name']?.toString() ?? 'N/A', isDark),
-            _drawerRow('AMOUNT', 'KES ${txn['amount'] ?? '0'}', isDark),
-            _drawerRow('STATUS', (txn['status']?.toString() ?? 'PENDING').toUpperCase(), isDark),
-            _drawerRow('DATE', txn['transaction_date_formatted'] ?? txn['created_at'] ?? '-', isDark),
+            _detailRow('Receipt Number', receipt, isDark, canCopy: true),
+            _detailRow('Customer Phone', txn['phone_number']?.toString() ?? 'N/A', isDark),
+            _detailRow('Customer Name', txn['full_name']?.toString() ?? 'Hotspot Guest', isDark),
+            _detailRow('Amount Paid', 'KES ${txn['amount'] ?? '0'}', isDark),
+            _detailRow('Status', status.toUpperCase(), isDark),
+            _detailRow('Transaction Date', txn['transaction_date_formatted'] ?? txn['created_at'] ?? '-', isDark),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(LucideIcons.checkCircle, size: 16),
-                label: const Text('CLOSE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: receipt));
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Receipt $receipt copied to clipboard', style: GoogleFonts.figtree()), backgroundColor: PaceColors.purple),
+                  );
+                },
+                icon: const Icon(LucideIcons.copy, size: 16),
+                label: Text('Copy Receipt Code', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PaceColors.purple,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ),
@@ -137,14 +154,37 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
     );
   }
 
-  Widget _drawerRow(String label, String value, bool isDark) {
+  Widget _detailRow(String label, String value, bool isDark, {bool canCopy = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+          Text(label, style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getDimText(isDark))),
+          Row(
+            children: [
+              Text(
+                value,
+                style: GoogleFonts.figtree(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: PaceColors.getPrimaryText(isDark),
+                ),
+              ),
+              if (canCopy) ...[
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: value));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Copied $value', style: GoogleFonts.figtree()), duration: const Duration(seconds: 1)),
+                    );
+                  },
+                  child: const Icon(LucideIcons.copy, size: 14, color: PaceColors.purple),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -155,72 +195,89 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return PaceOverlayLoader(
-      isLoading: _isProcessing,
-      message: 'Processing...',
-      child: Column(
-        children: [
-          _buildHeader(isDark),
-          _buildSearchBox(isDark),
-          // Table header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
-            child: Row(
-              children: [
-                Expanded(flex: 3, child: Text('RECEIPT / PHONE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-                Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-                Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1))),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _isLoading && _transactions.isEmpty
-              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 10))
+    return Column(
+      children: [
+        _buildHeader(isDark),
+        _buildSearchBox(isDark),
+        Expanded(
+          child: _isLoading && _transactions.isEmpty
+              ? const Padding(padding: EdgeInsets.all(16.0), child: SkeletonList(count: 8))
               : RefreshIndicator(
-                  onRefresh: () => _fetchCachedThenLive(),
+                  onRefresh: () => _fetchTransactions(forceRefresh: true),
                   color: PaceColors.purple,
                   child: _transactions.isEmpty
-                    ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchCachedThenLive(), isDark: isDark))
-                    : ListView.separated(
-                        controller: _scrollController,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.only(bottom: 120),
-                        itemCount: _transactions.length + (_isLoadingMore ? 1 : 0),
-                        separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
-                        itemBuilder: (context, index) {
-                          if (index < _transactions.length) {
-                            return _buildTransactionRow(_transactions[index], isDark);
-                          }
-                          if (index == _transactions.length && _isLoadingMore) {
-                             return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: PaceEmptyState(
+                            title: 'No Transactions Found',
+                            subtitle: 'Incoming M-Pesa receipts will automatically be recorded here.',
+                            onRetry: () => _fetchTransactions(forceRefresh: true),
+                            isDark: isDark,
+                          ),
+                        )
+                      : ListView.separated(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                          itemCount: _transactions.length + (_isLoadingMore ? 1 : 0),
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            if (index < _transactions.length) {
+                              return _buildTransactionCard(_transactions[index], isDark);
+                            }
+                            if (index == _transactions.length && _isLoadingMore) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
                 ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark)))),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('M-PESA TRANSACTIONS', style: TextStyle(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-              Text('AUTOMATED AUDIT LOGS', style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+              Text(
+                'M-Pesa Transactions',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getPrimaryText(isDark),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Gateway payment receipts and verification audit',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getDimText(isDark),
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
-          IconButton(onPressed: () {}, icon: const Icon(LucideIcons.download, color: PaceColors.purple, size: 20)),
+          if (_total > 0)
+            PaceBadge(
+              label: '$_total Total',
+              variant: BadgeVariant.primary,
+            ),
         ],
       ),
     );
@@ -228,63 +285,103 @@ class _MpesaTransactionsScreenState extends State<MpesaTransactionsScreen> {
 
   Widget _buildSearchBox(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: PaceSearchBar(
-        hint: 'Search code, phone or name...',
+        hint: 'Search receipt code, phone or name...',
         isDark: isDark,
-        onChanged: (val) { 
+        onChanged: (val) {
           setState(() {
             _search = val;
             _isLoading = true;
-            _transactions = []; // Clear current list to show skeleton
+            _transactions = [];
             _page = 1;
           });
-          _fetchCachedThenLive(); 
+          _fetchTransactions();
         },
       ),
     );
   }
 
-  Widget _buildTransactionRow(dynamic txn, bool isDark) {
-    final status = txn['status']?.toString().toLowerCase() ?? 'unknown';
-    Color statusColor = PaceColors.emerald;
-    if (status.contains('fail')) statusColor = Colors.red;
-    if (status.contains('pending')) statusColor = Colors.amber;
+  Widget _buildTransactionCard(dynamic txn, bool isDark) {
+    final status = txn['status']?.toString().toLowerCase() ?? 'completed';
+    final isSuccess = status.contains('success') || status.contains('complete') || status == '1';
+    final isFailed = status.contains('fail') || status.contains('cancel') || status == '0';
+    final receipt = txn['mpesa_receipt_number'] ?? 'N/A';
+    final phone = txn['phone_number'] ?? 'N/A';
+    final amount = txn['amount']?.toString() ?? '0';
+    final date = txn['transaction_date_formatted'] ?? txn['created_at'] ?? '';
+
+    BadgeVariant badgeVariant = BadgeVariant.success;
+    if (isFailed) {
+      badgeVariant = BadgeVariant.danger;
+    } else if (!isSuccess) {
+      badgeVariant = BadgeVariant.warning;
+    }
 
     return InkWell(
       onTap: () => _showTransactionDetails(txn, isDark),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
         child: Row(
           children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: PaceColors.emerald.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(LucideIcons.arrowDownLeft, size: 18, color: PaceColors.emerald),
+            ),
+            const SizedBox(width: 12),
             Expanded(
-              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(txn['mpesa_receipt_number'] ?? 'N/A', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-                  const SizedBox(height: 2),
-                  Text(txn['phone_number'] ?? 'N/A', style: TextStyle(fontSize: 10, color: PaceColors.getDimText(isDark))),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text('KES ${txn['amount']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-            ),
-            Expanded(
-              flex: 2,
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                    child: Text(status.toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: statusColor)),
+                  Row(
+                    children: [
+                      Text(
+                        receipt,
+                        style: GoogleFonts.figtree(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: PaceColors.getPrimaryText(isDark),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PaceBadge(
+                        label: isSuccess ? 'Completed' : (isFailed ? 'Failed' : 'Pending'),
+                        variant: badgeVariant,
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  Icon(Icons.more_vert, size: 16, color: PaceColors.getDimText(isDark)),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$phone • $date',
+                    style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+                  ),
                 ],
               ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'KES $amount',
+                  style: GoogleFonts.figtree(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isFailed ? Colors.red.shade600 : PaceColors.emerald,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Icon(LucideIcons.chevronRight, size: 14, color: Colors.grey),
+              ],
             ),
           ],
         ),
