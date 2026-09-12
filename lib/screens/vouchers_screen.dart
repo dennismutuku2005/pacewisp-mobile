@@ -344,21 +344,43 @@ class _VouchersScreenState extends State<VouchersScreen> {
     return Scaffold(
       backgroundColor: PaceColors.getBackground(isDark),
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(isDark, canCreate),
-            _buildFilterBar(isDark),
-            if (_selectedVoucherIds.isNotEmpty) _buildBulkActionBar(isDark),
-            _buildTableHeader(isDark),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => _fetchVouchers(pageNum: 1, forceRefresh: true),
-                color: PaceColors.purple,
-                child: _isLoading
-                    ? const TransactionSkeleton(count: 10)
-                    : _vouchers.isEmpty
-                        ? SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
+        child: RefreshIndicator(
+          onRefresh: () => _fetchVouchers(pageNum: 1, forceRefresh: true),
+          color: PaceColors.purple,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(child: _buildHeader(isDark, canCreate)),
+              SliverToBoxAdapter(child: _buildFilterBar(isDark)),
+              if (_selectedVoucherIds.isNotEmpty)
+                SliverToBoxAdapter(child: _buildBulkActionBar(isDark)),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                sliver: SliverToBoxAdapter(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: PaceColors.getCard(isDark),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildTableHeader(isDark),
+                        if (_isLoading)
+                          _buildSkeletonTable(isDark)
+                        else if (_vouchers.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
                             child: PaceEmptyState(
                               title: 'No Vouchers Found',
                               subtitle: _search.isNotEmpty
@@ -368,30 +390,34 @@ class _VouchersScreenState extends State<VouchersScreen> {
                               isDark: isDark,
                             ),
                           )
-                        : ListView.separated(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                            itemCount: _vouchers.length + (_isMoreLoading ? 1 : 0),
-                            separatorBuilder: (_, __) => Divider(height: 1, color: PaceColors.getBorder(isDark)),
+                        else ...[
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _vouchers.length,
                             itemBuilder: (context, index) {
-                              if (index == _vouchers.length) {
-                                return const Padding(
-                                  padding: EdgeInsets.all(16),
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple),
-                                    ),
-                                  ),
-                                );
-                              }
-                              return _buildVoucherRow(_vouchers[index], isDark);
+                              final isLast = index == _vouchers.length - 1 && !_isMoreLoading;
+                              return _buildVoucherRow(_vouchers[index], isDark, isLast: isLast);
                             },
                           ),
+                          if (_isMoreLoading)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              alignment: Alignment.center,
+                              child: const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple),
+                              ),
+                            ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       floatingActionButton: canCreate
@@ -609,7 +635,49 @@ class _VouchersScreenState extends State<VouchersScreen> {
     );
   }
 
-  Widget _buildVoucherRow(dynamic v, bool isDark) {
+  Widget _buildSkeletonTable(bool isDark) {
+    return Column(
+      children: List.generate(
+        8,
+        (index) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            border: index < 7 ? Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 0.8)) : null,
+          ),
+          child: Row(
+            children: [
+              PaceSkeleton(height: 16, width: 16, borderRadius: 4),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PaceSkeleton(height: 12, width: 100, borderRadius: 4),
+                    const SizedBox(height: 6),
+                    PaceSkeleton(height: 10, width: 60, borderRadius: 4),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: PaceSkeleton(height: 12, width: 70, borderRadius: 4),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: PaceSkeleton(height: 20, width: 56, borderRadius: 10),
+                ),
+              ),
+              const SizedBox(width: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVoucherRow(dynamic v, bool isDark, {bool isLast = false}) {
     final id = v['id']?.toString() ?? '';
     final code = v['voucher_code']?.toString().toUpperCase() ?? 'CODE';
     final plan = v['plan']?.toString() ?? 'Default';
@@ -621,7 +689,10 @@ class _VouchersScreenState extends State<VouchersScreen> {
     return InkWell(
       onTap: () => _showVoucherDetailsDrawer(v, isDark),
       child: Container(
-        color: isSelected ? PaceColors.purple.withOpacity(0.05) : Colors.transparent,
+        decoration: BoxDecoration(
+          color: isSelected ? PaceColors.purple.withOpacity(0.05) : Colors.transparent,
+          border: isLast ? null : Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 0.8)),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
