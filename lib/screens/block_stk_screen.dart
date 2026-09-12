@@ -213,36 +213,42 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Payment Blacklist',
-                style: GoogleFonts.figtree(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: PaceColors.getPrimaryText(isDark),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Payment Blacklist',
+                  style: GoogleFonts.figtree(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: PaceColors.purple,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Restrict fraud or suspicious numbers from STK prompts',
-                style: GoogleFonts.figtree(
-                  fontSize: 12,
-                  color: PaceColors.getDimText(isDark),
+                const SizedBox(height: 2),
+                Text(
+                  'Restrict suspicious phone numbers',
+                  style: GoogleFonts.figtree(
+                    fontSize: 11,
+                    color: PaceColors.getDimText(isDark),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: _showBlockModal,
-            icon: const Icon(LucideIcons.shieldAlert, size: 16),
-            label: Text('Block Number', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600)),
+            icon: const Icon(LucideIcons.shieldAlert, size: 15),
+            label: Text('Block Number', style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
+              backgroundColor: PaceColors.red,
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
@@ -268,7 +274,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
     final attempts = item['trial_count'] ?? 0;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: PaceColors.getCard(isDark),
         borderRadius: BorderRadius.circular(14),
@@ -276,15 +282,6 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(LucideIcons.phoneOff, size: 18, color: Colors.red),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +290,7 @@ class _BlockStkScreenState extends State<BlockStkScreen> {
                   children: [
                     Text(
                       phone,
-                      style: GoogleFonts.figtree(
+                      style: GoogleFonts.jetBrainsMono(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: PaceColors.getPrimaryText(isDark),
