@@ -20,23 +20,9 @@ subprojects {
 }
 
 subprojects {
-    fun configureJvmTarget(proj: Project) {
-        proj.tasks.withType<JavaCompile>().configureEach {
-            sourceCompatibility = "17"
-            targetCompatibility = "17"
-        }
-        proj.tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-            compilerOptions {
-                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-            }
-        }
-    }
-
-    if (state.executed) {
-        configureJvmTarget(this)
-    } else {
-        afterEvaluate {
-            configureJvmTarget(this)
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
 }
