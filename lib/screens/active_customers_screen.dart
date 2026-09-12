@@ -10,7 +10,6 @@ import '../components/badge.dart';
 import '../components/empty_state.dart';
 import '../components/skeleton.dart';
 import '../components/search_bar.dart';
-import '../components/overlay_loader.dart';
 import 'customer_history_screen.dart';
 
 class ActiveCustomersScreen extends StatefulWidget {
@@ -39,6 +38,12 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
     _scrollController.addListener(_onScroll);
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       if (!_isLoadingMore && _hasMore) {
@@ -49,13 +54,13 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
 
   Future<void> _fetchData({required int pageNum}) async {
     if (pageNum == 1) setState(() => _isLoading = true);
-    
+
     try {
       final res = await _apiService.getActiveConnections(
         page: pageNum,
         limit: 25,
         search: _search,
-        forceRefresh: true
+        forceRefresh: true,
       );
 
       if (mounted && res != null) {
@@ -66,7 +71,7 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
           } else {
             _active.addAll(newItems);
           }
-          _total = res['pagination']?['total'] ?? 0;
+          _total = res['pagination']?['total'] ?? _active.length;
           _hasMore = res['pagination']?['has_more'] ?? false;
           _page = pageNum;
           _isLoading = false;
@@ -91,59 +96,86 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Container(
-      color: PaceColors.getBackground(isDark),
-      child: Column(
-        children: [
-          _buildHeader(isDark),
-          _buildControls(isDark),
-          Expanded(
-            child: _isLoading 
-              ? const TableSkeleton(count: 10)
-              : Column(
-                  children: [
-                    _buildTableHeader(isDark),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () => _fetchData(pageNum: 1),
-                        color: PaceColors.purple,
-                        child: _active.isEmpty 
-                          ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: () => _fetchData(pageNum: 1), isDark: isDark))
-                          : ListView.separated(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
-                              itemCount: _active.length + (_isLoadingMore ? 1 : 0),
-                              separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
-                              itemBuilder: (context, index) {
-                                if (index == _active.length) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)));
-                                return _buildActiveRow(_active[index], isDark);
-                              },
-                            ),
-                      ),
-                    ),
-                  ],
+    return Column(
+      children: [
+        _buildHeader(isDark),
+        _buildControls(isDark),
+        Expanded(
+          child: _isLoading && _active.isEmpty
+              ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 8))
+              : RefreshIndicator(
+                  onRefresh: () => _fetchData(pageNum: 1),
+                  color: PaceColors.purple,
+                  child: _active.isEmpty
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: PaceEmptyState(
+                            title: 'No Active Sessions',
+                            subtitle: 'Connected hotspot devices and authenticated users will appear here in real-time.',
+                            onRetry: () => _fetchData(pageNum: 1),
+                            isDark: isDark,
+                          ),
+                        )
+                      : ListView.separated(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                          itemCount: _active.length + (_isLoadingMore ? 1 : 0),
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            if (index < _active.length) {
+                              return _buildActiveCard(_active[index], isDark);
+                            }
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2),
+                              ),
+                            );
+                          },
+                        ),
                 ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildHeader(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(LucideIcons.zap, color: PaceColors.purple, size: 20),
-              const SizedBox(width: 8),
-              Text('LIVE CONNECTIONS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
+              Text(
+                'Live Connections',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getPrimaryText(isDark),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Real-time authenticated hotspot sessions',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getDimText(isDark),
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
-          Text('REAL-TIME HOTSPOT SESSIONS & ACTIVITY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+          if (_total > 0)
+            PaceBadge(
+              label: '$_total Online',
+              variant: BadgeVariant.success,
+            ),
         ],
       ),
     );
@@ -151,75 +183,97 @@ class _ActiveCustomersScreenState extends State<ActiveCustomersScreen> {
 
   Widget _buildControls(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: PaceSearchBar(
-        hint: 'Search by phone or code...', 
-        isDark: isDark, 
+        hint: 'Search by phone number or voucher code...',
+        isDark: isDark,
         onChanged: (val) {
           _search = val;
           _fetchData(pageNum: 1);
-        }
+        },
       ),
     );
   }
 
-  Widget _buildTableHeader(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark).withOpacity(0.3),
-        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5))),
-      ),
-      child: Row(
-        children: [
-          Expanded(flex: 3, child: Text('PHONE / RECEIPT', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('PLAN', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-        ],
-      ),
-    );
-  }
+  Widget _buildActiveCard(dynamic u, bool isDark) {
+    final phone = u['phone']?.toString() ?? 'Guest';
+    final code = u['mpesa_code']?.toString() ?? u['voucher']?.toString() ?? 'Online Session';
+    final plan = u['plan']?.toString() ?? 'Hotspot Plan';
+    final uptime = u['uptime']?.toString() ?? 'Active';
 
-  Widget _buildActiveRow(dynamic u, bool isDark) {
     return InkWell(
-      onTap: () => Navigator.push(
-        context, 
-        MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: u['phone'].toString()))
-      ),
+      onTap: () {
+        if (u['phone'] != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => CustomerHistoryScreen(phone: u['phone'].toString())),
+          );
+        }
+      },
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
         child: Row(
           children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: PaceColors.emerald.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.wifi, color: PaceColors.emerald, size: 18),
+            ),
+            const SizedBox(width: 12),
             Expanded(
-              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(u['phone']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: -0.5)),
-                  const SizedBox(height: 4),
-                  Text(u['mpesa_code']?.toString().toUpperCase() ?? 'VOUCHER', style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                  Row(
+                    children: [
+                      Text(
+                        phone,
+                        style: GoogleFonts.figtree(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: PaceColors.getPrimaryText(isDark),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PaceBadge(label: 'Online', variant: BadgeVariant.success),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$plan • $code',
+                    style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+                  ),
                 ],
               ),
             ),
-            Expanded(
-              flex: 2,
-              child: Text(u['plan']?.toString() ?? 'N/A', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.purple)),
-            ),
-            Expanded(
-              flex: 2,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  PaceBadge(label: 'ONLINE', variant: BadgeVariant.success),
-                  const SizedBox(width: 8),
-                  Icon(LucideIcons.chevronRight, size: 14, color: PaceColors.getDimText(isDark).withOpacity(0.5)),
-                ],
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  uptime,
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: PaceColors.purple,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Icon(LucideIcons.chevronRight, size: 14, color: Colors.grey),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-
 }
