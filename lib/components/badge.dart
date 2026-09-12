@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/colors.dart';
 
 enum BadgeVariant { success, error, secondary, info, standard, primary, warning }
 
@@ -20,43 +22,50 @@ class PaceBadge extends StatelessWidget {
 
     switch (variant) {
       case BadgeVariant.success:
-        bgColor = const Color(0xFF2CB34A).withOpacity(0.12);
-        textColor = const Color(0xFF2CB34A);
+        bgColor = PaceColors.getGreenLight(isDark);
+        textColor = PaceColors.getGreen(isDark);
         break;
       case BadgeVariant.error:
-        bgColor = Colors.red.withOpacity(0.1);
-        textColor = Colors.red;
+        bgColor = PaceColors.getRedLight(isDark);
+        textColor = PaceColors.getRed(isDark);
         break;
       case BadgeVariant.secondary:
-        bgColor = const Color(0xFF9CA3AF).withOpacity(0.1);
-        textColor = const Color(0xFF9CA3AF);
+        bgColor = isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF3F4F6);
+        textColor = PaceColors.getDimText(isDark);
         break;
       case BadgeVariant.info:
         bgColor = const Color(0xFF3B82F6).withOpacity(0.1);
         textColor = const Color(0xFF3B82F6);
         break;
       case BadgeVariant.primary:
-        bgColor = const Color(0xFF4B1D8F).withOpacity(0.1);
-        textColor = const Color(0xFF4B1D8F);
+        bgColor = PaceColors.getPurpleLight(isDark);
+        textColor = PaceColors.getPurple(isDark);
         break;
       case BadgeVariant.warning:
-        bgColor = Colors.orange.withOpacity(0.1);
-        textColor = Colors.orange;
+        bgColor = const Color(0xFFF59E0B).withOpacity(0.1);
+        textColor = const Color(0xFFF59E0B);
         break;
       case BadgeVariant.standard:
       default:
-        bgColor = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFEEEFF1);
-        textColor = isDark ? Colors.white.withOpacity(0.75) : const Color(0xFF4B5563);
+        bgColor = isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF9FAFB);
+        textColor = PaceColors.getSecondaryText(isDark);
         break;
     }
 
-    return Text(
-      label.toUpperCase(),
-      style: TextStyle(
-        color: textColor,
-        fontSize: 9,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: textColor.withOpacity(0.2), width: 0.8),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.figtree(
+          color: textColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
