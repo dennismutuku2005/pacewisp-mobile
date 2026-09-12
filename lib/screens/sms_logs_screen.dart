@@ -7,6 +7,7 @@ import '../services/api_service.dart';
 import '../theme/colors.dart';
 import '../components/badge.dart';
 import '../components/skeleton.dart';
+import '../components/empty_state.dart';
 import 'package:intl/intl.dart';
 
 class SmsLogsScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class SmsLogsScreen extends StatefulWidget {
 class _SmsLogsScreenState extends State<SmsLogsScreen> {
   final ApiService _api = ApiService();
   final ScrollController _scrollController = ScrollController();
-  
+
   bool _isLoading = true;
   bool _isMoreLoading = false;
   List<dynamic> _logs = [];
@@ -31,6 +32,12 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
     super.initState();
     _fetchLogs();
     _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _onScroll() {
@@ -47,7 +54,7 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
       _currentPage = 1;
       _logs = [];
     });
-    
+
     try {
       final res = await _api.getSmsLogs(page: 1);
       if (res != null && res['status'] == 'success') {
@@ -59,7 +66,7 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
     } catch (e) {
       debugPrint('Error fetching logs: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -79,16 +86,125 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
     } catch (e) {
       debugPrint('Error fetching more logs: $e');
     } finally {
-      setState(() => _isMoreLoading = false);
+      if (mounted) setState(() => _isMoreLoading = false);
     }
   }
 
   void _showLogDetail(dynamic log, bool isDark) {
+    bool isSuccess = log['status'] == 'success';
+    DateTime date = DateTime.tryParse(log['created_at'] ?? '') ?? DateTime.now();
+
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildDetailSheet(log, isDark),
+      backgroundColor: PaceColors.getCard(isDark),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      log['phone'] ?? 'Phone',
+                      style: GoogleFonts.figtree(fontSize: 18, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+                    ),
+                    Text(
+                      'SMS Delivery Report',
+                      style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+                    ),
+                  ],
+                ),
+                PaceBadge(
+                  label: isSuccess ? 'Delivered' : 'Failed',
+                  variant: isSuccess ? BadgeVariant.success : BadgeVariant.danger,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.all(14),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: PaceColors.getSurface(isDark),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: PaceColors.getBorder(isDark)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Message Body', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark))),
+                  const SizedBox(height: 6),
+                  Text(
+                    log['message'] ?? '',
+                    style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getPrimaryText(isDark), height: 1.4),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _infoItem('Timestamp', DateFormat('MMM dd, yyyy HH:mm').format(date), LucideIcons.clock, isDark),
+                const SizedBox(width: 10),
+                _infoItem('Gateway Code', log['response_code']?.toString() ?? 'OK', LucideIcons.server, isDark),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PaceColors.purple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
+                child: Text('Close', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoItem(String label, String value, IconData icon, bool isDark) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: PaceColors.getSurface(isDark),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: PaceColors.purple),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark))),
+                  Text(
+                    value,
+                    style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -97,245 +213,150 @@ class _SmsLogsScreenState extends State<SmsLogsScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(isDark),
-            const SizedBox(height: 24),
-            _buildLogsContainer(isDark),
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('SMS LOGS', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 20, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-            Text('TRANSMISSION HISTORY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2)),
-          ],
-        ),
-        IconButton(
-          icon: Icon(LucideIcons.refreshCw, size: 18, color: PaceColors.getDimText(isDark)),
-          onPressed: _fetchLogs,
+        _buildHeader(isDark),
+        Expanded(
+          child: _isLoading && _logs.isEmpty
+              ? const Padding(padding: EdgeInsets.all(16), child: SkeletonList(count: 8))
+              : RefreshIndicator(
+                  onRefresh: _fetchLogs,
+                  color: PaceColors.purple,
+                  child: _logs.isEmpty
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: PaceEmptyState(
+                            title: 'No SMS Logs',
+                            subtitle: 'Outgoing SMS notifications and broadcast records will be listed here.',
+                            onRetry: _fetchLogs,
+                            isDark: isDark,
+                          ),
+                        )
+                      : ListView.separated(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                          itemCount: _logs.length + (_isMoreLoading ? 1 : 0),
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (ctx, i) {
+                            if (i == _logs.length) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2),
+                                ),
+                              );
+                            }
+                            return _buildLogCard(_logs[i], isDark);
+                          },
+                        ),
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildLogsContainer(bool isDark) {
+  Widget _buildHeader(bool isDark) {
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.2),
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildTableHeader(['RECIPIENT', 'CONTENT', 'STATUS'], isDark),
-          if (_isLoading && _logs.isEmpty)
-             const TransactionSkeleton(count: 8)
-          else if (_logs.isEmpty)
-            const Padding(padding: EdgeInsets.all(60), child: Center(child: Text('NO TRANSMISSIONS FOUND', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.grey))))
-          else
-            ..._logs.map((log) => _buildLogItem(log, isDark)).toList(),
-          
-          if (_isMoreLoading)
-            const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple)),
-          
-          if (!_hasMore && _logs.isNotEmpty)
-             Padding(
-               padding: const EdgeInsets.symmetric(vertical: 24),
-               child: Center(
-                 child: Row(
-                   mainAxisAlignment: MainAxisAlignment.center,
-                   children: [
-                     Container(width: 24, height: 1, color: PaceColors.getBorder(isDark)),
-                     const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Icon(LucideIcons.checkCircle2, size: 12, color: PaceColors.emerald)),
-                     Container(width: 24, height: 1, color: PaceColors.getBorder(isDark)),
-                   ],
-                 ),
-               ),
-             ),
-          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'SMS Logs',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getPrimaryText(isDark),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Delivery history and SMS gateway responses',
+                style: GoogleFonts.figtree(
+                  color: PaceColors.getDimText(isDark),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.refreshCw, size: 18),
+            onPressed: _fetchLogs,
+            tooltip: 'Refresh Logs',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildLogItem(dynamic log, bool isDark) {
+  Widget _buildLogCard(dynamic log, bool isDark) {
     bool isSuccess = log['status'] == 'success';
-    DateTime date = DateTime.parse(log['created_at']);
+    DateTime date = DateTime.tryParse(log['created_at'] ?? '') ?? DateTime.now();
 
     return InkWell(
       onTap: () => _showLogDetail(log, isDark),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.4)))),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: PaceColors.getCard(isDark),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: PaceColors.getBorder(isDark)),
+        ),
         child: Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: PaceColors.getSurface(isDark),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
+                color: isSuccess ? PaceColors.emerald.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              child: Icon(LucideIcons.smartphone, size: 14, color: PaceColors.getDimText(isDark)),
+              child: Icon(
+                isSuccess ? LucideIcons.messageSquare : LucideIcons.alertCircle,
+                size: 16,
+                color: isSuccess ? PaceColors.emerald : Colors.red.shade600,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              flex: 3, 
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, 
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(log['phone'] ?? 'UNKNOWN', style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: PaceColors.purple)), 
-                  Text(DateFormat('MMM dd, HH:mm').format(date).toUpperCase(), style: GoogleFonts.figtree(fontSize: 8, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
-                ]
-              )
-            ),
-            Expanded(
-              flex: 4, 
-              child: Text(log['message'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: -0.2)),
+                  Row(
+                    children: [
+                      Text(
+                        log['phone'] ?? 'Recipient',
+                        style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+                      ),
+                      const SizedBox(width: 8),
+                      PaceBadge(
+                        label: isSuccess ? 'Delivered' : 'Failed',
+                        variant: isSuccess ? BadgeVariant.success : BadgeVariant.danger,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    log['message'] ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(width: 8),
-            SizedBox(
-              width: 70,
-              child: PaceBadge(label: isSuccess ? 'SENT' : 'FAIL', variant: isSuccess ? BadgeVariant.success : BadgeVariant.error),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTableHeader(List<String> titles, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), 
-      decoration: BoxDecoration(color: PaceColors.getSurface(isDark).withOpacity(0.5), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))), 
-      child: Row(children: titles.asMap().entries.map((e) {
-        final bool last = e.key == titles.length - 1;
-        return Expanded(flex: e.key == 0 ? 3 : e.key == 1 ? 4 : 2, child: Text(e.value, textAlign: last ? TextAlign.right : TextAlign.left, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)));
-      }).toList())
-    );
-  }
-
-  Widget _buildDetailSheet(dynamic log, bool isDark) {
-    bool isSuccess = log['status'] == 'success';
-    DateTime date = DateTime.parse(log['created_at']);
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(log['phone'], style: GoogleFonts.figtree(fontSize: 20, fontWeight: FontWeight.normal, color: PaceColors.purple, letterSpacing: -0.5)),
-                  Text('RECIPIENT NUMBER', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                ],
-              ),
-              PaceBadge(label: isSuccess ? 'DELIVERED' : 'FAILED', variant: isSuccess ? BadgeVariant.success : BadgeVariant.error),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(20),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: PaceColors.getBackground(isDark),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: PaceColors.getBorder(isDark)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('MESSAGE CONTENT', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                const SizedBox(height: 12),
-                Text(log['message'] ?? '', style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getPrimaryText(isDark), height: 1.6, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              _buildInfoBox('DATE', DateFormat('MMMM dd, yyyy').format(date).toUpperCase(), LucideIcons.calendar, isDark),
-              const SizedBox(width: 12),
-              _buildInfoBox('TIME', DateFormat('hh:mm a').format(date).toUpperCase(), LucideIcons.clock, isDark),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildInfoBox('GATEWAY', log['response_code']?.toString() ?? 'N/A', LucideIcons.server, isDark),
-              const SizedBox(width: 12),
-              _buildInfoBox('REF ID', (log['message_id?'] ?? 'INTERNAL').toString(), LucideIcons.shieldCheck, isDark),
-            ],
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: PaceColors.purple,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text('DISMISS REPORT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoBox(String label, String value, IconData icon, bool isDark) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 12, color: PaceColors.purple),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: GoogleFonts.figtree(fontSize: 7, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 1)),
-                  Text(value, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)), overflow: TextOverflow.ellipsis),
-                ],
-              ),
+            Text(
+              DateFormat('MMM dd, HH:mm').format(date),
+              style: GoogleFonts.figtree(fontSize: 11, color: PaceColors.getDimText(isDark)),
             ),
           ],
         ),
