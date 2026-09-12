@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -42,7 +41,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
         setState(() {
           final rootData = res['data'] is Map ? res['data'] : null;
           _summary = res['summary'] ?? rootData?['summary'];
-          _sessions = res['sessions'] ?? rootData?['sessions'] ?? res['data'] ?? [];
+          _sessions = res['sessions'] ?? rootData?['sessions'] ?? (res['data'] is List ? res['data'] : []);
           _isBlocked = (res['is_blocked'] == true || rootData?['is_blocked'] == true);
           _isLoading = false;
         });
@@ -74,42 +73,45 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
-    final isDark = settings.isDarkMode;
+    final isDark = Provider.of<SettingsProvider>(context).isDarkMode;
 
     return Scaffold(
       backgroundColor: PaceColors.getBackground(isDark),
       body: PaceOverlayLoader(
         isLoading: _isProcessing,
         message: 'Syncing security policy...',
-        child: Column(
-          children: [
-            _buildHeader(isDark),
-            _buildQuickStats(isDark),
-            Expanded(
-              child: _isLoading 
-                ? const Padding(padding: EdgeInsets.all(24.0), child: SkeletonList(count: 8))
-                : Column(
-                    children: [
-                      _buildTableHeader(isDark),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: _fetchData,
-                          color: PaceColors.purple,
-                          child: _sessions.isEmpty
-                            ? SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: PaceEmptyState(onRetry: _fetchData, isDark: isDark))
-                            : ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
-                                itemCount: _sessions.length,
-                                separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark).withOpacity(0.4), height: 1),
-                                itemBuilder: (context, index) => _buildSessionRow(_sessions[index], isDark),
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-            ),
-          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(isDark),
+              _buildQuickStats(isDark),
+              _buildTableHeader(isDark),
+              Expanded(
+                child: _isLoading 
+                  ? const Padding(padding: EdgeInsets.all(16.0), child: TransactionSkeleton(count: 6))
+                  : RefreshIndicator(
+                      onRefresh: _fetchData,
+                      color: PaceColors.purple,
+                      child: _sessions.isEmpty
+                        ? SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: PaceEmptyState(
+                              title: 'No Session Records',
+                              subtitle: 'No payment or access sessions found for this customer.',
+                              onRetry: _fetchData,
+                              isDark: isDark,
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                            itemCount: _sessions.length,
+                            separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
+                            itemBuilder: (context, index) => _buildSessionRow(_sessions[index], isDark),
+                          ),
+                    ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -117,31 +119,43 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
 
   Widget _buildHeader(bool isDark) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark))),
+      ),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(LucideIcons.arrowLeft, color: PaceColors.getPrimaryText(isDark), size: 20),
+            icon: Icon(LucideIcons.arrowLeft, color: PaceColors.getPrimaryText(isDark), size: 18),
             style: IconButton.styleFrom(
               backgroundColor: PaceColors.getSurface(isDark),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.phone, style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
-                Text('CUSTOMER INFO', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
+                Text(
+                  widget.phone,
+                  style: GoogleFonts.jetBrainsMono(color: PaceColors.purple, fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  'Customer History & Sessions',
+                  style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 11, fontWeight: FontWeight.w600),
+                ),
               ],
             ),
           ),
           IconButton(
             onPressed: _toggleSecurity,
-            icon: Icon(_isBlocked ? LucideIcons.shieldAlert : LucideIcons.shieldCheck, color: _isBlocked ? Colors.red : PaceColors.emerald, size: 24),
+            icon: Icon(
+              _isBlocked ? LucideIcons.shieldAlert : LucideIcons.shieldCheck,
+              color: _isBlocked ? PaceColors.red : PaceColors.green,
+              size: 20,
+            ),
           ),
         ],
       ),
@@ -150,50 +164,55 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
 
   Widget _buildQuickStats(bool isDark) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statItem('TOTAL SPENT', 'KES ${_summary?['total_spent'] ?? _summary?['total_amount'] ?? 0}', isDark),
-          _statItem('ENTRIES', '${_summary?['sessions'] ?? _summary?['total_visits'] ?? 0}', isDark),
-          _statItem('LAST SEEN', _summary?['last_seen']?.toString().split(',')[0] ?? 'N/A', isDark),
+          _statItem('Total Spent', 'KES ${_summary?['total_spent'] ?? _summary?['total_amount'] ?? 0}', isDark),
+          Container(width: 1, height: 28, color: PaceColors.getBorder(isDark)),
+          _statItem('Sessions', '${_summary?['sessions'] ?? _summary?['total_visits'] ?? _sessions.length}', isDark),
+          Container(width: 1, height: 28, color: PaceColors.getBorder(isDark)),
+          _statItem('Status', _isBlocked ? 'Blocked' : 'Active', isDark, isBlocked: _isBlocked),
         ],
       ),
     );
   }
 
-  Widget _statItem(String label, String value, bool isDark) {
+  Widget _statItem(String label, String value, bool isDark, {bool isBlocked = false}) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2)),
-        const SizedBox(height: 6),
-        Text(value, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+        Text(
+          label,
+          style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark)),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.figtree(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: isBlocked ? PaceColors.red : PaceColors.getPrimaryText(isDark),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildTableHeader(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      margin: const EdgeInsets.only(top: 24),
-      decoration: BoxDecoration(
-        color: PaceColors.getSurface(isDark).withOpacity(0.3),
-        border: Border(
-          top: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
-          bottom: BorderSide(color: PaceColors.getBorder(isDark).withOpacity(0.5)),
-        ),
-      ),
+      color: PaceColors.getSurface(isDark),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('TRANSACTION / NODE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('USAGE STATUS', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
-          Expanded(flex: 2, child: Text('AMOUNT', textAlign: TextAlign.right, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.2))),
+          Expanded(flex: 3, child: Text('SESSION CODE / NODE', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
+          Expanded(flex: 2, child: Text('STATUS', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
+          Expanded(flex: 2, child: Text('AMOUNT', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
         ],
       ),
     );
@@ -201,57 +220,49 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
 
   Widget _buildSessionRow(dynamic s, bool isDark) {
     final bool isActive = (s['active'] == true || s['active']?.toString() == '1');
-    final bool isUsed = (s['used'] == true || s['used']?.toString() == '1');
-    
     final amount = s['amount'] ?? s['price'] ?? 0;
-    final created = s['created'] ?? s['created_at'] ?? 'N/A';
-    final expires = s['expires'] ?? s['expire_time'] ?? 'N/A';
-    final mac = s['mac'] ?? 'N/A';
-    final router = s['router'] ?? s['router_name'] ?? 'SYSTEM';
+    final created = s['created'] ?? s['created_at'] ?? '---';
+    final router = s['router'] ?? s['router_name'] ?? 'Mikrotik';
     final code = (s['code'] ?? s['mpesa_code'] ?? s['voucher'] ?? 'SESSION').toString().toUpperCase();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(code, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-                const SizedBox(height: 4),
-                Text(router.toString().toUpperCase(), style: TextStyle(fontSize: 7, color: PaceColors.purple, fontWeight: FontWeight.w600, letterSpacing: 1)),
-                const SizedBox(height: 4),
-                Text(mac.toString().toUpperCase(), style: GoogleFonts.jetBrainsMono(fontSize: 8, color: PaceColors.getDimText(isDark))),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    PaceBadge(
-                      label: isActive ? 'ACTIVE' : 'EXPIRED', 
-                      variant: isActive ? BadgeVariant.success : BadgeVariant.error,
-                    ),
-                    const SizedBox(width: 4),
-                    if (isUsed) PaceBadge(label: 'USED', variant: BadgeVariant.secondary),
-                  ],
+                Text(
+                  code,
+                  style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark)),
                 ),
-                const SizedBox(height: 8),
-                Text('IN: $created', style: TextStyle(fontSize: 7, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600)),
-                Text('EX: $expires', style: TextStyle(fontSize: 7, color: PaceColors.purple.withOpacity(0.7), fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(
+                  '$router • ${created.toString().split(' ')[0]}',
+                  style: GoogleFonts.figtree(fontSize: 10, color: PaceColors.getDimText(isDark)),
+                ),
               ],
             ),
           ),
           Expanded(
             flex: 2,
-            child: Text('KES $amount', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.emerald)),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: PaceBadge(
+                label: isActive ? 'Active' : 'Ended',
+                variant: isActive ? BadgeVariant.success : BadgeVariant.secondary,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'KES $amount',
+              textAlign: TextAlign.right,
+              style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.w700, color: PaceColors.green),
+            ),
           ),
         ],
       ),
