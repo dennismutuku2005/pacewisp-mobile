@@ -163,31 +163,58 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
     });
   }
 
-  List<Widget> get _screens => [
-    HomeScreen(onGenerateVoucher: _onGenerateVoucher, onNavigateToRouters: _onNavigateToRouters),
-    VouchersScreen(openModal: _triggerVouchersModal),
-    const IncomeScreen(),
-    const EntriesScreen(),
-    const NotificationsScreen(),
-    const MonthlyCustomersScreen(),
-    const ActiveCustomersScreen(),
-    const PlansScreen(),
-    const RoutersScreen(),
-    const ExpensesScreen(),
-    const StaffScreen(),
-    const WhatsAppAlertsScreen(),
-    const FinancialReportScreen(),
-    const MpesaTransactionsScreen(),
-    const InvoicesScreen(),
-    const MyBillScreen(),
-    const SystemConfigScreen(),
-    const SystemLogsScreen(),
-    const SettingsScreen(),
-    const BlockStkScreen(),
-    const ThemesScreen(),
-    const SmsScreen(),
-    const SmsLogsScreen(),
-  ];
+  Widget _buildSelectedScreen(int index) {
+    switch (index) {
+      case 0:
+        return HomeScreen(onGenerateVoucher: _onGenerateVoucher, onNavigateToRouters: _onNavigateToRouters);
+      case 1:
+        return VouchersScreen(openModal: _triggerVouchersModal);
+      case 2:
+        return const IncomeScreen();
+      case 3:
+        return const EntriesScreen();
+      case 4:
+        return const NotificationsScreen();
+      case 5:
+        return const MonthlyCustomersScreen();
+      case 6:
+        return const ActiveCustomersScreen();
+      case 7:
+        return const PlansScreen();
+      case 8:
+        return const RoutersScreen();
+      case 9:
+        return const ExpensesScreen();
+      case 10:
+        return const StaffScreen();
+      case 11:
+        return const WhatsAppAlertsScreen();
+      case 12:
+        return const FinancialReportScreen();
+      case 13:
+        return const MpesaTransactionsScreen();
+      case 14:
+        return const InvoicesScreen();
+      case 15:
+        return const MyBillScreen();
+      case 16:
+        return const SystemConfigScreen();
+      case 17:
+        return const SystemLogsScreen();
+      case 18:
+        return const SettingsScreen();
+      case 19:
+        return const BlockStkScreen();
+      case 20:
+        return const ThemesScreen();
+      case 21:
+        return const SmsScreen();
+      case 22:
+        return const SmsLogsScreen();
+      default:
+        return HomeScreen(onGenerateVoucher: _onGenerateVoucher, onNavigateToRouters: _onNavigateToRouters);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -384,7 +411,7 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
             ],
           ),
         ),
-        body: _screens[_selectedIndex],
+        body: _buildSelectedScreen(_selectedIndex),
         bottomNavigationBar: _selectedIndex < 4 ? BottomNavigationBar(
           elevation: 12,
           currentIndex: _selectedIndex > 3 ? 0 : _selectedIndex,
