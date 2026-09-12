@@ -32,6 +32,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
   String _selectedRouter = 'All Routers';
   String _selectedDateRange = 'All Time';
   List<String> _routerNames = ['All Routers'];
+  dynamic _reinitializingId;
 
   @override
   void initState() {
@@ -49,25 +50,27 @@ class _EntriesScreenState extends State<EntriesScreen> {
 
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMore) {
+      if (!_isLoadingMore && _hasMore && !_isLoading) {
         _fetchMoreEntries();
       }
     }
   }
 
   Future<void> _loadRouters() async {
-    final res = await _apiService.getRouters(forceRefresh: true);
-    if (res != null) {
-      final dynamic raw = res['data'] ?? res['routers'];
-      if (raw is List) {
-        final Set<String> unique = {'All Routers'};
-        for (var r in raw) {
-          String? name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
-          if (name != null && name.isNotEmpty) unique.add(name);
+    try {
+      final res = await _apiService.getRouters(forceRefresh: true);
+      if (res != null) {
+        final dynamic raw = res['data'] ?? res['routers'];
+        if (raw is List) {
+          final Set<String> unique = {'All Routers'};
+          for (var r in raw) {
+            String? name = (r is Map) ? (r['name'] ?? r['router_name'] ?? r['router'])?.toString() : r.toString();
+            if (name != null && name.isNotEmpty) unique.add(name);
+          }
+          if (mounted) setState(() => _routerNames = unique.toList());
         }
-        if (mounted) setState(() => _routerNames = unique.toList());
       }
-    }
+    } catch (_) {}
   }
 
   Map<String, String> _parseDateRange(String range) {
@@ -86,12 +89,14 @@ class _EntriesScreenState extends State<EntriesScreen> {
   Future<void> _fetchEntries({bool forceRefresh = false}) async {
     setState(() => _isLoading = true);
     final filters = _parseDateRange(_selectedDateRange);
-    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
+    final router = (_selectedRouter == 'All Routers' || _selectedRouter.isEmpty) ? null : _selectedRouter;
+    final search = _search.trim().isEmpty ? null : _search.trim();
 
     try {
       final live = await _apiService.getEntries(
-        search: _search, 
+        search: search, 
         page: 1, 
+        limit: 12,
         router: router,
         startDate: filters['startDate'],
         endDate: filters['endDate'],
@@ -99,15 +104,23 @@ class _EntriesScreenState extends State<EntriesScreen> {
       );
       if (mounted) {
         if (live != null) {
+          final items = _extractEntries(live);
+          final hasMore = _extractHasMore(live, items.length);
+          final total = _extractTotal(live, items.length);
           setState(() {
-            _entries = _extractEntries(live);
-            _hasMore = _extractHasMore(live);
-            _total = _extractTotal(live);
+            _entries = items;
+            _hasMore = hasMore;
+            _total = total;
             _page = 1;
             _isLoading = false;
           });
         } else {
-          setState(() => _isLoading = false);
+          setState(() {
+            _entries = [];
+            _hasMore = false;
+            _total = 0;
+            _isLoading = false;
+          });
         }
       }
     } catch (_) {
@@ -116,15 +129,18 @@ class _EntriesScreenState extends State<EntriesScreen> {
   }
 
   Future<void> _fetchMoreEntries() async {
+    if (_isLoadingMore) return;
     setState(() => _isLoadingMore = true);
     final nextPage = _page + 1;
     final filters = _parseDateRange(_selectedDateRange);
-    final router = _selectedRouter == 'All Routers' ? null : _selectedRouter;
+    final router = (_selectedRouter == 'All Routers' || _selectedRouter.isEmpty) ? null : _selectedRouter;
+    final search = _search.trim().isEmpty ? null : _search.trim();
 
     try {
       final live = await _apiService.getEntries(
-        search: _search, 
+        search: search, 
         page: nextPage, 
+        limit: 12,
         router: router,
         startDate: filters['startDate'],
         endDate: filters['endDate'],
@@ -132,9 +148,12 @@ class _EntriesScreenState extends State<EntriesScreen> {
       );
       if (mounted && live != null) {
         final newEntries = _extractEntries(live);
+        final existingIds = _entries.map((e) => e['id']?.toString()).where((id) => id != null).toSet();
+        final uniqueNew = newEntries.where((e) => !existingIds.contains(e['id']?.toString())).toList();
+        
         setState(() {
-          _entries.addAll(newEntries);
-          _hasMore = _extractHasMore(live);
+          _entries.addAll(uniqueNew);
+          _hasMore = _extractHasMore(live, _entries.length);
           _page = nextPage;
           _isLoadingMore = false;
         });
@@ -147,32 +166,94 @@ class _EntriesScreenState extends State<EntriesScreen> {
   }
 
   List<dynamic> _extractEntries(Map<String, dynamic> data) {
-    if (data['data'] != null && data['data']['entries'] is List) {
-      return data['data']['entries'];
+    if (data['data'] is List) return data['data'] as List;
+    if (data['data'] is Map && data['data']['entries'] is List) {
+      return data['data']['entries'] as List;
     }
-    if (data['entries'] is List) return data['entries'];
-    if (data['data'] is List) return data['data'];
+    if (data['data'] is Map && data['data']['data'] is List) {
+      return data['data']['data'] as List;
+    }
+    if (data['entries'] is List) return data['entries'] as List;
     return [];
   }
 
-  bool _extractHasMore(Map<String, dynamic> data) {
-    if (data['pagination'] != null && data['pagination']['has_more'] != null) {
-      return data['pagination']['has_more'];
+  bool _extractHasMore(Map<String, dynamic> data, int currentCount) {
+    if (data['pagination'] is Map && data['pagination']['has_more'] != null) {
+      final val = data['pagination']['has_more'];
+      return val == true || val == 1 || val == '1' || val == 'true';
     }
-    if (data['data'] != null && data['data']['pagination'] != null && data['data']['pagination']['has_more'] != null) {
-      return data['data']['pagination']['has_more'];
+    if (data['data'] is Map && data['data']['pagination'] is Map && data['data']['pagination']['has_more'] != null) {
+      final val = data['data']['pagination']['has_more'];
+      return val == true || val == 1 || val == '1' || val == 'true';
     }
-    return false;
+    if (data['has_more'] != null) {
+      return data['has_more'] == true || data['has_more'] == 1;
+    }
+    final total = _extractTotal(data, currentCount);
+    return total > currentCount && currentCount > 0;
   }
 
-  int _extractTotal(Map<String, dynamic> data) {
-    if (data['pagination'] != null && data['pagination']['total'] != null) {
-      return data['pagination']['total'];
+  int _extractTotal(Map<String, dynamic> data, int fallbackCount) {
+    if (data['pagination'] is Map && data['pagination']['total'] != null) {
+      return int.tryParse(data['pagination']['total'].toString()) ?? fallbackCount;
     }
-    if (data['data'] != null && data['data']['pagination'] != null && data['data']['pagination']['total'] != null) {
-      return data['data']['pagination']['total'];
+    if (data['data'] is Map && data['data']['pagination'] is Map && data['data']['pagination']['total'] != null) {
+      return int.tryParse(data['data']['pagination']['total'].toString()) ?? fallbackCount;
     }
-    return _entries.length;
+    if (data['total'] != null) {
+      return int.tryParse(data['total'].toString()) ?? fallbackCount;
+    }
+    return fallbackCount;
+  }
+
+  Future<void> _handleReinitialize(dynamic entryId, StateSetter setModalState) async {
+    if (_reinitializingId != null) return;
+    setModalState(() => _reinitializingId = entryId);
+
+    try {
+      final res = await _apiService.reinitializeEntry(entryId);
+      if (mounted) {
+        if (res != null && res['status'] == 'success') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(res['message'] ?? 'Entry reinitialized on MikroTik router'),
+              backgroundColor: PaceColors.emerald,
+            ),
+          );
+          // Update item in local list
+          setState(() {
+            _entries = _entries.map((item) {
+              if (item['id']?.toString() == entryId.toString()) {
+                final updated = Map<String, dynamic>.from(item as Map);
+                updated['used'] = true;
+                updated['active'] = true;
+                if (res['data'] is Map && res['data']['expires'] != null) {
+                  updated['expires'] = res['data']['expires'];
+                }
+                return updated;
+              }
+              return item;
+            }).toList();
+          });
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(res?['message'] ?? 'Failed to reinitialize entry'),
+              backgroundColor: PaceColors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: PaceColors.red),
+        );
+      }
+    } finally {
+      if (mounted) setModalState(() => _reinitializingId = null);
+    }
   }
 
   @override
@@ -182,50 +263,119 @@ class _EntriesScreenState extends State<EntriesScreen> {
     return Scaffold(
       backgroundColor: PaceColors.getBackground(isDark),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(isDark),
-            _buildGlobalFilters(isDark),
-            _buildSearchBox(isDark),
-            _buildTableHeader(isDark),
-            Expanded(
-              child: _isLoading 
-                ? const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: TransactionSkeleton(count: 8))
-                : RefreshIndicator(
-                    onRefresh: () => _fetchEntries(forceRefresh: true),
-                    color: PaceColors.purple,
-                    child: _entries.isEmpty 
-                      ? SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: PaceEmptyState(
-                            title: 'No Connection Entries',
-                            subtitle: 'No connection sessions match your current filter criteria.',
-                            onRetry: () => _fetchEntries(forceRefresh: true),
-                            isDark: isDark,
-                          ),
-                        )
-                      : ListView.separated(
-                          controller: _scrollController,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                          itemCount: _entries.length + (_isLoadingMore ? 1 : 0),
-                          separatorBuilder: (_, __) => Divider(color: PaceColors.getBorder(isDark), height: 1),
-                          itemBuilder: (context, index) {
-                            if (index == _entries.length) {
-                              return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16),
-                                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: PaceColors.purple, strokeWidth: 2)),
-                                ),
-                              );
-                            }
-                            return _buildEntryItem(_entries[index], isDark);
-                          },
+        child: RefreshIndicator(
+          onRefresh: () => _fetchEntries(forceRefresh: true),
+          color: PaceColors.purple,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(child: _buildHeader(isDark)),
+              SliverToBoxAdapter(child: _buildGlobalFilters(isDark)),
+              SliverToBoxAdapter(child: _buildSearchBox(isDark)),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                sliver: SliverToBoxAdapter(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: PaceColors.getCard(isDark),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: PaceColors.getBorder(isDark), width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildTableHeader(isDark),
+                        if (_isLoading)
+                          _buildSkeletonList(isDark)
+                        else if (_entries.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
+                            child: PaceEmptyState(
+                              title: 'No Connection Entries',
+                              subtitle: 'No connection sessions match your current filter criteria.',
+                              onRetry: () => _fetchEntries(forceRefresh: true),
+                              isDark: isDark,
+                            ),
+                          )
+                        else ...[
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _entries.length,
+                            itemBuilder: (context, index) {
+                              final isLast = index == _entries.length - 1 && !_isLoadingMore;
+                              return _buildEntryItem(_entries[index], isDark, isLast: isLast);
+                            },
+                          ),
+                          if (_isLoadingMore)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              alignment: Alignment.center,
+                              child: const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple),
+                              ),
+                            ),
+                        ],
+                      ],
+                    ),
                   ),
-            ),
-          ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonList(bool isDark) {
+    return Column(
+      children: List.generate(
+        8,
+        (index) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            border: index < 7 ? Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 0.8)) : null,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PaceSkeleton(height: 14, width: 120, borderRadius: 4),
+                    const SizedBox(height: 6),
+                    PaceSkeleton(height: 10, width: 80, borderRadius: 4),
+                  ],
+                ),
+              ),
+              const Expanded(
+                flex: 2,
+                child: Center(
+                  child: PaceSkeleton(height: 14, width: 60, borderRadius: 4),
+                ),
+              ),
+              const Expanded(
+                flex: 2,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: PaceSkeleton(height: 22, width: 56, borderRadius: 6),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -326,16 +476,30 @@ class _EntriesScreenState extends State<EntriesScreen> {
       backgroundColor: PaceColors.getCard(isDark),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-              child: Text('Select Mikrotik Station', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 1)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Mikrotik Station', 
+                    style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark)),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.x, size: 16),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
-            const Divider(),
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
@@ -373,16 +537,27 @@ class _EntriesScreenState extends State<EntriesScreen> {
       backgroundColor: PaceColors.getCard(isDark),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-              child: Text('Time Range', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 1)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Time Range', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700, color: PaceColors.getPrimaryText(isDark))),
+                  IconButton(
+                    icon: const Icon(LucideIcons.x, size: 16),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
-            const Divider(),
             ...ranges.map((range) {
               final isSelected = _selectedDateRange == range;
               return ListTile(
@@ -418,7 +593,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
         ),
         child: TextField(
           onChanged: (val) { 
-            setState(() => _search = val); 
+            _search = val; 
             _fetchEntries(); 
           },
           style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getPrimaryText(isDark)),
@@ -436,28 +611,34 @@ class _EntriesScreenState extends State<EntriesScreen> {
 
   Widget _buildTableHeader(bool isDark) {
     return Container(
-      color: PaceColors.getSurface(isDark),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: PaceColors.getSurface(isDark),
+        border: Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 1)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('CLIENT IDENTIFIER', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
-          Expanded(flex: 2, child: Center(child: Text('AMOUNT', style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)))),
-          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 9, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
+          Expanded(flex: 3, child: Text('CLIENT IDENTIFIER', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
+          Expanded(flex: 2, child: Center(child: Text('AMOUNT', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5)))),
+          Expanded(flex: 2, child: Text('STATUS', textAlign: TextAlign.right, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w700, color: PaceColors.getDimText(isDark), letterSpacing: 0.5))),
         ],
       ),
     );
   }
 
-  Widget _buildEntryItem(dynamic entry, bool isDark) {
+  Widget _buildEntryItem(dynamic entry, bool isDark, {bool isLast = false}) {
     final bool isActive = (entry['active'] == true || entry['active'] == 1 || entry['active'] == '1');
-    final phone = entry['phone'] ?? entry['user_phone'] ?? 'Client';
-    final code = entry['code'] ?? entry['voucher_code'] ?? '';
+    final phone = (entry['phone'] ?? entry['user_phone'] ?? 'Client').toString();
+    final code = (entry['code'] ?? entry['voucher_code'] ?? '').toString();
     final router = (entry['router'] ?? entry['router_name'] ?? 'Mikrotik').toString();
-    final amount = entry['amount']?.toString() ?? '0';
+    final amount = (entry['amount'] ?? '0').toString();
 
     return InkWell(
       onTap: () => _showDetailModal(entry, isDark),
       child: Container(
+        decoration: BoxDecoration(
+          border: isLast ? null : Border(bottom: BorderSide(color: PaceColors.getBorder(isDark), width: 0.8)),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
@@ -473,9 +654,9 @@ class _EntriesScreenState extends State<EntriesScreen> {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      if (code.toString().isNotEmpty) ...[
+                      if (code.isNotEmpty) ...[
                         Text(
-                          code.toString(),
+                          code,
                           style: GoogleFonts.jetBrainsMono(fontSize: 10, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(width: 6),
@@ -520,45 +701,100 @@ class _EntriesScreenState extends State<EntriesScreen> {
   }
 
   void _showDetailModal(dynamic entry, bool isDark) {
+    final bool isActive = (entry['active'] == true || entry['active'] == 1 || entry['active'] == '1');
+    final bool isUsed = (entry['used'] == true || entry['used'] == 1 || entry['used'] == '1');
+    final dynamic entryId = entry['id'];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        decoration: BoxDecoration(
-          color: PaceColors.getCard(isDark),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          border: Border.all(color: PaceColors.getBorder(isDark)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          decoration: BoxDecoration(
+            color: PaceColors.getCard(isDark),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(color: PaceColors.getBorder(isDark)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(color: PaceColors.getBorder(isDark), borderRadius: BorderRadius.circular(2)),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Session Details', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w700, color: PaceColors.purple)),
-                IconButton(icon: const Icon(LucideIcons.x, size: 18), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildDetailRow('Phone / Client', entry['phone']?.toString() ?? 'N/A', isDark),
-            _buildDetailRow('Voucher PIN', entry['code']?.toString() ?? 'None', isDark),
-            _buildDetailRow('Amount Paid', 'KES ${entry['amount'] ?? 0}', isDark),
-            _buildDetailRow('Mikrotik Node', entry['router_name'] ?? entry['router'] ?? 'Default', isDark),
-            _buildDetailRow('MAC Address', entry['mac']?.toString() ?? 'N/A', isDark),
-            _buildDetailRow('Connected Time', entry['time_ago'] ?? entry['created_at'] ?? 'N/A', isDark),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Session Details', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w700, color: PaceColors.purple)),
+                  IconButton(icon: const Icon(LucideIcons.x, size: 18), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildDetailRow('Phone / Client', entry['phone']?.toString() ?? 'N/A', isDark),
+              _buildDetailRow('Voucher PIN', entry['code']?.toString() ?? 'None', isDark),
+              _buildDetailRow('Amount Paid', 'KES ${entry['amount'] ?? 0}', isDark),
+              _buildDetailRow('Mikrotik Station', entry['router_name'] ?? entry['router'] ?? 'Default', isDark),
+              _buildDetailRow('MAC Address', entry['mac']?.toString() ?? 'N/A', isDark),
+              _buildDetailRow('Timeline Started', entry['created'] ?? entry['created_at'] ?? 'N/A', isDark),
+              _buildDetailRow('Session Expires', entry['expires']?.toString() ?? 'N/A', isDark),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Status', style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark))),
+                    PaceBadge(
+                      label: isActive ? 'Active' : 'Expired',
+                      variant: isActive ? BadgeVariant.success : BadgeVariant.secondary,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('MikroTik Used', style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark))),
+                    Row(
+                      children: [
+                        PaceBadge(
+                          label: isUsed ? 'Yes' : 'No',
+                          variant: isUsed ? BadgeVariant.success : BadgeVariant.destructive,
+                        ),
+                        if (entryId != null) ...[
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: (isActive && _reinitializingId == null) 
+                              ? () => _handleReinitialize(entryId, setModalState)
+                              : null,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: isActive ? PaceColors.purple.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: _reinitializingId == entryId
+                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: PaceColors.purple))
+                                : Icon(LucideIcons.refreshCw, size: 14, color: isActive ? PaceColors.purple : Colors.grey),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
