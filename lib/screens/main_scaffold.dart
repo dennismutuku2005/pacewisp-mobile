@@ -409,46 +409,166 @@ class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver
   Widget _buildDrawerHeader(SettingsProvider settings, bool isDark) {
     return Container(
       width: double.infinity,
-      height: 180,
-      decoration: const BoxDecoration(
-        image: DecorationImage(image: AssetImage('assets/images/sidebar.png'), fit: BoxFit.cover, alignment: Alignment.centerRight),
+      padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
+      decoration: BoxDecoration(
+        color: PaceColors.purple,
+        gradient: LinearGradient(
+          colors: [PaceColors.purple, PaceColors.purple.withOpacity(0.85)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [PaceColors.purple, PaceColors.purple.withOpacity(0.5)], begin: Alignment.bottomLeft, end: Alignment.topRight),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(settings.accountName?.toUpperCase() ?? 'ADMINISTRATOR', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 0.5)),
-            const SizedBox(height: 4),
-            Text(settings.activeAccount != null ? "${settings.activeAccount!.subdomain}.${settings.activeAccount!.domain}" : 'PACE WISP', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.75), fontWeight: FontWeight.w600)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  settings.activeAccount?.type.toUpperCase() ?? 'ADMIN',
+                  style: GoogleFonts.figtree(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              if (settings.accounts.length > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: PaceColors.green.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: PaceColors.green.withOpacity(0.6)),
+                  ),
+                  child: Text(
+                    '${settings.accounts.length} ACCOUNTS',
+                    style: GoogleFonts.figtree(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            settings.accountName ?? 'Administrator',
+            style: GoogleFonts.figtree(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            settings.activeAccount != null
+                ? "${settings.activeAccount!.subdomain}.${settings.activeAccount!.domain}"
+                : 'pacewisp.co.ke',
+            style: GoogleFonts.figtree(
+              fontSize: 11,
+              color: Colors.white.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (settings.accounts.length > 1) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withOpacity(0.15)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  isDense: true,
+                  isExpanded: true,
+                  dropdownColor: PaceColors.purple,
+                  icon: const Icon(LucideIcons.chevronsUpDown, size: 14, color: Colors.white),
+                  value: settings.accounts.indexWhere((a) =>
+                      a.subdomain == settings.activeAccount?.subdomain &&
+                      a.domain == settings.activeAccount?.domain),
+                  items: List.generate(settings.accounts.length, (i) {
+                    final acc = settings.accounts[i];
+                    return DropdownMenuItem<int>(
+                      value: i,
+                      child: Text(
+                        '${acc.accountName} (${acc.subdomain})',
+                        style: GoogleFonts.figtree(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                    );
+                  }),
+                  onChanged: (newIdx) {
+                    if (newIdx != null) {
+                      settings.switchAccount(newIdx);
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildDrawerSection(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-      child: Text(title, style: TextStyle(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+      child: Text(
+        title,
+        style: GoogleFonts.figtree(
+          color: PaceColors.getDimText(isDark),
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+        ),
+      ),
     );
   }
 
   Widget _buildDrawerItem(int index, String title, IconData icon, bool isDark) {
     bool isSelected = _selectedIndex == index;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 1),
       child: ListTile(
         dense: true,
         selected: isSelected,
-        selectedTileColor: PaceColors.purple.withOpacity(0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: Icon(icon, color: isSelected ? PaceColors.purple : PaceColors.getSecondaryText(isDark), size: 18),
-        title: Text(title, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w600, color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark))),
+        selectedTileColor: PaceColors.purple.withOpacity(0.08),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        leading: Icon(
+          icon,
+          color: isSelected ? PaceColors.purple : PaceColors.getSecondaryText(isDark),
+          size: 16,
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.figtree(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? PaceColors.purple : PaceColors.getPrimaryText(isDark),
+          ),
+        ),
+        trailing: isSelected
+            ? Container(
+                width: 5,
+                height: 5,
+                decoration: const BoxDecoration(
+                  color: PaceColors.purple,
+                  shape: BoxShape.circle,
+                ),
+              )
+            : null,
         onTap: () {
           setState(() => _selectedIndex = index);
           Navigator.pop(context);
