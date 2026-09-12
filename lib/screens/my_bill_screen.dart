@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/settings_provider.dart';
 import '../services/api_service.dart';
 import '../theme/colors.dart';
+import '../components/badge.dart';
 import '../components/skeleton.dart';
 import '../components/empty_state.dart';
 
@@ -19,33 +20,30 @@ class MyBillScreen extends StatefulWidget {
 class _MyBillScreenState extends State<MyBillScreen> {
   final ApiService _apiService = ApiService();
   final _currencyFormat = NumberFormat("#,###", "en_US");
-  
+
   Map<String, dynamic>? _accountData;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchCachedThenLive();
+    _fetchAccountDetails();
   }
 
-  Future<void> _fetchCachedThenLive() async {
-    final cached = await _apiService.getAccountDetails(forceRefresh: false);
-    if (mounted && cached != null && _accountData == null) {
-      setState(() {
-        _accountData = cached['data'] ?? cached;
-        _isLoading = false;
-      });
-    }
-
-    final live = await _apiService.getAccountDetails(forceRefresh: true);
-    if (mounted && live != null) {
-      setState(() {
-        _accountData = live['data'] ?? live;
-        _isLoading = false;
-      });
-    } else if (mounted) {
-      setState(() => _isLoading = false);
+  Future<void> _fetchAccountDetails() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await _apiService.getAccountDetails(forceRefresh: true);
+      if (mounted && res != null) {
+        setState(() {
+          _accountData = res['data'] ?? res;
+          _isLoading = false;
+        });
+      } else if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -54,193 +52,205 @@ class _MyBillScreenState extends State<MyBillScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final isDark = settings.isDarkMode;
 
-    if (_isLoading && _accountData == null) return const Scaffold(body: SkeletonList());
-    if (_accountData == null) return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
-      body: RefreshIndicator(
-        onRefresh: () => _fetchCachedThenLive(),
+    if (_isLoading && _accountData == null) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: SkeletonList(count: 6),
+      );
+    }
+
+    if (_accountData == null) {
+      return RefreshIndicator(
+        onRefresh: _fetchAccountDetails,
         color: PaceColors.purple,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
-            height: MediaQuery.of(context).size.height * 0.8,
-            child: PaceEmptyState(onRetry: () => _fetchCachedThenLive(), isDark: isDark, title: 'ACCOUNT DATA UNAVAILABLE', subtitle: 'We couldn\'t load your billing information. Please check your connection and retry.'),
+            height: MediaQuery.of(context).size.height * 0.7,
+            alignment: Alignment.center,
+            child: PaceEmptyState(
+              title: 'Account Billing Unavailable',
+              subtitle: 'We could not load your subscription and usage information.',
+              onRetry: _fetchAccountDetails,
+              isDark: isDark,
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
 
     final billing = _accountData?['billing'];
     final sub = _accountData?['subscription'];
 
-    return Scaffold(
-      backgroundColor: PaceColors.getBackground(isDark),
-      body: RefreshIndicator(
-        onRefresh: () => _fetchCachedThenLive(),
-        color: PaceColors.purple,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          children: [
-            _buildHeader(isDark, _accountData?['customer_id']?.toString() ?? ''),
-            const SizedBox(height: 24),
-            _buildMainBillCard(isDark, billing, sub),
-            const SizedBox(height: 24),
-            _buildCalculationDetail(isDark, billing),
-            const SizedBox(height: 24),
-            _buildSidebarStats(isDark, billing, sub),
-            const SizedBox(height: 100),
-          ],
-        ),
+    return RefreshIndicator(
+      onRefresh: _fetchAccountDetails,
+      color: PaceColors.purple,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+        children: [
+          _buildHeader(isDark),
+          const SizedBox(height: 16),
+          _buildMainBillCard(isDark, billing, sub),
+          const SizedBox(height: 16),
+          _buildUsageBreakdown(isDark, billing),
+          const SizedBox(height: 16),
+          _buildSubscriptionDetails(isDark, sub),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader(bool isDark, String customerId) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('YOUR BILL', style: GoogleFonts.figtree(color: PaceColors.purple, fontSize: 18, fontWeight: FontWeight.normal, letterSpacing: -0.5)),
-        Text('LIVE USAGE CYCLE SUMMARY', style: GoogleFonts.figtree(color: PaceColors.getDimText(isDark), fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 2)),
-      ]),
-      IconButton(
-        onPressed: () {},
-        icon: const Icon(LucideIcons.printer, color: PaceColors.purple, size: 20),
-      ),
-    ]);
+  Widget _buildHeader(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Service Bill',
+          style: GoogleFonts.figtree(
+            color: PaceColors.getPrimaryText(isDark),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Platform usage estimation and recurring cycle period',
+          style: GoogleFonts.figtree(
+            color: PaceColors.getDimText(isDark),
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildMainBillCard(bool isDark, dynamic billing, dynamic sub) {
-    final double progress = (billing?['cycle_progress'] ?? 0).toDouble() / 100.0;
     final int daysLeft = sub?['days_left'] ?? 0;
-    final String cyclesubs = daysLeft < 0 ? 'CYCLE ENDED ${daysLeft.abs()} DAYS AGO' : 'CYCLE ENDS IN $daysLeft DAYS';
+    final String cycleStatus = daysLeft < 0 ? 'Ended ${daysLeft.abs()} days ago' : 'Renews in $daysLeft days';
 
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: PaceColors.getCard(isDark), 
-        borderRadius: BorderRadius.circular(28), 
-        border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5),
-        boxShadow: isDark ? [] : [BoxShadow(color: PaceColors.purple.withOpacity(0.05), blurRadius: 30, offset: const Offset(0, 10))]
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, 
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [PaceColors.purple, PaceColors.purple.withOpacity(0.8)]),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('CURRENT SERVICE PERIOD', style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
-                Text(_formatDate(sub?['current_period_end']), style: GoogleFonts.jetBrainsMono(fontSize: 8, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.bold)),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Estimated Current Bill',
+                style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark)),
+              ),
+              PaceBadge(label: cycleStatus, variant: daysLeft < 3 ? BadgeVariant.warning : BadgeVariant.primary),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('ESTIMATED ACCRUAL', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-                Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(LucideIcons.activity, color: PaceColors.purple, size: 14)),
-              ]),
-              const SizedBox(height: 12),
-              Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-                Text('KES', style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.bold, color: PaceColors.purple.withOpacity(0.5))),
-                const SizedBox(width: 8),
-                Text(_currencyFormat.format(billing?['current_estimated_bill'] ?? 0), style: GoogleFonts.figtree(fontSize: 42, fontWeight: FontWeight.normal, color: PaceColors.getPrimaryText(isDark), letterSpacing: -1.5)),
-              ]),
-              const SizedBox(height: 20),
-              Row(children: [
-                Icon(LucideIcons.calendar, size: 12, color: PaceColors.getDimText(isDark)),
-                const SizedBox(width: 8),
-                Text(cyclesubs, style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.bold, color: PaceColors.getDimText(isDark))),
-              ]),
-            ]),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                'KES ',
+                style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.bold, color: PaceColors.purple),
+              ),
+              Text(
+                _currencyFormat.format(billing?['current_estimated_bill'] ?? 0),
+                style: GoogleFonts.figtree(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: PaceColors.getPrimaryText(isDark),
+                ),
+              ),
+            ],
           ),
-          Container(
-            height: 6,
-            width: double.infinity,
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
-            child: FractionallySizedBox(alignment: Alignment.centerLeft, widthFactor: progress.clamp(0.0, 1.0), child: Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [PaceColors.purple, Colors.blueAccent])))),
+          const SizedBox(height: 14),
+          Divider(color: PaceColors.getBorder(isDark), height: 1),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Current Billing Cycle',
+                style: GoogleFonts.figtree(fontSize: 12, color: PaceColors.getDimText(isDark)),
+              ),
+              Text(
+                sub?['current_period_end'] ?? 'Active Period',
+                style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark)),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCalculationDetail(bool isDark, dynamic billing) {
+  Widget _buildUsageBreakdown(bool isDark, dynamic billing) {
+    final double revenue = double.tryParse(billing?['cycle_revenue']?.toString() ?? '0') ?? 0;
+    final int transactions = billing?['transaction_count'] ?? 0;
+    final String rate = billing?['platform_rate']?.toString() ?? 'Standard';
+
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(28), border: Border.all(color: PaceColors.getBorder(isDark), width: 1.5)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ALGORITHMIC BREAKDOWN', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark), letterSpacing: 1.5)),
-        const SizedBox(height: 24),
-        _buildCalcRow('BASE', 'STARTER PLAN (PRO-RATED)', 'KSH 1,499 x ${billing?['cycle_progress'] ?? 0}% ELAPSED', 'KSH ${_currencyFormat.format((billing?['base_fee'] ?? 0) * (billing?['cycle_progress'] ?? 0) / 100)}', isDark),
-        const Divider(height: 32),
-        _buildCalcRow('ADD', 'CLIENT SURCHARGE', '${billing?['additional_users'] ?? 0} CLIENTS ABOVE TIER 1 (x KSH 8/EA)', 'KSH ${_currencyFormat.format(billing?['extra_fee'] ?? 0)}', isDark, iconColor: Colors.orangeAccent),
-        const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: PaceColors.purple.withOpacity(0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.purple.withOpacity(0.1))),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Row(children: [
-                Icon(LucideIcons.info, size: 14, color: PaceColors.purple),
-                const SizedBox(width: 10),
-                Text('MONTHLY PROJECTION', style: GoogleFonts.figtree(fontSize: 10, fontWeight: FontWeight.w600, color: PaceColors.purple, letterSpacing: 0.5)),
-            ]),
-            Text('KSH ${_currencyFormat.format(billing?['total_monthly_projection'] ?? 0)}', style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w600, color: PaceColors.purple)),
-          ]),
-        ),
-      ]),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Usage Metrics',
+            style: GoogleFonts.figtree(fontSize: 15, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+          ),
+          const SizedBox(height: 12),
+          _rowItem('Gross Hotspot Revenue', 'KES ${_currencyFormat.format(revenue)}', isDark),
+          _rowItem('Total Transactions', transactions.toString(), isDark),
+          _rowItem('Service Tier Rate', rate, isDark),
+        ],
+      ),
     );
   }
 
-  Widget _buildCalcRow(String tag, String title, String sub, String amount, bool isDark, {Color? iconColor}) {
-    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(width: 36, height: 36, decoration: BoxDecoration(color: (iconColor ?? PaceColors.purple).withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Center(child: Text(tag, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: iconColor ?? PaceColors.purple)))),
-      const SizedBox(width: 16),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-        Text(sub, style: GoogleFonts.figtree(fontSize: 9, color: PaceColors.getDimText(isDark), fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-      ])),
-      Text(amount, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-    ]);
-  }
-
-  Widget _buildSidebarStats(bool isDark, dynamic billing, dynamic sub) {
-    return Column(children: [
-        _buildSmallStatCard('CLIENT DENSITY', '${billing?['user_count'] ?? 0} RECURRING NODES', LucideIcons.users, isDark, PaceColors.purple),
-        const SizedBox(height: 12),
-        _buildSmallStatCard('BILLING POLICY', 'KSH 1,499 BASE TIER', LucideIcons.shieldCheck, isDark, Colors.blueAccent),
-        const SizedBox(height: 12),
-        _buildSmallStatCard('NEXT INVOICE', _formatDate(sub?['next_payment']), LucideIcons.calendar, isDark, Colors.orangeAccent),
-    ]);
-  }
-
-  String _formatDate(String? date) {
-    if (date == null) return 'PENDING';
-    try {
-      final d = DateTime.parse(date);
-      return DateFormat('dd MMM yyyy').format(d).toUpperCase();
-    } catch (_) {
-      return date.toUpperCase();
-    }
-  }
-
-  Widget _buildSmallStatCard(String label, String value, IconData icon, bool isDark, Color color) {
+  Widget _buildSubscriptionDetails(bool isDark, dynamic sub) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: PaceColors.getCard(isDark), borderRadius: BorderRadius.circular(20), border: Border.all(color: PaceColors.getBorder(isDark), width: 1)),
-      child: Row(children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 20),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: GoogleFonts.figtree(fontSize: 8, fontWeight: FontWeight.w600, color: PaceColors.getDimText(isDark), letterSpacing: 1.5)),
-          Text(value, style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
-        ])),
-      ]),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PaceColors.getCard(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: PaceColors.getBorder(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Subscription Plan',
+            style: GoogleFonts.figtree(fontSize: 15, fontWeight: FontWeight.bold, color: PaceColors.getPrimaryText(isDark)),
+          ),
+          const SizedBox(height: 12),
+          _rowItem('Plan Name', sub?['plan_name'] ?? 'WISP Enterprise', isDark),
+          _rowItem('Status', (sub?['status'] ?? 'Active').toString().toUpperCase(), isDark),
+          _rowItem('Next Invoice Date', sub?['next_invoice_date'] ?? sub?['current_period_end'] ?? '-', isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _rowItem(String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: GoogleFonts.figtree(fontSize: 13, color: PaceColors.getDimText(isDark))),
+          Text(value, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: PaceColors.getPrimaryText(isDark))),
+        ],
+      ),
     );
   }
 }
